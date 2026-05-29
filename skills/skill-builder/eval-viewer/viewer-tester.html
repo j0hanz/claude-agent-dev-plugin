@@ -75,15 +75,15 @@
       </button>
       <div class="lh-1">
         <div class="eyebrow mb-1">Skill review</div>
-        <span id="skill-name" class="fw-semibold text-body-emphasis text-truncate skill-name d-inline-block align-bottom" title=""></span>
+        <h1 id="skill-name" class="fw-semibold text-body-emphasis text-truncate skill-name d-inline-block align-bottom h6 mb-0" title=""></h1>
       </div>
     </div>
     <ul class="nav seg-tabs d-none mx-2" id="view-tabs" role="tablist">
       <li class="nav-item" role="presentation">
-        <button class="nav-link active" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#panel-outputs" aria-selected="true" aria-label="Outputs">Outputs</button>
+        <button id="tab-outputs" class="nav-link active" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#panel-outputs" aria-selected="true" aria-controls="panel-outputs">Outputs</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#panel-benchmark" aria-selected="false">Benchmark</button>
+        <button id="tab-benchmark" class="nav-link" type="button" role="tab" data-bs-toggle="tab" data-bs-target="#panel-benchmark" aria-selected="false" aria-controls="panel-benchmark">Benchmark</button>
       </li>
     </ul>
     <div class="d-flex align-items-center gap-3 ms-auto">
@@ -105,14 +105,15 @@
   <main class="tab-content flex-grow-1 overflow-hidden">
 
     <!-- ---- Outputs panel (qualitative review) — three-column workbench ---- -->
-    <div class="tab-pane fade show active h-100" id="panel-outputs">
+    <div class="tab-pane fade show active h-100" id="panel-outputs" role="tabpanel" aria-labelledby="tab-outputs" tabindex="-1">
       <div class="d-flex h-100 overflow-hidden">
 
         <!-- Nav rail: grouped eval list (static on lg+, offcanvas below) -->
         <aside class="nav-rail offcanvas-start d-flex flex-column" id="sidebar"
                tabindex="-1" aria-labelledby="sidebar-title">
           <div class="offcanvas-body p-0 scroll-pane flex-grow-1 bg-body-tertiary">
-            <div id="eval-list" class="list-group list-group-flush"></div>
+            <h2 id="sidebar-title" class="visually-hidden">Eval list</h2>
+          <div id="eval-list" class="list-group list-group-flush"></div>
           </div>
         </aside>
 
@@ -191,11 +192,12 @@
         <aside class="fb-rail offcanvas-xl offcanvas-end" id="feedback-rail"
                tabindex="-1" aria-labelledby="fb-rail-title">
           <div class="offcanvas-header border-bottom d-xl-none">
-            <h6 class="offcanvas-title" id="fb-rail-title">Your Review</h6>
+            <h6 class="offcanvas-title">Your Review</h6>
             <button class="btn-close" type="button" data-bs-dismiss="offcanvas"
                     data-bs-target="#feedback-rail" aria-label="Close review panel"></button>
           </div>
           <div class="offcanvas-body scroll-pane p-3 bg-body-tertiary">
+            <span id="fb-rail-title" class="visually-hidden">Your Review</span>
             <div class="d-flex align-items-center justify-content-between mb-3 d-none d-xl-flex">
               <span class="fw-semibold text-body-emphasis">Your Review</span>
               <span id="rail-grade-badge" class="badge rounded-pill d-none"></span>
@@ -230,7 +232,7 @@
     </div>
 
     <!-- ---- Benchmark panel (quantitative stats) ---- -->
-    <div class="tab-pane fade h-100" id="panel-benchmark">
+    <div class="tab-pane fade h-100" id="panel-benchmark" role="tabpanel" aria-labelledby="tab-benchmark" tabindex="-1">
       <div class="scroll-pane h-100">
         <div id="benchmark-content" class="container"></div>
       </div>
