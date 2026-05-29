@@ -268,6 +268,8 @@
     </div>
   </div>
 
+  <div id="sr-announcer" class="visually-hidden" aria-live="polite" aria-atomic="true"></div>
+
   <script src="../assets/bootstrap.bundle.min.js"></script>
   <script>
   (() => {
@@ -772,12 +774,19 @@ def test_explain_uses_index_scan(db):
     // ═══════════════════════════════════════════════════════════════
     // COPY HELPER
     // ═══════════════════════════════════════════════════════════════
+    function announceToSR(msg) {
+      const region = $("sr-announcer");
+      region.textContent = "";
+      requestAnimationFrame(() => { region.textContent = msg; });
+    }
+
     function copyText(text, btn) {
       navigator.clipboard.writeText(text).then(() => {
         const orig = btn.textContent;
         btn.textContent = "Copied!";
         btn.classList.replace("btn-outline-secondary", "btn-success");
         btn.classList.add("copied");
+        announceToSR("Copied to clipboard");
         setTimeout(() => {
           btn.textContent = orig;
           btn.classList.replace("btn-success", "btn-outline-secondary");
@@ -1501,7 +1510,15 @@ def test_explain_uses_index_scan(db):
       document.querySelectorAll("input[name='verdict']").forEach((r) =>
         r.addEventListener("change", () => setVerdict(r.checked ? r.value : "")));
       document.addEventListener("keydown", onKey);
-      if (DATA.benchmark) { $("view-tabs").classList.remove("d-none"); renderBenchmark(); }
+      if (DATA.benchmark) {
+        $("view-tabs").classList.remove("d-none");
+        renderBenchmark();
+        $("view-tabs").addEventListener("shown.bs.tab", (e) => {
+          const targetId = e.target.getAttribute("data-bs-target");
+          const panel = document.querySelector(targetId);
+          if (panel) panel.focus();
+        });
+      }
       prefillFeedback().then(() => { if (RUNS.length) showRun(0); else updateNav(); });
     }
 
