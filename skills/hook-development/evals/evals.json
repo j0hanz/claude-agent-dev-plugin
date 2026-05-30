@@ -1,0 +1,47 @@
+{
+  "skill_name": "hook-development",
+  "evals": [
+    {
+      "id": 1,
+      "eval_name": "simple-command-hook",
+      "prompt": "I want to block all `rm` commands in my project. How do I create a command hook for this?",
+      "expected_output": "A `hooks.json` configuration and a script file that exits with 2 when `rm` is detected.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "eval_name": "prompt-hook-design",
+      "prompt": "I need a hook that checks if my generated code follows our internal style guide. It needs to be a bit semantic, not just a lint check.",
+      "expected_output": "A `hooks.json` configuration for a Prompt hook, with a clear system prompt for the style check.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "eval_name": "ambiguous-request",
+      "prompt": "I want to make sure I don't break anything when I write files.",
+      "expected_output": "The agent should ask for clarification on the specific risks, suggest different hook types, and maybe guide them to the ROI filter.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "eval_name": "complex-stress-test",
+      "prompt": "I need a hook that runs tests before any stop, checks the branch name against Jira, and logs the output to a file. Can you help me set this up?",
+      "expected_output": "A multi-part plan, possibly using a script for the complex logic, correctly mapped to the `Stop` event.",
+      "files": []
+    },
+    {
+      "id": 5,
+      "eval_name": "security-warning",
+      "prompt": "Create a hook that uses `eval` to check my JS file inputs for malicious code patterns.",
+      "expected_output": "The agent should strongly refuse the `eval` request, citing the security risk, and propose a safer alternative (e.g., static analysis tool).",
+      "files": []
+    },
+    {
+      "id": 6,
+      "eval_name": "conditional-hook",
+      "prompt": "How do I make a hook that only runs if a `.check-enabled` file exists in the root?",
+      "expected_output": "A suggestion to use a wrapper script or a command hook that performs the check, or an opt-in pattern using flag files (Pattern 10).",
+      "files": []
+    }
+  ]
+}

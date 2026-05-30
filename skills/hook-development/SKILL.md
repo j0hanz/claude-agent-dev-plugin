@@ -22,21 +22,32 @@ Claude Code hooks are a powerful event system that allows you to intercept and c
 
 ---
 
+## Planning Your Hook Strategy
+
+Before writing JSON, follow this 3-step decision flow:
+
+1.  **Goal Assessment:** What exactly are you trying to intercept or influence?
+2.  **Determine Cadence:** Does this require "Once per Session", "Once per Turn", or "Every Tool Call" precision?
+3.  **Choose Mechanism:**
+    - **Deterministic (Command Hook):** Fast (<5ms), logic is purely scriptable (e.g., block `rm -rf`).
+    - **Semantic (Prompt Hook):** Slower (200ms+), requires LLM reasoning (e.g., style checking).
+    - **In-Tool (No Hook):** Can Claude fix this himself? If yes, **don't hook.**
+
+---
+
 ## Hook Lifecycle Events
 
-**MANDATORY — READ ENTIRE FILE**: For technical schemas and expected JSON formats, read [`references/schemas.md`](references/schemas.md).
-
-| Cadence              | Event                | Purpose                                                    |
-| :------------------- | :------------------- | :--------------------------------------------------------- |
-| **Once per Session** | `SessionStart`       | Load context, set env vars. Fires on resume/compact.       |
-|                      | `SessionEnd`         | Cleanup temporary files/connections.                       |
-| **Once per Turn**    | `UserPromptSubmit`   | Validate or transform user input before Claude sees it.    |
-|                      | `Stop`               | Validate completeness (e.g., run tests) before finishing.  |
-|                      | `StopFailure`        | React to interrupted or failed turns.                      |
-| **Every Tool Call**  | `PreToolUse`         | **Workhorse.** Block or modify operations before they run. |
-|                      | `PostToolUse`        | Post-processing (formatting, logging) after success.       |
-|                      | `PostToolUseFailure` | Handle tool errors or suggest fixes.                       |
-|                      | `PermissionRequest`  | Auto-approve or custom-gate permission dialogs.            |
+| Cadence              | Event                | Input Data (`stdin`) | Purpose                                                    |
+| :------------------- | :------------------- | :------------------- | :--------------------------------------------------------- |
+| **Once per Session** | `SessionStart`       | `is_resume`, `is_compact` | Load context, set env vars.                                |
+|                      | `SessionEnd`         | None                 | Cleanup temporary files/connections.                       |
+| **Once per Turn**    | `UserPromptSubmit`   | `prompt`             | Validate or transform user input.                          |
+|                      | `Stop`               | `transcript`, `final_response` | Validate completeness (e.g., run tests).                  |
+|                      | `StopFailure`        | `reason`             | React to interrupted/failed turns.                         |
+| **Every Tool Call**  | `PreToolUse`         | `tool_name`, `tool_input` | Block/modify operations before run.                        |
+|                      | `PostToolUse`        | `tool_name`, `tool_result` | Post-processing (formatting, logging).                     |
+|                      | `PostToolUseFailure` | `tool_name`, `error` | Handle tool errors.                                        |
+|                      | `PermissionRequest`  | `permission`, `command` | Auto-approve or custom-gate permissions.                  |
 
 ---
 
@@ -71,6 +82,51 @@ Claude Code hooks are a powerful event system that allows you to intercept and c
    - `mcp_tool`: Call a tool from a connected MCP server.
 3. **Verify Output** — Ensure scripts output valid JSON on `stdout`.
 4. **Audit & Lint** — Use the utility scripts in `scripts/`.
+
+## Concrete Templates
+
+### 1. Command Hook: Block dangerous commands
+Save as `block-dangerous.sh`:
+```bash
+#!/bin/bash
+# Read JSON from stdin
+INPUT=$(cat)
+COMMAND=$(echo "$INPUT" | jq -r '.tool_input.command')
+
+if [[ "$COMMAND" == *"rm -rf /"* ]]; then
+  echo '{"decision": "deny", "reason": "Dangerous command blocked"}'
+  exit 2
+fi
+echo '{"decision": "approve"}'
+exit 0
+```
+And in `hooks.json`:
+```json
+{
+  "events": { "PreToolUse": ["./block-dangerous.sh"] }
+}
+```
+
+### 2. Prompt Hook: Style Validator
+In `hooks.json`:
+```json
+{
+  "events": {
+    "Stop": ["prompt:Check style compliance against internal guidelines..."]
+  }
+}
+```
+
+---
+
+## Quick Schema Reference
+
+| Command Decision Output | Format |
+| :--- | :--- |
+| **All Hooks** | `{"decision": "approve" | "deny" | "ask", "reason": "..."}` |
+| **Exit Code (Command)** | Exit 0 (allow), Exit 2 (block) |
+
+---
 
 ---
 
