@@ -73,6 +73,8 @@ def parse_agent(path: str | Path) -> AgentSpec:
     path_obj = Path(path)
     try:
         content = path_obj.read_text(encoding="utf-8")
+    except FileNotFoundError:
+        raise
     except (OSError, UnicodeDecodeError) as e:
         raise ParseError(f"Failed to read agent file at {path}: {e}") from e
 
