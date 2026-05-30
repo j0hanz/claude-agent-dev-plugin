@@ -13,6 +13,34 @@ import sys
 from pathlib import Path
 
 
+def _aggregate_runs(results: list[dict] | None) -> tuple[int, int]:
+    """Compute total correct and total run counts across all results."""
+    if not results:
+        return 0, 0
+    correct = 0
+    total = 0
+    for r in results:
+        runs = r.get("runs", 0)
+        triggers = r.get("triggers", 0)
+        total += runs
+        if r.get("should_trigger", True):
+            correct += triggers
+        else:
+            correct += runs - triggers
+    return correct, total
+
+
+def _score_class(correct: int, total: int) -> str:
+    """Return a CSS class name based on the correct/total ratio."""
+    if total > 0:
+        ratio = correct / total
+        if ratio >= 0.8:
+            return "score-good"
+        elif ratio >= 0.5:
+            return "score-ok"
+    return "score-bad"
+
+
 def generate_html(data: dict, auto_refresh: bool = False, skill_name: str = "") -> str:
     """Generate HTML report from loop output data. If auto_refresh is True, adds a meta refresh tag."""
     history = data.get("history", [])
@@ -243,34 +271,12 @@ def generate_html(data: dict, auto_refresh: bool = False, skill_name: str = "") 
         test_by_query = {r["query"]: r for r in test_results} if test_results else {}
 
         # Compute aggregate correct/total runs across all retries
-        def aggregate_runs(results: list[dict]) -> tuple[int, int]:
-            correct = 0
-            total = 0
-            for r in results:
-                runs = r.get("runs", 0)
-                triggers = r.get("triggers", 0)
-                total += runs
-                if r.get("should_trigger", True):
-                    correct += triggers
-                else:
-                    correct += runs - triggers
-            return correct, total
-
-        train_correct, train_runs = aggregate_runs(train_results)
-        test_correct, test_runs = aggregate_runs(test_results)
+        train_correct, train_runs = _aggregate_runs(train_results)
+        test_correct, test_runs = _aggregate_runs(test_results)
 
         # Determine score classes
-        def score_class(correct: int, total: int) -> str:
-            if total > 0:
-                ratio = correct / total
-                if ratio >= 0.8:
-                    return "score-good"
-                elif ratio >= 0.5:
-                    return "score-ok"
-            return "score-bad"
-
-        train_class = score_class(train_correct, train_runs)
-        test_class = score_class(test_correct, test_runs)
+        train_class = _score_class(train_correct, train_runs)
+        test_class = _score_class(test_correct, test_runs)
 
         row_class = "best-row" if iteration == best_iter else ""
 
