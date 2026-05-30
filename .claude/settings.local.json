@@ -1,12 +1,6 @@
 {
   "permissions": {
-    "allow": [
-      "Bash",
-      "Edit",
-      "Read",
-      "Write",
-      "Skill(agent-dev:using-agent-dev)"
-    ],
+    "allow": ["Bash", "Edit", "Read", "Write"],
     "additionalDirectories": [
       "C:\\Users\\PC\\.claude\\projects\\c--agent-dev\\create-plan-workspace\\iteration-1\\eval-1-auth-jwt-feature-plan\\with_skill\\outputs"
     ]

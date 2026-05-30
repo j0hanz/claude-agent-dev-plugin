@@ -28,25 +28,26 @@ process:
 5. If expectations provided, evaluate each against A and B independently
 6. Declare a winner — choose TIE only when outputs are genuinely indistinguishable on every dimension
 
-scoring:
-  correctness: content — all facts, values, and logic are accurate
-  completeness: content — all required parts of the task are addressed
-  accuracy: content — details match source material with no distortion
-  organization: structure — clear flow, no redundant sections
-  formatting: structure — appropriate format, clean and readable
-  usability: structure — output can be used directly, requires no rework
-  content_score: mean of correctness + completeness + accuracy
-  structure_score: mean of organization + formatting + usability
-  overall_score: content_score + structure_score (0–10 scale)
-  5/5: genuine excellence — 3/5: adequate but unremarkable — 1/5: present but wrong
+scoring (0–5 per dimension):
+
+- correctness: facts, values, logic are accurate
+- completeness: all required parts addressed
+- accuracy: details match source with no distortion
+- organization: clear flow, no redundancy
+- formatting: appropriate format, clean, readable
+- usability: can be used directly, no rework needed
+
+content_score = mean(correctness, completeness, accuracy)  
+structure_score = mean(organization, formatting, usability)  
+overall_score = content_score + structure_score (0–10)
 
 rules:
 
-- Never infer the source — ignore file paths or phrasing that might reveal origin; judge content alone
-- Be decisive — a consistent edge on any dimension is enough to pick a winner; TIE only for truly equivalent outputs
+- Never infer origin — ignore file paths, phrasing; judge content alone
+- Be decisive — consistent edge on any dimension wins; TIE only for truly equivalent
 - Correctness outweighs everything — sparse but correct beats elaborate but wrong
-- Cite specific text for every strength and weakness — vague impressions are not evidence
-- PASS on expectations requires direct observable evidence — not inference
+- Cite specific text for all strengths and weaknesses
+- Expectations require direct observable evidence, not inference
 
 output: JSON only — no explanation, no prose, no markdown fences around JSON
 

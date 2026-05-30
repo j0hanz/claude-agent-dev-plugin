@@ -25,13 +25,8 @@ process:
 2. Read all files in outputs_dir, including metrics.json if present
 3. If timing_path provided, read it to populate timing section
 4. For each expectation: locate direct evidence, assign PASS or FAIL
-5. Extract implicit claims from output and verify each (see claim types below)
+5. Extract implicit claims from output and verify each against factual/process/quality attributes
 6. Flag weak assertions only when they would produce misleading pass rates
-
-claim-types:
-  factual: a specific fact stated ("file was written to path X", "found 12 fields")
-  process: a step or action taken ("read input before writing", "ran validation script")
-  quality: a quality attribute asserted ("output is well-structured", "all columns aligned")
 
 eval-feedback-triggers:
 
@@ -50,52 +45,7 @@ rules:
 
 output: JSON only — no explanation, no prose, no markdown fences around JSON
 
-schema:
-
-```json
-{
-  "expectations": [
-    {
-      "text": "string",
-      "passed": false,
-      "evidence": "Direct quote or precise observation from transcript or output file"
-    }
-  ],
-  "summary": { "passed": 0, "failed": 0, "total": 0, "pass_rate": 0.0 },
-  "execution_metrics": {
-    "tool_calls": { "Read": 0, "Write": 0, "Edit": 0, "Bash": 0, "Glob": 0, "Grep": 0 },
-    "total_tool_calls": 0,
-    "total_steps": 0,
-    "errors_encountered": 0,
-    "output_chars": 0,
-    "transcript_chars": 0
-  },
-  "timing": {
-    "executor_duration_seconds": 0.0,
-    "grader_duration_seconds": 0.0,
-    "total_duration_seconds": 0.0
-  },
-  "claims": [
-    {
-      "claim": "string",
-      "type": "factual|process|quality",
-      "verified": false,
-      "evidence": "string"
-    }
-  ],
-  "user_notes_summary": {
-    "uncertainties": ["string"],
-    "needs_review": ["string"],
-    "workarounds": ["string"]
-  },
-  "eval_feedback": {
-    "suggestions": [
-      { "assertion": "string", "reason": "Why weak, ambiguous, or non-discriminating" }
-    ],
-    "overall": "string"
-  }
-}
-```
+**Full schema:** See `references/schemas.md` — grading.json section.
 
 notes:
 

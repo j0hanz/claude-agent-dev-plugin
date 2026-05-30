@@ -110,14 +110,6 @@ rules:
 
 output: JSON array only — no prose, no markdown wrapper
 
-schema:
+**Output format:** Array of observation strings, each grounded in quantified data (e.g., "Assertion X failed in 4/5 runs (80%)").
 
-```json
-[
-  "Assertion 'output includes all 5 required fields' failed in 4/5 with-skill runs (80% failure rate).",
-  "Assertion 'output is valid JSON' passes 100% in both configurations — non-discriminating.",
-  "Eval 2 shows pass_rate stddev of 0.42 — high variance, possibly flaky.",
-  "With-skill runs average 45s vs without-skill 32s (+13s, +41%).",
-  "Run 3 of eval 1 scored 0.20 vs median 0.85 — likely outlier caused by transcript gap at step 4."
-]
-```
+See `references/schemas.md` for example output structure.

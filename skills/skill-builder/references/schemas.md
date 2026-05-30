@@ -1,6 +1,17 @@
 # JSON Schemas
 
-This document defines the JSON schemas used by skill-builder.
+Canonical reference for all JSON formats used by skill-builder.
+
+**Quick Navigation:**
+
+- [`evals.json`](#evalsjson) — Test case definitions
+- [`grading.json`](#gradingjson) — Assertion results + execution metrics
+- [`metrics.json`](#metricsjson) — Tool usage and output statistics
+- [`timing.json`](#timingjson) — Wall clock timing per run
+- [`benchmark.json`](#benchmarkjson) — Aggregated benchmark results
+- [`comparison.json`](#comparisonjson) — Blind comparison verdict
+- [`analysis.json`](#analysisjson) — Post-hoc analysis suggestions
+- [`history.json`](#historyjson) — Version progression tracking
 
 ---
 
@@ -26,14 +37,14 @@ Defines the evals for a skill. Located at `evals/evals.json` within the skill di
 }
 ```
 
-**Fields:**
-
-- `skill_name`: Name matching the skill's frontmatter
-- `evals[].id`: Unique integer identifier
-- `evals[].prompt`: The task to execute
-- `evals[].expected_output`: Human-readable description of success
-- `evals[].files`: Optional list of input file paths (relative to skill root)
-- `evals[].expectations`: List of verifiable statements
+| Field | Type | Notes |
+| --- | --- | --- |
+| `skill_name` | string | Must match skill frontmatter |
+| `evals[].id` | integer | Unique per skill |
+| `evals[].prompt` | string | Task to execute |
+| `evals[].expected_output` | string | Success description |
+| `evals[].files` | string[] | Input paths (optional, relative to root) |
+| `evals[].expectations` | string[] | Verifiable statements |
 
 ---
 
@@ -72,16 +83,16 @@ Tracks version progression in Improve mode. Located at workspace root.
 }
 ```
 
-**Fields:**
-
-- `started_at`: ISO timestamp of when improvement started
-- `skill_name`: Name of the skill being improved
-- `current_best`: Version identifier of the best performer
-- `iterations[].version`: Version identifier (v0, v1, ...)
-- `iterations[].parent`: Parent version this was derived from
-- `iterations[].expectation_pass_rate`: Pass rate from grading
-- `iterations[].grading_result`: "baseline", "won", "lost", or "tie"
-- `iterations[].is_current_best`: Whether this is the current best version
+| Field | Type | Notes |
+| --- | --- | --- |
+| `started_at` | string (ISO timestamp) | When improvement started |
+| `skill_name` | string | Skill being improved |
+| `current_best` | string | Best version identifier |
+| `iterations[].version` | string | Version ID (v0, v1, ...) |
+| `iterations[].parent` | string | Parent version |
+| `iterations[].expectation_pass_rate` | number | Pass rate from grading |
+| `iterations[].grading_result` | enum | "baseline" \| "won" \| "lost" \| "tie" |
+| `iterations[].is_current_best` | boolean | Current best performer |
 
 ---
 
@@ -151,15 +162,15 @@ Output from the grader agent. Located at `<run-dir>/grading.json`.
 }
 ```
 
-**Fields:**
-
-- `expectations[]`: Graded expectations with evidence
-- `summary`: Aggregate pass/fail counts
-- `execution_metrics`: Tool usage and output size (from executor's metrics.json)
-- `timing`: Wall clock timing (from timing.json)
-- `claims`: Extracted and verified claims from the output
-- `user_notes_summary`: Issues flagged by the executor
-- `eval_feedback`: (optional) Improvement suggestions for the evals, only present when the grader identifies issues worth raising
+| Field | Type | Notes |
+| --- | --- | --- |
+| `expectations[]` | object[] | Graded expectations with evidence |
+| `summary` | object | Pass/fail counts and rate |
+| `execution_metrics` | object | Tool usage, output size (from executor) |
+| `timing` | object | Wall clock duration (from timing.json) |
+| `claims[]` | object[] | Extracted and verified claims |
+| `user_notes_summary` | object | Uncertainties, workarounds flagged |
+| `eval_feedback` | object (optional) | Suggestions for evals (if issues found) |
 
 ---
 
@@ -186,15 +197,15 @@ Output from the executor agent. Located at `<run-dir>/outputs/metrics.json`.
 }
 ```
 
-**Fields:**
-
-- `tool_calls`: Count per tool type
-- `total_tool_calls`: Sum of all tool calls
-- `total_steps`: Number of major execution steps
-- `files_created`: List of output files created
-- `errors_encountered`: Number of errors during execution
-- `output_chars`: Total character count of output files
-- `transcript_chars`: Character count of transcript
+| Field | Type | Notes |
+| --- | --- | --- |
+| `tool_calls` | object | Count per tool type (Read, Write, Bash, etc.) |
+| `total_tool_calls` | integer | Sum of all tool calls |
+| `total_steps` | integer | Major execution steps |
+| `files_created` | string[] | Output files created |
+| `errors_encountered` | integer | Errors during execution |
+| `output_chars` | integer | Total output character count |
+| `transcript_chars` | integer | Transcript character count |
 
 ---
 
@@ -202,7 +213,7 @@ Output from the executor agent. Located at `<run-dir>/outputs/metrics.json`.
 
 Wall clock timing for a run. Located at `<run-dir>/timing.json`.
 
-**How to capture:** When a subagent task completes, the task notification includes `total_tokens` and `duration_ms`. Save these immediately — they are not persisted anywhere else and cannot be recovered after the fact.
+⚠️ **Capture timing immediately when task completes** — `total_tokens` and `duration_ms` from task notification are not persisted elsewhere.
 
 ```json
 {
@@ -289,25 +300,22 @@ Output from Benchmark mode. Located at `benchmarks/<timestamp>/benchmark.json`.
 }
 ```
 
-**Fields:**
+| Section | Field | Notes |
+| --- | --- | --- |
+| `metadata` | `skill_name` | Name of the skill |
+| | `timestamp` | When benchmark was run |
+| | `evals_run` | List of eval names or IDs |
+| | `runs_per_configuration` | Runs per config (e.g., 3) |
+| `runs[]` | `eval_id` | Numeric identifier |
+| | `eval_name` | Used as viewer section header |
+| | `configuration` | MUST be `"with_skill"` or `"without_skill"` |
+| | `run_number` | Integer (1, 2, 3...) |
+| | `result` | Object: pass_rate, passed, total, time_seconds, tokens, errors |
+| `run_summary` | `with_skill` / `without_skill` | Mean/stddev for pass_rate, time_seconds, tokens |
+| | `delta` | Difference strings: `"+0.50"`, `"+13.0"`, `"+1700"` |
+| `notes[]` | — | Freeform observations from analyzer |
 
-- `metadata`: Information about the benchmark run
-  - `skill_name`: Name of the skill
-  - `timestamp`: When the benchmark was run
-  - `evals_run`: List of eval names or IDs
-  - `runs_per_configuration`: Number of runs per config (e.g. 3)
-- `runs[]`: Individual run results
-  - `eval_id`: Numeric eval identifier
-  - `eval_name`: Human-readable eval name (used as section header in the viewer)
-  - `configuration`: Must be `"with_skill"` or `"without_skill"` (the viewer uses this exact string for grouping and color coding)
-  - `run_number`: Integer run number (1, 2, 3...)
-  - `result`: Nested object with `pass_rate`, `passed`, `total`, `time_seconds`, `tokens`, `errors`
-- `run_summary`: Statistical aggregates per configuration
-  - `with_skill` / `without_skill`: Each contains `pass_rate`, `time_seconds`, `tokens` objects with `mean` and `stddev` fields
-  - `delta`: Difference strings like `"+0.50"`, `"+13.0"`, `"+1700"`
-- `notes`: Freeform observations from the analyzer
-
-**Important:** The viewer reads these field names exactly. Using `config` instead of `configuration`, or putting `pass_rate` at the top level of a run instead of nested under `result`, will cause the viewer to show empty/zero values. Always reference this schema when generating benchmark.json manually.
+⚠️ **Exact field names required:** Field names like `configuration`, `result` nesting are read literally by the viewer. Substitutions (e.g., `config`) will cause empty values in output.
 
 ---
 
