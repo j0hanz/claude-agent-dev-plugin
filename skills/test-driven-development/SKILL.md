@@ -2,7 +2,6 @@
 name: test-driven-development
 description: |
   Use this skill when the user asks to implement a feature or bugfix using TDD, asks to write tests first, or requests to add behaviors incrementally. Triggers on "TDD", "red-green-refactor", "test-first", or when asked to write tests before implementation. MANDATORY for any non-trivial logic implementation where correctness is prioritized. Defines strict rules for how an LLM agent should navigate the TDD loop without hallucinating tests or getting stuck in broken environments. Also invoked as the implementation sub-skill of `spec-driven-development` — each plan task is executed using this skill's red-green-refactor loop.
-disable-model-invocation: false
 ---
 
 # Test-Driven Development (TDD)
@@ -26,7 +25,7 @@ If you cannot write a failing test first, that is a signal the interface is uncl
 | "Let me get the implementation working first" | HARD-GATE: no impl without a failing test. |
 | "The test structure isn't clear yet" | That means the design isn't clear. Figure it out in the test. |
 | "I'll write all tests first, then implement" | That's horizontal slicing — see Anti-Pattern section below. |
-| "It passed on the first try" | Either you wrote a tautology or you tested existing behavior. Rewrite. |
+| "It passed on the first try" | Two cases: **(1) Tautology** — the test passes even with `return None` / `return 0` as the implementation. This means you tested nothing. Delete and rewrite. **(2) Correct generalization** — the minimal impl from a prior cycle already handles this new scenario. This is fine. Verify it's not vacuous, note why it passes, and move on. The difference: would the test fail if you deleted the implementation? If yes, it's real. |
 
 ## The Critical Anti-Pattern: Horizontal Slicing
 
@@ -103,6 +102,11 @@ Before writing any tests, write down the public interface:
 
 This prevents mid-stream API changes and gives tests a target to hit.
 
+4. **Test File Location**
+   - Python: `test_<module_name>.py` in the same directory or a `tests/` folder
+   - JavaScript/TypeScript: `<module_name>.test.ts` or `<module_name>.spec.ts` beside the source file
+   - Run the test file by name on the first run to confirm it's the one failing
+
 ---
 
 ## Test Scope: One Scenario Per Test
@@ -130,6 +134,24 @@ def test_no_discount():
 ```
 
 Why: Each test = one reason to run. One scenario per test = clear diagnosis when it fails.
+
+---
+
+## When to Stop Adding Tests
+
+A test suite is complete when it covers the **stated contract** — not when you run out of edge cases to imagine.
+
+**Add a test for:**
+- Each requirement from the spec or bug report
+- Each error case defined in your Pre-TDD interface doc
+- The boundary values (the value just inside and just outside a threshold)
+
+**Don't add a test for:**
+- Scenarios not in the specification — they need a spec update first
+- Combinations of already-tested rules (if length-check tests and uppercase-check tests both pass, you don't need a test for "too short AND no uppercase")
+- Implementation internals — if two inputs produce the same observable output, one test is enough
+
+**Guideline:** 3–6 tests typically cover a focused function. When you're adding a test and you cannot point to which requirement it verifies, stop.
 
 ---
 
@@ -181,6 +203,9 @@ The principle: implement exactly what the test requires, nothing more.
 **When you need patterns for a specific domain** (math functions, validators, parsers, classes):
 **MANDATORY — READ ENTIRE FILE**: `references/minimal-impl-examples.md`
 
+**Working in JavaScript or TypeScript** (Jest, Vitest, Mocha, async tests, TypeScript type errors as RED):
+**MANDATORY — READ ENTIRE FILE**: `references/js-ts-patterns.md`
+
 ---
 
 ## REFACTOR Phase Guidance
@@ -208,7 +233,17 @@ Only refactor when ALL current tests are GREEN. Use the refactor skill for detai
 - Run all tests (must still pass)
 - Confirm no new failures introduced
 
-**For detailed refactoring strategy:** Consult the separate `refactor` skill if you need to apply complex structural patterns (Strategy, Observer, extract classes, etc.). This TDD skill covers WHEN to refactor in the cycle; the refactor skill covers HOW.
+**Quick HOW guide for the most common refactors:**
+
+| Smell | Fix |
+|-------|-----|
+| Same expression copy-pasted 2+ times | Extract a helper function |
+| Function body > 10 lines | Extract sub-step with a descriptive name |
+| Magic literal (`0.1`, `"admin"`) | Replace with a named constant |
+| Nested `if` inside `if` | Flatten with a guard clause (`if not x: return`) |
+| Unclear variable name | Rename — don't rename just for consistency, only when the name misleads |
+
+**For deep structural patterns** (Strategy, Observer, extract classes, etc.): consult the separate `refactor` skill. This TDD skill covers WHEN to refactor in the cycle; the refactor skill covers HOW for complex cases.
 
 ---
 
@@ -237,6 +272,25 @@ def test_parse_single_line():
 ```
 
 Each test is one building block. If the block doesn't fit, it's too big.
+
+**Class example** — if you get stuck trying to implement all validation rules at once:
+
+```python
+# Stuck: testing all 3 rules in one test
+def test_password_validates_all_rules():
+    v = PasswordValidator()
+    assert v.validate("Ab1") is False       # too short
+    assert v.validate("alllower1") is False  # no uppercase
+    assert v.validate("AllLetters") is False # no digit
+    assert v.validate("ValidPass1") is True  # all rules
+
+# Solution: revert, write ONE simpler test
+def test_too_short_password_invalid():
+    v = PasswordValidator()
+    assert v.validate("Ab1") is False  # ONLY length rule
+```
+
+Implement only the length guard. Once GREEN, start a new test for the uppercase rule.
 
 ---
 
