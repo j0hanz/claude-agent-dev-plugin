@@ -32,9 +32,7 @@ tools:
   - TodoWrite
 skills:
   - name: refactor
-    version: "1.0.0"
   - name: diagnose
-    version: "1.0.0"
 ---
 
 # Coder Agent

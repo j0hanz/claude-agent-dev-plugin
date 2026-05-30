@@ -35,7 +35,6 @@ tools:
   - mcp__plugin_context7_context7__resolve-library-id
 skills:
   - name: research
-    version: "1.0.0"
 ---
 
 # Explorer Agent
