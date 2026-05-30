@@ -1,40 +1,25 @@
-#!/usr/bin/env python3
-"""Run trigger evaluation for a skill description.
-
-Tests whether a skill's description causes Claude to trigger (read the skill)
-for a set of queries. Outputs results as JSON.
-"""
-
-import argparse
+import asyncio
 import json
 import os
-import subprocess
 import sys
 import uuid
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+from scripts.json_utils import load_json
 from scripts.utils import parse_skill_md
 
 _TRIGGER_TOOLS = frozenset({"Skill", "Read"})
 
-
 def find_project_root() -> Path:
-    """Find the project root by walking up from cwd looking for .claude/.
-
-    Mimics how Claude Code discovers its project root, so the command file
-    we create ends up where claude -p will look for it.
-    """
     current = Path.cwd()
     for parent in [current, *current.parents]:
         if (parent / ".claude").is_dir():
             return parent
     return current
 
-
-def run_single_query(
+async def run_single_query(
     query: str,
     skill_name: str,
     skill_description: str,
@@ -42,14 +27,6 @@ def run_single_query(
     project_root: str,
     model: str | None = None,
 ) -> bool:
-    """Run a single query and return whether the skill was triggered.
-
-    Creates a command file in .claude/commands/ so it appears in Claude's
-    available_skills list, then runs `claude -p` with the raw query.
-    Uses --include-partial-messages to detect triggering early from
-    stream events (content_block_start) rather than waiting for the
-    full assistant message, which only arrives after tool execution.
-    """
     unique_id = uuid.uuid4().hex[:8]
     clean_name = f"{skill_name}-skill-{unique_id}"
     project_commands_dir = Path(project_root) / ".claude" / "commands"
@@ -57,7 +34,6 @@ def run_single_query(
 
     try:
         project_commands_dir.mkdir(parents=True, exist_ok=True)
-        # Use YAML block scalar to avoid breaking on quotes in description
         indented_desc = "\n  ".join(skill_description.split("\n"))
         command_content = (
             f"---\n"
@@ -81,28 +57,27 @@ def run_single_query(
         if model:
             cmd.extend(["--model", model])
 
-        # Remove CLAUDECODE env var to allow nesting claude -p inside a
-        # Claude Code session. The guard is for interactive terminal conflicts;
-        # programmatic subprocess usage is safe.
         env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
 
-        completed = subprocess.run(
-            cmd,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.DEVNULL,
             cwd=project_root,
             env=env,
-            timeout=timeout,
-            text=True,
-            encoding="utf-8",
-            errors="replace",
         )
+
+        try:
+            stdout, _ = await asyncio.wait_for(process.communicate(), timeout=timeout)
+        except asyncio.TimeoutError:
+            process.terminate()
+            return False
 
         triggered = False
         pending_tool_name = None
         accumulated_json = ""
 
-        for raw_line in completed.stdout.splitlines():
+        for raw_line in stdout.decode(errors="replace").splitlines():
             line = raw_line.strip()
             if not line:
                 continue
@@ -152,14 +127,11 @@ def run_single_query(
                         triggered = True
 
         return triggered
-    except subprocess.TimeoutExpired:
-        return False
     finally:
         if command_file.exists():
             command_file.unlink()
 
-
-def run_eval(
+async def run_eval(
     eval_set: list[dict],
     skill_name: str,
     description: str,
@@ -170,56 +142,54 @@ def run_eval(
     trigger_threshold: float = 0.5,
     model: str | None = None,
 ) -> dict:
-    """Run the full eval set and return results."""
-    results = []
+    semaphore = asyncio.Semaphore(num_workers)
 
-    with ThreadPoolExecutor(max_workers=num_workers) as executor:
-        future_to_info = {}
-        for item in eval_set:
-            for run_idx in range(runs_per_query):
-                future = executor.submit(
-                    run_single_query,
-                    item["query"],
-                    skill_name,
-                    description,
-                    timeout,
-                    str(project_root),
-                    model,
-                )
-                future_to_info[future] = (item, run_idx)
+    async def sem_run_single(item, run_idx):
+        async with semaphore:
+            return await run_single_query(
+                item["query"],
+                skill_name,
+                description,
+                timeout,
+                str(project_root),
+                model,
+            )
 
-        query_triggers: dict[str, list[bool]] = {}
-        query_items: dict[str, dict] = {}
-        for future in as_completed(future_to_info):
-            item, _ = future_to_info[future]
-            query = item["query"]
-            query_items[query] = item
-            if query not in query_triggers:
-                query_triggers[query] = []
-            try:
-                query_triggers[query].append(future.result())
-            except Exception as e:
-                print(f"Warning: query failed: {e}", file=sys.stderr)
+    tasks = []
+    for item in eval_set:
+        for _ in range(runs_per_query):
+            tasks.append(sem_run_single(item, 0))
+
+    results_data = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    query_triggers = {}
+    idx = 0
+    for item in eval_set:
+        query = item["query"]
+        query_triggers[query] = []
+        for _ in range(runs_per_query):
+            res = results_data[idx]
+            idx += 1
+            if isinstance(res, Exception):
                 query_triggers[query].append(False)
+            else:
+                query_triggers[query].append(res)
 
-    for query, triggers in query_triggers.items():
-        item = query_items[query]
+    results = []
+    for item in eval_set:
+        query = item["query"]
+        triggers = query_triggers[query]
         trigger_rate = sum(triggers) / len(triggers)
         should_trigger = item["should_trigger"]
-        if should_trigger:
-            did_pass = trigger_rate >= trigger_threshold
-        else:
-            did_pass = trigger_rate < trigger_threshold
-        results.append(
-            {
-                "query": query,
-                "should_trigger": should_trigger,
-                "trigger_rate": trigger_rate,
-                "triggers": sum(triggers),
-                "runs": len(triggers),
-                "pass": did_pass,
-            }
-        )
+        did_pass = (trigger_rate >= trigger_threshold) if should_trigger else (trigger_rate < trigger_threshold)
+        results.append({
+            "query": query,
+            "should_trigger": should_trigger,
+            "trigger_rate": trigger_rate,
+            "triggers": sum(triggers),
+            "runs": len(triggers),
+            "pass": did_pass,
+        })
 
     passed = sum(1 for r in results if r["pass"])
     total = len(results)
@@ -235,41 +205,22 @@ def run_eval(
         },
     }
 
-
 def main():
-    parser = argparse.ArgumentParser(
-        description="Run trigger evaluation for a skill description"
-    )
+    parser = argparse.ArgumentParser(description="Run trigger evaluation for a skill description")
     parser.add_argument("--eval-set", required=True, help="Path to eval set JSON file")
     parser.add_argument("--skill-path", required=True, help="Path to skill directory")
-    parser.add_argument(
-        "--description", default=None, help="Override description to test"
-    )
-    parser.add_argument(
-        "--num-workers", type=int, default=10, help="Number of parallel workers"
-    )
-    parser.add_argument(
-        "--timeout", type=int, default=30, help="Timeout per query in seconds"
-    )
-    parser.add_argument(
-        "--runs-per-query", type=int, default=3, help="Number of runs per query"
-    )
-    parser.add_argument(
-        "--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold"
-    )
-    parser.add_argument(
-        "--model",
-        default=None,
-        help="Model to use for claude -p (default: user's configured model)",
-    )
-    parser.add_argument(
-        "--verbose", action="store_true", help="Print progress to stderr"
-    )
+    parser.add_argument("--description", default=None, help="Override description to test")
+    parser.add_argument("--num-workers", type=int, default=10, help="Number of parallel workers")
+    parser.add_argument("--timeout", type=int, default=30, help="Timeout per query in seconds")
+    parser.add_argument("--runs-per-query", type=int, default=3, help="Number of runs per query")
+    parser.add_argument("--trigger-threshold", type=float, default=0.5, help="Trigger rate threshold")
+    parser.add_argument("--model", default=None, help="Model to use")
+    parser.add_argument("--verbose", action="store_true", help="Print progress to stderr")
     args = parser.parse_args()
 
-    eval_set = json.loads(Path(args.eval_set).read_text(encoding="utf-8"))
+    eval_set = load_json(Path(args.eval_set))
     skill_path = Path(args.skill_path)
-
+    
     if not (skill_path / "SKILL.md").exists():
         print(f"Error: No SKILL.md found at {skill_path}", file=sys.stderr)
         sys.exit(1)
@@ -278,10 +229,7 @@ def main():
     description = args.description or original_description
     project_root = find_project_root()
 
-    if args.verbose:
-        print(f"Evaluating: {description}", file=sys.stderr)
-
-    output = run_eval(
+    output = asyncio.run(run_eval(
         eval_set=eval_set,
         skill_name=name,
         description=description,
@@ -291,23 +239,9 @@ def main():
         runs_per_query=args.runs_per_query,
         trigger_threshold=args.trigger_threshold,
         model=args.model,
-    )
-
-    if args.verbose:
-        summary = output["summary"]
-        print(
-            f"Results: {summary['passed']}/{summary['total']} passed", file=sys.stderr
-        )
-        for r in output["results"]:
-            status = "PASS" if r["pass"] else "FAIL"
-            rate_str = f"{r['triggers']}/{r['runs']}"
-            print(
-                f"  [{status}] rate={rate_str} expected={r['should_trigger']}: {r['query'][:70]}",
-                file=sys.stderr,
-            )
+    ))
 
     print(json.dumps(output, indent=2))
-
 
 if __name__ == "__main__":
     main()

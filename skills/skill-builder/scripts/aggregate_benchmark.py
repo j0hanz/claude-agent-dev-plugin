@@ -38,6 +38,7 @@ import argparse
 import json
 import math
 import sys
+from scripts.json_utils import load_json
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -122,9 +123,8 @@ def load_run_results(benchmark_dir: Path) -> dict[str, list[dict]]:
                     continue
 
                 try:
-                    with open(grading_file) as f:
-                        grading = json.load(f)
-                except json.JSONDecodeError as e:
+                    grading = load_json(grading_file)
+                except Exception as e:
                     print(f"Warning: Invalid JSON in {grading_file}: {e}")
                     continue
 
@@ -144,13 +144,12 @@ def load_run_results(benchmark_dir: Path) -> dict[str, list[dict]]:
                 timing_file = run_dir / "timing.json"
                 if result["time_seconds"] == 0.0 and timing_file.exists():
                     try:
-                        with open(timing_file) as tf:
-                            timing_data = json.load(tf)
+                        timing_data = load_json(timing_file)
                         result["time_seconds"] = timing_data.get(
                             "total_duration_seconds", 0.0
                         )
                         result["tokens"] = timing_data.get("total_tokens", 0)
-                    except json.JSONDecodeError:
+                    except Exception:
                         pass
 
                 # Extract metrics if available
