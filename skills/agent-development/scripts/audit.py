@@ -7,6 +7,7 @@ Exit: 0=clean, 1=warnings, 2=errors
 
 from __future__ import annotations
 import argparse
+import dataclasses
 import re
 import sys
 from pathlib import Path
@@ -265,13 +266,11 @@ def audit(spec: AgentSpec, strict: bool = False) -> List[Finding]:
         for finding in check_cc_subagent_specific(
             spec.raw_frontmatter, spec.system_prompt
         ):
-            finding.path = p
-            findings.append(finding)
+            findings.append(dataclasses.replace(finding, path=p))
 
     # Append skill composition check to findings (works for both managed and cc_subagent)
     for finding in check_skill_composition(spec.raw_frontmatter, spec.system_prompt):
-        finding.path = p
-        findings.append(finding)
+        findings.append(dataclasses.replace(finding, path=p))
 
     return findings
 
