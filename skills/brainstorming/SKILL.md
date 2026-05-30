@@ -4,7 +4,7 @@ description: |
   Use BEFORE implementing any new feature, component, or significant behavior change. Explores user intent, requirements, and design constraints through structured discovery. Also use when: domain terminology is ambiguous, terminology alignment is needed, or foundational assumptions need validation.
 
   SKIP brainstorming for: bug fixes (clear problem), refactors with no behavior change, documentation updates, or when design is already approved.
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Brainstorming

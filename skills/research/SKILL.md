@@ -10,7 +10,14 @@ description: |
   Context7 setup/authentication, this skill is required — do not guess CLI commands
   from memory, as the correct syntax is in the reference files.
 disable-model-invocation: false
+argument-hint: "[library/framework or ctx7 command]"
 ---
+
+## NEVER
+
+- **NEVER answer a library or framework question from training data alone without disclosing it** — APIs change between versions; always note when falling back to training data and recommend verifying against current docs
+- **NEVER reuse a Context7 library ID from memory across sessions** — IDs can change on republication; always resolve fresh with `mcp__context7__resolve-library-id`
+- **NEVER skip the MCP path and go straight to CLI** — MCP is lower latency and doesn't require a local install; prefer it when `mcp__context7__resolve-library-id` is available
 
 ## Research & Context7
 

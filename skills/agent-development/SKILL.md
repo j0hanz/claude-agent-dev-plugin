@@ -3,6 +3,7 @@ name: agent-development
 description: |
   Use when building, testing, auditing, or debugging agents — Managed Agents, Claude Code subagents, agent teams, or skill+hooks behavior shaping.
 disable-model-invocation: true
+allowed-tools: Bash(python *) Bash(python3 *)
 ---
 
 ## Core Philosophy
@@ -10,6 +11,12 @@ disable-model-invocation: true
 Building agents is a **Process** task. Configuration formats must match API expectations exactly (low freedom), while system prompts and hook designs benefit from iteration (medium freedom). We use an eval-first loop: define the behavioral constraints, baseline the tests with hook-based assertions, build the agent, and measure.
 
 Compose first; build only where no sibling skill exists. The workspace has 20 sibling skills — running `scripts/recommend-skills.py` is part of Phase 1, not an afterthought.
+
+## NEVER
+
+- **NEVER test agent behavior changes directly in production** — use `simulate.py` with `--sandbox` first; production agents can make irreversible API calls, send real messages, or charge real money
+- **NEVER grant `computer` or `bash` tools to an agent without explicit per-task justification** — these tools can exfiltrate data and modify the host; start with read-only tools and escalate only when required
+- **NEVER inline credentials or secrets in agent config** — agent configs appear in logs, diffs, and API responses; use environment variable references
 
 ## Critical Anti-Patterns
 

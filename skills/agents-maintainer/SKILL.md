@@ -3,6 +3,7 @@ name: agents-maintainer
 description: |
   Create, audit, refactor, or shorten AGENTS.md / CLAUDE.md / GEMINI.md / .cursorrules and other agent-facing instruction files, or generate an initial codebase onboarding guide. Use this whenever the user mentions agent docs, "instructions for Claude", project memory files, asks to "onboard me to this codebase", "help me understand this repo", or asks to set up, trim, deduplicate, or migrate an agent instructions file. Also use when an existing instruction file is over 100 lines, repeats linter rules, or drifts from real project conventions.
 disable-model-invocation: true
+allowed-tools: Bash(python *) Bash(python3 *)
 ---
 
 # agents-maintainer

@@ -3,6 +3,7 @@ name: diagnose
 description: |
   Disciplined debugging methodology for any bug—software crashes, performance regressions, flaky tests, infrastructure failures, API errors, race conditions. Use when the user says "debug this", "fix this crash", "why is this slow", "diagnose", "my code is broken", "test is flaking", or describes unexpected behavior. Works for code (C/JavaScript/Python/etc), infrastructure (logs, services, deployments), and everything in between.
 disable-model-invocation: false
+argument-hint: "[symptom or file path]"
 ---
 
 # Skill: diagnose
@@ -20,11 +21,13 @@ The value of this methodology is that it forces you to know — not guess — be
 | "The fix is obvious" | Document it anyway. You may be wrong. |
 | "I'll write the regression test after" | Write it before the fix. That is Phase 5. |
 
-## Overview
+**Purpose:** Systematic bug finding and fixing. A fast, deterministic feedback loop is a prerequisite to finding the root cause — do not guess. Applies to code, infrastructure, flakiness, and performance.
 
-- **Purpose:** Systematic bug finding and fixing.
-- **Principle:** A fast, deterministic feedback loop is a prerequisite to finding the root cause. Do not guess.
-- **Applicability:** Code, infrastructure, flakiness, performance.
+## NEVER
+
+- **NEVER apply multiple changes simultaneously** — you cannot isolate which change fixed (or masked) the issue; one hypothesis, one change, one test run
+- **NEVER delete or overwrite the reproduction harness** before the fix is confirmed and the regression test passes — if the first fix is wrong you need to reproduce from the same baseline
+- **NEVER accept "works on my machine"** as a root cause — the environmental difference between machines IS the bug; investigate the delta (env vars, OS, runtime version, seed)
 
 ## Execution Rules
 

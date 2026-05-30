@@ -2,7 +2,9 @@
 name: create-specs
 description: |
   Use this skill whenever the user needs a clear, AI-ready technical specification. Always use it when the user mentions specs, requirements, contracts, interfaces, or asks 'what should we build?' before jumping to implementation. Use even if the spec is incomplete — this skill guides you through gathering what's needed. Applies to features, components, APIs, integrations, migrations, infrastructure changes, or any work that benefits from a written contract before coding starts. Seamlessly hands off to the `create-plan` skill. This is a required sub-skill of `spec-driven-development` — if the user is running the full SDD workflow, this skill is invoked at Step 2 (Specification Gate).
-disable-model-invocation: true
+disable-model-invocation: false
+user-invocable: false
+allowed-tools: Bash(python *) Bash(python3 *)
 ---
 
 # Create Specs

@@ -2,7 +2,9 @@
 name: create-plan
 description: |
   Creates a structured implementation plan for a specific technical task. Use when you already have a validated spec (from `create-specs`) or are handed a well-scoped task and need an executable plan. ROUTING: if the user is starting a feature from scratch with no spec yet, invoke `spec-driven-development` first — this skill is its Step 3 sub-skill, not a replacement for the full workflow. Triggers directly on: 'create a plan', 'write a plan for', 'plan this out', 'what are the steps to', or when `spec-driven-development` reaches its Planning Gate. Also use standalone for: refactoring a known component, upgrading a dependency, migrating infrastructure — tasks where scope is already clear. Offers quick-start flags (--quick for simple features, --compact for overviews, --assume-paths for multi-repo). Do NOT skip this for multi-step technical work.
-disable-model-invocation: true
+disable-model-invocation: false
+user-invocable: false
+allowed-tools: Bash(python *) Bash(python3 *) Bash(node *)
 argument-hint: |
   [--atomic (default) | --compact (executive) | --narrative (runbook)]
   [--quick (skip discovery)] [--assume-paths (multi-repo)]
@@ -198,20 +200,6 @@ Ask yourself:
 | 4    | **Author**: Fill plan template with verified content                         | No placeholders; all paths are markdown links                   |
 | 5    | **Validate**: Verify links and structure                                     | Plan passes validation; UNVERIFIED markers resolved or accepted |
 
-**For SDD integration**: If coming from `spec-driven-development` with a validated spec, pass the spec to Step 2 (discovery) and skip to Step 3 (decompose).
-
----
-
-## The Workflow (5 Core Steps)
-
-| Step | What                                                                         | Success Gate                                                    |
-| ---- | ---------------------------------------------------------------------------- | --------------------------------------------------------------- |
-| 1    | **Intake**: Confirm purpose, component, context                              | Purpose is specific and achievable                              |
-| 2    | **Discover**: Find files & symbols (skip with `--quick` or `--assume-paths`) | All required paths verified or documented assumptions           |
-| 3    | **Decompose**: Break into phases & atomic tasks                              | Each task has one clear outcome, dependencies tracked           |
-| 4    | **Author**: Fill plan template with verified content                         | No placeholders; all paths are markdown links                   |
-| 5    | **Validate**: Verify links and structure                                     | Plan passes validation; UNVERIFIED markers resolved or accepted |
-
 **For SDD integration**: If coming from `spec-driven-development` with a validated spec, copy the **Goals** and **Requirements** sections from your spec as input here.
 
 ---
@@ -264,54 +252,7 @@ All file paths and symbols must be markdown links verified by discovery.
 
 ---
 
-## Effort Estimation
-
-Effort depends on **task type** and **code volume**. Use this rubric:
-
-### Base Effort by Task Type
-
-| Task Type | Complexity | Base Time |
-|-----------|-----------|-----------|
-| New file (implementation) | Simple (< 50 LOC) | 15-30 min |
-| New file (utility/helper) | Medium (50-150 LOC) | 30-60 min |
-| New file (integration) | Complex (150-300 LOC) | 60-90 min |
-| Modify existing file | Simple (1-20 changes) | 10-20 min |
-| Modify existing file | Complex (20+ changes) | 30-60 min |
-| Test file (unit tests) | Per 10 test cases | 20-30 min |
-| Test file (integration) | Per 5 test cases | 30-45 min |
-| Configuration (env vars) | Per section | 5-10 min |
-| Documentation | Per 500 words | 20-30 min |
-
-### Multiplier for Context
-
-| Situation | Multiplier |
-|-----------|-----------|
-| Using familiar tech (Express, React, etc.) | 1.0x |
-| Using new library/framework | 1.3x |
-| Complex architecture change | 1.5x |
-| First time with this codebase | 1.2x |
-
-### Examples
-
-**Example 1: Simple feature (add validation)**
-- 1 file, 30 LOC: 20 min
-- 1 test file, 8 tests: 25 min
-- Total: **45 min**
-
-**Example 2: Medium feature (JWT auth)**
-- 2 new files (utils + middleware), 200 LOC: 60 min
-- 2 test files, 30 tests: 90 min
-- 1 config file: 10 min
-- Doc: 20 min
-- Total: **3 hours**
-
-**Example 3: Large feature (multi-service API gateway)**
-- 5 new files, 500 LOC: 3 hours
-- 5 test files, 80 tests: 3 hours
-- 2 config sections: 15 min
-- Docs: 45 min
-- Discovery overhead (5 repos): 30 min
-- Total: **7-8 hours**
+For effort estimation tables by task type, see [references/decomposition.md](references/decomposition.md).
 
 ---
 
@@ -320,7 +261,7 @@ Effort depends on **task type** and **code volume**. Use this rubric:
 Before marking plan complete, run the validation script:
 
 ```bash
-python skills/create-plan/scripts/validate_plan.py plan-feature-auth-middleware-1.md
+python ${CLAUDE_SKILL_DIR}/scripts/validate_plan.py plan-feature-auth-middleware-1.md
 ```
 
 This checks **all of these automatically**:
@@ -336,7 +277,7 @@ This checks **all of these automatically**:
 ### Example Validation
 
 ```bash
-$ python validate_plan.py plan-feature-auth-middleware-1.md
+$ python ${CLAUDE_SKILL_DIR}/scripts/validate_plan.py plan-feature-auth-middleware-1.md
 
 Validating plan-feature-auth-middleware-1.md...
 ✓ 27 tasks
@@ -524,260 +465,19 @@ microservices/
 
 ---
 
-## Version Control & Git Integration
-
-Track plan evolution using Git:
-
-### Branching Strategy
-
-```bash
-git checkout -b plans/auth-middleware
-git add plan-feature-auth-middleware-1.md
-git commit -m "Add JWT auth implementation plan"
-git push origin plans/auth-middleware
-```
-
-### Committing Plans
-
-Include the plan in your PR or branch:
-```bash
-git commit -m "Add auth implementation plan
-
-Implements task: Add JWT auth to Express API
-File: plan-feature-auth-middleware-1.md
-Effort: 3-4 hours
-Status: Ready for review"
-```
-
-### Plan Versioning
-
-When updating a plan:
-- Increment version: `plan-feature-auth-middleware-1.md` → `plan-feature-auth-middleware-2.md`
-- Keep old versions for history (don't delete)
-- Reference in commits: "Updates plan-feature-auth-middleware-1.md"
-
-### Linking Plans in PRs
-
-```
-Implements plan: plan-feature-auth-middleware-1.md
-See: /plan/feature-auth-middleware-1.md
-```
+For version control conventions and team review checklist, see [references/git-workflow.md](references/git-workflow.md).
 
 ---
 
-## Team Collaboration & Reviews
+For detailed script documentation (syntax, output format, flags), see **MANDATORY — READ ENTIRE FILE**: [references/scripts.md](references/scripts.md) before running any script manually.
 
-### Plan Review Workflow
+## Reference Docs
 
-1. **Generate plan** and commit to feature branch: `plans/[purpose]-[component]`
-2. **Create PR** with plan for stakeholder review
-3. **Reviewers check**:
-   - Are all dependencies tracked correctly?
-   - Is the effort estimate realistic for our team?
-   - Are there missing edge cases?
-   - Does it match our team's standards?
-4. **Approve and merge** after feedback
-5. **Assign to executor** with link to the plan: `[Full Plan](./plan/plan-name.md)`
-
-### Feedback & Iteration
-
-If reviewers request changes:
-1. Update the plan in place (don't create v2 yet)
-2. Push updates to the same branch
-3. Request re-review
-4. Merge when approved
-
-If plan scope changes mid-execution:
-1. Create new version: `v2`, `v3`, etc.
-2. Document what changed and why
-3. Notify executor of the new plan version
-
-### Team Standards Checklist
-
-Before approving a plan, verify:
-- ✅ Plan file follows naming: `[purpose]-[component]-[version].md`
-- ✅ Passes automated validation: `python validate_plan.py [plan].md`
-- ✅ Effort estimate is realistic for your team and codebase
-- ✅ All external dependencies documented
-- ✅ Security considerations addressed
-- ✅ Testing strategy is comprehensive
-- ✅ Rollback plan included (if applicable)
-
----
-
-## Built-In Helper Scripts
-
-These scripts are included with the skill. They run automatically when you use the skill, but you can also invoke them manually for debugging or standalone use.
-
-### discover.mjs — File & Symbol Discovery
-
-Find files matching a pattern and extract function/class symbols with line numbers.
-
-**Syntax**:
-```bash
-node skills/create-plan/scripts/discover.mjs \
-  --pattern "src/**/*.ts" \
-  --filter "generateToken|verifyToken" \
-  --output discovery.json
-```
-
-**Output** (`discovery.json`):
-```json
-{
-  "matches": [
-    {
-      "file": "src/utils/jwt.ts",
-      "symbols": [
-        {
-          "name": "generateToken",
-          "type": "function",
-          "line": 15,
-          "markdown": "[generateToken](src/utils/jwt.ts#L15)"
-        }
-      ]
-    }
-  ]
-}
-```
-
-**When to use**:
-- Verifying file paths before writing plan
-- Finding exact line numbers for symbols
-- Multi-repo projects (run per repo)
-- Ensuring symbols exist before referencing them
-
----
-
-### generate_plan.py — Plan Skeleton Generator
-
-Takes a spec and generates task structure with phases.
-
-**Syntax**:
-```bash
-python skills/create-plan/scripts/generate_plan.py \
-  --spec spec.yaml \
-  --component auth-middleware \
-  --profile atomic
-```
-
-**Profiles**: `atomic` (15-40 tasks), `compact` (6-8 phases), `narrative` (runbook)
-
-**Output**: `plan-skeleton-[component]-1.md` with structure:
-```markdown
-# Phase 1: Setup
-## Task 1: Configure Environment
-...
-## Task 2: Install Dependencies
-...
-```
-
-**When to use**:
-- Generating initial plan structure from spec
-- Choosing task granularity (atomic vs compact vs narrative)
-- Re-generating plan if scope changes
-
----
-
-### validate_plan.py — Plan Validation
-
-Check that completed plan follows all conventions.
-
-**Syntax**:
-```bash
-python skills/create-plan/scripts/validate_plan.py \
-  plan-feature-auth-middleware-1.md
-```
-
-**Checks**:
-- All file paths are markdown-linked `[file.ts](path/to/file.ts)`
-- All symbols have line anchors `[func](path#L42)`
-- Every task has required fields: Depends on, Files, Symbols, Action, Validate, Expected result
-- No circular task dependencies (valid DAG)
-- All cross-references (TASK-001, PHASE-001) exist and link
-
-**Output**:
-```
-✓ 27 tasks validated
-✓ All 45 file links valid
-✓ No circular dependencies detected
-READY FOR EXECUTION
-```
-
-**When to use**:
-- Before marking plan complete
-- Before handing plan to executor
-- When importing plans from other sources
-
-## Reference Docs — Quick Navigation
-
-Read these in order only if you need them. Most of the time, you won't:
-
-### 1. [Plan Template](references/template.md)
-**Read this if**: "What should my plan look like?"
-
-**Covers**:
-- Goal statement (2-3 sentences)
-- Requirements & constraints format (REQ-001)
-- Phases and tasks structure
-- Testing & acceptance criteria sections
-- Optional: Decision log, risks, alternatives
-
-**Time**: 5 min
-
----
-
-### 2. [Discovery Guide](references/discovery.md)
-**Read this if**: "How do I find files and symbols?"
-
-**Covers**:
-- Using discover.mjs to find files
-- Extracting function/class symbols
-- Handling multi-repo projects
-- Verifying paths before adding to plan
-
-**When to use**: If plan discovery is failing or you're in an unfamiliar codebase
-
-**Time**: 10 min
-
----
-
-### 3. [Task Decomposition](references/decomposition.md)
-**Read this if**: "How do I break work into tasks?"
-
-**Covers**:
-- Task sizing (how small is small?)
-- Bundled vs. atomic tasks
-- Dependency ordering
-- What makes a good task
-
-**When to use**: If your tasks feel too big, too small, or out of order
-
-**Time**: 10 min
-
----
-
-### 4. [Validation Checklist](references/validation.md)
-**Read this if**: "Is my plan complete?"
-
-**Covers**:
-- Complete task block structure
-- Markdown link requirements
-- Dependency validation (no cycles)
-- Common mistakes and fixes
-
-**When to use**: Before marking plan done and handing to executor
-
-**Time**: 5 min
-
----
-
-### Quick Reference: Which Doc for Your Problem?
-
-| Problem | Doc |
-|---------|-----|
-| "What goes in a plan?" | [Template](references/template.md) |
-| "I can't find the file path" | [Discovery](references/discovery.md) |
-| "My tasks are too vague" | [Decomposition](references/decomposition.md) |
-| "Plan validation failed" | [Validation](references/validation.md) |
-| "I don't know if I'm done" | [Validation](references/validation.md) |
-| "How do I organize plans?" | (See Plan Directory section below) |
+| Problem | Reference |
+| --- | --- |
+| Plan structure & template | [references/template.md](references/template.md) |
+| Finding files & symbols | [references/discovery.md](references/discovery.md) |
+| Task sizing & decomposition | [references/decomposition.md](references/decomposition.md) |
+| Validation checklist | [references/validation.md](references/validation.md) |
+| Script syntax (manual use) | [references/scripts.md](references/scripts.md) |
+| Git workflow & team reviews | [references/git-workflow.md](references/git-workflow.md) |

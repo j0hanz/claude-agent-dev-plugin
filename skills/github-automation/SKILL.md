@@ -15,6 +15,7 @@ description: >-
   terminal commands or basic YAML authoring unless the task explicitly calls for gh script
   automation.
 disable-model-invocation: true
+allowed-tools: Bash(python *) Bash(python3 *)
 ---
 
 # GitHub Automation

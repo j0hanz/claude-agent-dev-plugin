@@ -261,7 +261,7 @@ Once all runs are done:
 4. **Launch the viewer** with both qualitative outputs and quantitative data:
 
    ```bash
-   python <skill-builder-path>/eval-viewer/generate_review.py \
+   python ${CLAUDE_SKILL_DIR}/eval-viewer/generate_review.py \
      <workspace>/iteration-N \
      --skill-name "my-skill" \
      --benchmark <workspace>/iteration-N/benchmark.json \

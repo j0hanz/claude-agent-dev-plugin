@@ -2,12 +2,18 @@
 name: spec-driven-development
 description: |
   Use this skill to implement features or fixes using Spec-Driven Development (SDD). Follow the mandatory workflow: clarify scope → create spec → create plan → implement with governance → validate acceptance. Do not skip steps or sub-skills. This skill ensures implementation serves the spec, maintaining alignment and traceability from requirements to code.
-disable-model-invocation: true
+disable-model-invocation: false
 ---
 
 # Spec-Driven Development
 
 > **Autonomy: low** — all gates are mandatory; do not skip or substitute sub-skills.
+
+## NEVER
+
+- **NEVER retrofit a spec from existing code** — a spec that merely describes what the code already does is not a contract; it protects nothing and will drift instantly as the code changes
+- **NEVER patch code and backfill the spec afterward** — when implementation conflicts with the spec, stop, resolve at the spec level, then resume; reversing this order makes the spec meaningless
+- **NEVER skip `validate_spec.py`** because the spec "looks right" — structural errors (missing REQ→AC traceability, unresolvable VAL commands) only surface when the validator runs, and they invalidate the planning step
 
 ## When to Use
 
