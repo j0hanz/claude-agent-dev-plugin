@@ -534,9 +534,9 @@ def print_audit_report(root_dir: Path, results: AuditResults) -> int:
             not results.manifest_valid,
         ]
     ):
-        print("❌ Audit failed with one or more errors.")
+        print("FAIL: Audit failed with one or more errors.")
         return 1
-    print("✅ Audit passed. Plugin is healthy.")
+    print("PASS: Audit passed. Plugin is healthy.")
     return 0
 
 
@@ -609,7 +609,8 @@ def main() -> int:
         case "validate-skills":
             valid, errors = validate_skill_files(root / "skills")
             for err in errors:
-                print(f"FAIL: {err}", file=sys.stderr)
+                prefix = "WARN" if err.startswith("WARN") else "FAIL"
+                print(f"{prefix}: {err}", file=sys.stderr)
             if valid:
                 print("PASS: Skills are valid.")
             return 0 if valid else 1

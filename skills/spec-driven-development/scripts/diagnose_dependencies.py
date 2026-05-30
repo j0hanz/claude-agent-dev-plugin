@@ -80,13 +80,13 @@ def main():
             present = spec["check"]()
         except Exception as e:
             present = False
-            print(f"[✗ ERROR] {name}")
+            print(f"[ERROR] {name}")
             print(f"          Could not check: {str(e)}")
             print()
             all_ok = False
             continue
 
-        status = "✓ OK" if present else "✗ MISSING"
+        status = "OK" if present else "MISSING"
         print(f"[{status}] {name}")
 
         if not present:
@@ -96,11 +96,11 @@ def main():
 
     print("=" * 70)
     if all_ok:
-        print("✓ All prerequisites present. Ready to use spec-driven-development.")
+        print("OK: All prerequisites present. Ready to use spec-driven-development.")
         print()
         return 0
     else:
-        print("✗ Some prerequisites are missing. Fix them above, then retry.")
+        print("FAIL: Some prerequisites are missing. Fix them above, then retry.")
         print()
         return 1
 

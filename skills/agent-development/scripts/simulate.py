@@ -241,11 +241,11 @@ def main():
         print("\n## Simulation Report\n")
         for case_id, summary in suite_results.items():
             status = (
-                "✅"
+                "PASS"
                 if summary["pass_rate"] == 1.0
-                else "⚠️"
+                else "PARTIAL"
                 if summary["pass_rate"] > 0
-                else "❌"
+                else "FAIL"
             )
             print(
                 f"- {status} **{case_id}**: {summary['pass_rate'] * 100:.0f}% pass "
