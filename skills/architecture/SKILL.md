@@ -18,6 +18,14 @@ disable-model-invocation: false
 
 # Architecture
 
+## Before Routing
+
+If the user's message provides no clear intent — a single word, a vague noun, no codebase context — ask one targeted question before selecting a mode:
+
+> "Are you looking to diagnose an existing codebase, or design something new?"
+
+Only apply the routing table once you have enough signal to distinguish Mode A from Mode B. Do not silently analyze a nearby codebase just because one exists; confirm it's the intended target first.
+
 ## Routing
 
 Read this first — pick one mode and follow only that section.
@@ -27,7 +35,7 @@ Read this first — pick one mode and follow only that section.
 | Codebase already exists; user wants to find/fix structural problems (coupling, God modules, testability, circular deps) | **MODE A — DIAGNOSE** |
 | New feature or module; user asks where logic should live, which pattern to pick, how to design interfaces               | **MODE B — DESIGN**   |
 
-When in doubt: if there's code to look at, use Mode A. If there's a blank page, use Mode B.
+When in doubt: if there's code to look at **and the user has indicated they want a diagnosis**, use Mode A. If there's a blank page, use Mode B.
 
 ---
 
@@ -72,7 +80,12 @@ Walk the codebase using the automated analysis scripts. Scripts gracefully skip 
 - **MANDATORY — RUN SCRIPT**: **Locality Check**: Run `node ${CLAUDE_SKILL_DIR}/scripts/check-locality.mjs [dir]` to find circular dependencies and "God modules" (high fan-out). Example: `node ${CLAUDE_SKILL_DIR}/scripts/check-locality.mjs src`
 - **MANDATORY — RUN SCRIPT**: **Bleed Detection**: Run `node ${CLAUDE_SKILL_DIR}/scripts/detect-bleed.mjs [domain_dir] [infra_packages]` to find infrastructure leaks (e.g., Express or Prisma in domain logic). Example: `node ${CLAUDE_SKILL_DIR}/scripts/detect-bleed.mjs src/domain express,prisma,typeorm`
 
-**Manual Exploration** (if scripts don't fit the project structure):
+**If no directory is available** (user pasted inline code without a path):
+- Skip the scripts.
+- Tell the user: "Running manual analysis on the provided code — if you have a project directory, share the path for automated scanning."
+- Proceed with manual friction-signal identification below.
+
+**Manual Exploration** (if scripts don't fit the project structure, or no directory is available):
 
 Look for these friction signals:
 
@@ -84,7 +97,7 @@ Look for these friction signals:
 
 #### Phase 2: Present Candidates
 
-You must constrain yourself. Do NOT start writing implementation code. List **3–6 deepening opportunities**, ordered by impact. Use this exact format:
+You must constrain yourself. Do NOT write implementation code — no function bodies, class implementations, or working logic. Typed interface signatures are acceptable when they clarify the proposed seam boundary, but keep them minimal. List **3–6 deepening opportunities**, ordered by impact. Use this exact format:
 
 ```markdown
 **[Short Name of Opportunity]**
@@ -142,16 +155,25 @@ Stop proposing candidates when:
 
 Architecture is the set of decisions that are hard to change later. Your goal is to maximize **Reversibility** and **Boundary Integrity**. Do not just "clean the code"; design the system to survive the "Churn of Infrastructure" (frameworks, DBs, APIs).
 
-### Architecture Diagnosis Flow
+### Three-Step Procedure
 
-Before proposing a structure, perform this diagnosis:
+#### Step 1: Diagnose
+
+Before proposing a structure, run this diagnosis:
 
 1. **Identify the Core Domain**: What is the "Business Fact" this code exists to manage? Separate this from the "Mechanism" (how it's stored or delivered).
 2. **Map the Change Drivers**: Ask "If X changes (e.g., swapping SQL for NoSQL, moving from Web to CLI), what code _must_ break?"
 3. **Boundary Stress Test**: Mentally attempt to move a feature module to a separate repository. If the "seams" are bleeding implementation details, the boundary is wrong.
 4. **Select Pattern**:
    - **MANDATORY**: If considering a specific pattern (Layered, Hexagonal, CQRS, etc.), you MUST read `references/architecture-patterns.md` to evaluate its failure modes before recommending.
-5. **Define the Public Surface**: Design the API (interfaces/types) of the module as if it were a third-party library.
+
+#### Step 2: Propose
+
+5. **Define the Public Surface**: Design the API (interfaces/types) of the module as if it were a third-party library. Show what callers will import — don't write implementation yet.
+
+#### Step 3: Confirm
+
+6. **Apply the Swap Test**: Ask the user: "If we swapped [the key mechanism — the database, the HTTP framework, the payment provider], what code changes?" If the answer is "only the adapter/infra layer," the boundary is right. If domain logic would change, redraw the seam.
 
 ### Expert Principles
 
