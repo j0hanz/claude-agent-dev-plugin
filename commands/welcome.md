@@ -1,5 +1,6 @@
 ---
-description: Get a guided tour of the agent-dev plugin.
+description: |
+  Welcome to the agent-dev plugin. This plugin provides skills, agents, hooks, and slash commands for building and maintaining Claude Code agents and skills.
 ---
 
 # Welcome — Plugin Walkthrough

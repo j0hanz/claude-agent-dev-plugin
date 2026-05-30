@@ -1,5 +1,6 @@
 ---
-description: Run plugin health checks — structure, skills, agents, hooks, and manifest validation.
+description: |
+  Run targeted plugin health checks on the current workspace. Modes: all (full pipeline), structure (file organization), skills (skill frontmatter and body), agents (agent markdown), hooks (hook presence), manifest (manifest structure), validate (CLI validation).
 argument-hint: [all|structure|skills|agents|hooks|manifest|validate]
 ---
 

@@ -1,5 +1,6 @@
 ---
-description: Author, audit, update, lint, or run evaluations for a plugin skill.
+description: |
+  Author, audit, update, lint, or run evaluations for plugin skills. Modes: create (author new suite), audit (review existing suite), update (refine suite), lint (check suite structure), run (execute evals with or without a baseline).
 argument-hint: [create|audit|update|lint|run] [skill-name]
 ---
 

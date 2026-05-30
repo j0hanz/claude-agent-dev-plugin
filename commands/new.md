@@ -1,5 +1,6 @@
 ---
-description: Scaffold a new skill, agent, or hook in this plugin.
+description: |
+  Create a new plugin component: skill, agent, or hook. Example: `/new skill my-feature` or `/new hook my-hook`.
 argument-hint: [skill|agent|hook] [name]
 ---
 

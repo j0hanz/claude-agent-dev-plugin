@@ -1,5 +1,6 @@
 ---
-description: Create or update plugin documentation — AGENTS.md, CLAUDE.md, skill docs, or README.
+description: |
+  Author or update plugin documentation for: `$ARGUMENTS`. Targets: `agents-md` (AGENTS.md), `claude-md` (CLAUDE.md), `readme` (README.md), or `skill <name>` (skill markdown).
 argument-hint: [agents-md|claude-md|readme|skill <name>]
 ---
 

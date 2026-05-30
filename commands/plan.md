@@ -1,5 +1,6 @@
 ---
-description: Run the full planning pipeline for a new feature or task.
+description: |
+  Plan the following task: `$ARGUMENTS`. Follow the pipeline: brainstorming, create-specs, create-plan.
 argument-hint: [task description]
 ---
 

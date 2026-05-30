@@ -1,6 +1,7 @@
 ---
-description: Run the plugin test suite — Node.js unit tests, Python tests, or integration tests.
-argument-hint: [all|node|python|integration]
+description: |
+  Author, audit, update, lint, or run evaluations for plugin skills. Modes: create (author new suite), audit (review existing suite), update (refine suite), lint (check suite structure), run (execute evals with or without a baseline).
+argument-hint: [all|node|python|integration|create|audit|update|lint|run] [skill-name]
 ---
 
 # Test: $ARGUMENTS

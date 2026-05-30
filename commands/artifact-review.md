@@ -1,5 +1,6 @@
 ---
-description: Review agent-dev artifacts (skills, agents, plans, hooks) for quality, design, and alignment.
+description: |
+  Review agent-dev plugin components for quality and design. Modes: create (architectural vetting), audit (quality check), update (refinement), lint (structural check).
 argument-hint: [create|audit|update|lint] [type|name]
 ---
 

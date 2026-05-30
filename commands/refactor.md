@@ -1,5 +1,6 @@
 ---
-description: Refactor code for clarity, maintainability, or testability without changing behavior.
+description: |
+  Refactor plugin code to improve structure, readability, or maintainability without changing behavior. Provide a file path or describe the code area to refactor.
 argument-hint: [file path or description of what to refactor]
 ---
 

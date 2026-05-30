@@ -1,5 +1,6 @@
 ---
-description: Validate, commit with attribution, and prepare a PR for the current plugin work.
+description: |
+  Deliver the current plugin work: validate output, commit with attribution, and open a PR.
 ---
 
 # Deliver — Delivery Pipeline

@@ -1,5 +1,6 @@
 ---
-description: Debug a problem using the diagnose skill's structured root-cause methodology.
+description: |
+  Invoke the `diagnose` skill for the problem described in `$ARGUMENTS`. Follow the skill's methodology: reproduce, gather evidence, hypothesize root causes, test hypotheses, apply a fix, and add a regression test to prevent recurrence.
 argument-hint: [symptom or error description]
 ---
 
