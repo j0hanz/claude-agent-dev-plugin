@@ -12,11 +12,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from lib.agent_parser import parse_agent, ParseError
+from lib.agent_parser import parse_agent, ParseError, AgentSpec
+from lib.heuristics import CHARS_PER_TOKEN
 from lib.report import Finding, render_human, render_json, compute_exit_code
 
 
-def diff_agents(cur, prop):
+def diff_agents(cur: AgentSpec, prop: AgentSpec) -> list:
     findings = []
     label = f"{cur.path} -> {prop.path}"
 
@@ -155,8 +156,8 @@ def diff_agents(cur, prop):
 
     # System-prompt diff (info)
     if cur.system_prompt != prop.system_prompt:
-        ct_tok = len(cur.system_prompt) // 4
-        pt_tok = len(prop.system_prompt) // 4
+        ct_tok = len(cur.system_prompt) // CHARS_PER_TOKEN
+        pt_tok = len(prop.system_prompt) // CHARS_PER_TOKEN
         delta = pt_tok - ct_tok
         sign = "+" if delta >= 0 else ""
         findings.append(

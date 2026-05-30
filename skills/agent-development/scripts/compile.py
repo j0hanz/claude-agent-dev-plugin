@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from lib.agent_parser import parse_agent, detect_agent_kind, ParseError
+from lib.agent_parser import parse_agent, detect_agent_kind, ParseError, AgentSpec
 from lib.report import Finding, render_human, render_json, compute_exit_code
 from lib.constants import KNOWN_MODELS, KNOWN_FRONTMATTER_KEYS
 
@@ -32,7 +32,7 @@ def _compile_cc_subagent(frontmatter: dict, body: str) -> dict:
     }
 
 
-def validate(spec, mode: str):
+def validate(spec: AgentSpec, mode: str) -> list:
     findings = []
     p = spec.path
 
@@ -86,7 +86,7 @@ def validate(spec, mode: str):
     return findings
 
 
-def to_payload(spec, mode: str) -> dict:
+def to_payload(spec: AgentSpec, mode: str) -> dict:
     payload: dict = {"name": spec.name}
     if spec.description:
         payload["description"] = spec.description

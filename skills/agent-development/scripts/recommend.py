@@ -12,7 +12,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from lib.agent_parser import parse_agent, ParseError
+from lib.agent_parser import parse_agent, ParseError, AgentSpec
 from lib.heuristics import score_complexity, score_to_tier, has_shell_tool
 
 _TIER_MODELS = {
@@ -22,7 +22,7 @@ _TIER_MODELS = {
 }
 
 
-def recommend(spec) -> dict:
+def recommend(spec: AgentSpec) -> dict:
     score, reasons = score_complexity(spec)
     tier = score_to_tier(score, spec)
 

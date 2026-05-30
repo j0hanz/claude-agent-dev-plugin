@@ -13,7 +13,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from lib.agent_parser import parse_agent, ParseError
+from lib.agent_parser import parse_agent, ParseError, AgentSpec
 from lib.heuristics import estimate_input_tokens, estimate_tokens, TOOL_SCHEMA_TOKENS
 from lib.pricing import cost_usd, PRICING_DATE, PRICING_URL
 
@@ -21,7 +21,7 @@ _SMELL_INPUT_THRESHOLD = 10_000
 _SMELL_COST_THRESHOLD = 5.00
 
 
-def estimate_cost(spec, runs: int = 3, output_tokens: int = 500) -> dict:
+def estimate_cost(spec: AgentSpec, runs: int = 3, output_tokens: int = 500) -> dict:
     input_tokens = estimate_input_tokens(spec)
     prompt_tokens = estimate_tokens(spec.system_prompt)
     tool_tokens = len(spec.tools) * TOOL_SCHEMA_TOKENS
