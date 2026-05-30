@@ -18,6 +18,7 @@ _TABLE: Dict[str, Tuple[float, float]] = {
     "claude-haiku-4-5": (0.80, 4.00),
     "claude-sonnet-4-6": (3.00, 15.00),
     "claude-opus-4-7": (15.00, 75.00),
+    "claude-opus-4-8": (15.00, 75.00),
 }
 
 _FALLBACK: str = "claude-sonnet-4-6"

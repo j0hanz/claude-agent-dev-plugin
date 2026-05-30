@@ -10,6 +10,14 @@ KNOWN_MODELS = {
     "claude-haiku-4-5",
     "claude-sonnet-4-6",
     "claude-opus-4-7",
+    "claude-opus-4-8",
+}
+
+# Canonical tier → latest model ID (single source of truth; import this elsewhere)
+TIER_MODELS: dict[str, str] = {
+    "haiku": "claude-haiku-4-5-20251001",
+    "sonnet": "claude-sonnet-4-6",
+    "opus": "claude-opus-4-8",
 }
 
 # Tools

@@ -19,6 +19,15 @@ _ALLOWED_PROPERTIES = {
 
 def _parse_frontmatter(text: str) -> dict[str, str]:
     """Parse a flat YAML-style frontmatter block into top-level key/value pairs."""
+    try:
+        import yaml
+
+        result = yaml.safe_load(text) or {}
+        return {k: str(v) for k, v in result.items() if isinstance(k, str)}
+    except ImportError:
+        pass
+
+    # Fallback: hand-rolled parser for environments without PyYAML
     result: dict[str, str] = {}
     lines = text.split("\n")
     i = 0

@@ -10,7 +10,7 @@ import os
 import sys
 from collections import defaultdict
 
-TELEMETRY_FILE = ".claude/telemetry.jsonl"
+TELEMETRY_FILE = ".claude/telemetry.log"
 
 
 def main():

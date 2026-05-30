@@ -116,7 +116,7 @@ def run_case(
             # Inject the agent's system prompt as a preamble so the model
             # runs with the intended persona during simulation.
             try:
-                from lib.agent_parser import parse_agent
+                from lib.agent_parser import parse_agent  # noqa: PLC0415
 
                 agent_spec = parse_agent(agent_file)
                 system_preamble = f"[SYSTEM PROMPT]\n{agent_spec.system_prompt}\n[END SYSTEM PROMPT]\n\n"
@@ -137,7 +137,7 @@ def run_case(
             # Parse output
             try:
                 out_data = json.loads(res.stdout)
-                final_response = out_data.get("completion", "")
+                final_response = out_data.get("result", "")
                 tokens_in = out_data.get("usage", {}).get("input_tokens", 0)
                 tokens_out = out_data.get("usage", {}).get("output_tokens", 0)
             except Exception:

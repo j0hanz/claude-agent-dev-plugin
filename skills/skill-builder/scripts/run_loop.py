@@ -15,6 +15,8 @@ import time
 import webbrowser
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 from scripts.generate_report import generate_html
 from scripts.improve_description import improve_description
 from scripts.run_eval import find_project_root, run_eval

@@ -11,8 +11,10 @@ import os
 import subprocess
 import sys
 import uuid
-from concurrent.futures import ProcessPoolExecutor, as_completed
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.utils import parse_skill_md
 
@@ -171,7 +173,7 @@ def run_eval(
     """Run the full eval set and return results."""
     results = []
 
-    with ProcessPoolExecutor(max_workers=num_workers) as executor:
+    with ThreadPoolExecutor(max_workers=num_workers) as executor:
         future_to_info = {}
         for item in eval_set:
             for run_idx in range(runs_per_query):

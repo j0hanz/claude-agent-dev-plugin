@@ -60,10 +60,10 @@ console.log('auth flow trace', user.id); // debug-keep
 
 The `.simulate/` directory contains a harness for recording real hook inputs during a test session.
 
-| Task                    | Command                                                                                    |
-| ----------------------- | ------------------------------------------------------------------------------------------ |
-| Run simulation          | `python skills/agent-development/scripts/simulate.py --config .simulate/hooks-config.json` |
-| Inspect recorded events | Open `.simulate/<run-id>/tool-calls.jsonl` — one JSON object per hook call                 |
+| Task                    | Command                                                                                  |
+| ----------------------- | ---------------------------------------------------------------------------------------- |
+| Run simulation          | `python skills/agent-development/scripts/simulate.py <agent.md> <cases.yaml> --worktree` |
+| Inspect recorded events | Open `.simulate/runs/<case-id>/tool-calls.jsonl` — one JSON object per hook call         |
 
 Use this to capture realistic inputs before writing unit tests for a new handler.
 

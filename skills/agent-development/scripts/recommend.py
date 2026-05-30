@@ -13,13 +13,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from lib.agent_parser import parse_agent, ParseError, AgentSpec
+from lib.constants import TIER_MODELS as _TIER_MODELS
 from lib.heuristics import score_complexity, score_to_tier, has_shell_tool
-
-_TIER_MODELS = {
-    "haiku": "claude-haiku-4-5-20251001",
-    "sonnet": "claude-sonnet-4-6",
-    "opus": "claude-opus-4-7",
-}
 
 
 def recommend(spec: AgentSpec) -> dict:

@@ -8,6 +8,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Resolve paths relative to the project root (two levels up from this script)
+_SCRIPT_DIR = Path(__file__).parent
+_PROJECT_ROOT = _SCRIPT_DIR.parent.parent.parent
+_SKILLS_DIR = _PROJECT_ROOT / "skills"
+
 
 def check_command(cmd):
     """Check if a command exists in PATH or as a file."""
@@ -30,40 +35,30 @@ def check_file(path):
 # Define prerequisites
 PREREQUISITES = {
     "create-specs skill": {
-        "check": lambda: check_file("../create-specs/SKILL.md"),
-        "fix": "Contact workspace admin or verify create-specs is installed in ../create-specs/",
+        "check": lambda: check_file(_SKILLS_DIR / "create-specs" / "SKILL.md"),
+        "fix": "Verify create-specs is installed under skills/create-specs/",
     },
     "create-plan skill": {
-        "check": lambda: check_file("../create-plan/SKILL.md"),
-        "fix": "Contact workspace admin or verify create-plan is installed in ../create-plan/",
+        "check": lambda: check_file(_SKILLS_DIR / "create-plan" / "SKILL.md"),
+        "fix": "Verify create-plan is installed under skills/create-plan/",
     },
     "validate_spec.py": {
-        "check": lambda: (
-            check_file("tools/validate_spec.py")
-            or check_command("python validate_spec.py --help")[0]
+        "check": lambda: check_file(
+            _SKILLS_DIR / "create-specs" / "scripts" / "validate_spec.py"
         ),
-        "fix": "Run: python tools/setup.py",
+        "fix": "Verify create-specs skill is installed (contains scripts/validate_spec.py)",
     },
     "validate_plan.py": {
-        "check": lambda: (
-            check_file("tools/validate_plan.py")
-            or check_command("python validate_plan.py --help")[0]
+        "check": lambda: check_file(
+            _SKILLS_DIR / "create-plan" / "scripts" / "validate_plan.py"
         ),
-        "fix": "Run: python tools/setup.py",
+        "fix": "Verify create-plan skill is installed (contains scripts/validate_plan.py)",
     },
     "generate_plan.py": {
-        "check": lambda: (
-            check_file("tools/generate_plan.py")
-            or check_command("python generate_plan.py --help")[0]
+        "check": lambda: check_file(
+            _SKILLS_DIR / "create-plan" / "scripts" / "generate_plan.py"
         ),
-        "fix": "Run: python tools/setup.py",
-    },
-    "discover.mjs": {
-        "check": lambda: (
-            check_file("tools/discover.mjs")
-            or check_command("node tools/discover.mjs --help")[0]
-        ),
-        "fix": "Run: npm run setup",
+        "fix": "Verify create-plan skill is installed (contains scripts/generate_plan.py)",
     },
 }
 

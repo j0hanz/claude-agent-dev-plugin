@@ -1,5 +1,6 @@
 """Shared utilities for skill-builder scripts."""
 
+import re
 from pathlib import Path
 
 
@@ -7,9 +8,7 @@ def parse_skill_md(skill_path: Path) -> tuple[str, str, str]:
     """Parse a SKILL.md file, returning (name, description, full_content)."""
     content = (skill_path / "SKILL.md").read_text(encoding="utf-8")
 
-    match = __import__("re").match(
-        r"^---\n(.*?)\n---\n", content, __import__("re").DOTALL
-    )
+    match = re.match(r"^---\n(.*?)\n---\n", content, re.DOTALL)
     if not match:
         raise ValueError("SKILL.md missing frontmatter")
 
