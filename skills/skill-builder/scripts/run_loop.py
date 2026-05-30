@@ -194,7 +194,8 @@ def run_loop(
                 "history": history,
             }
             live_report_path.write_text(
-                generate_html(partial_output, auto_refresh=True, skill_name=name)
+                generate_html(partial_output, auto_refresh=True, skill_name=name),
+                encoding="utf-8",
             )
 
         if verbose:
@@ -342,7 +343,8 @@ def main():
             live_report_path = Path(args.report)
         # Open the report immediately so the user can watch
         live_report_path.write_text(
-            "<html><body><h1>Starting optimization loop...</h1><meta http-equiv='refresh' content='5'></body></html>"
+            "<html><body><h1>Starting optimization loop...</h1><meta http-equiv='refresh' content='5'></body></html>",
+            encoding="utf-8",
         )
         webbrowser.open(str(live_report_path))
     else:
@@ -378,18 +380,20 @@ def main():
     json_output = json.dumps(output, indent=2)
     print(json_output)
     if results_dir:
-        (results_dir / "results.json").write_text(json_output)
+        (results_dir / "results.json").write_text(json_output, encoding="utf-8")
 
     # Write final HTML report (without auto-refresh)
     if live_report_path:
         live_report_path.write_text(
-            generate_html(output, auto_refresh=False, skill_name=name)
+            generate_html(output, auto_refresh=False, skill_name=name),
+            encoding="utf-8",
         )
         print(f"\nReport: {live_report_path}", file=sys.stderr)
 
     if results_dir and live_report_path:
         (results_dir / "report.html").write_text(
-            generate_html(output, auto_refresh=False, skill_name=name)
+            generate_html(output, auto_refresh=False, skill_name=name),
+            encoding="utf-8",
         )
 
     if results_dir:

@@ -53,7 +53,7 @@ def validate_skill(skill_path: "Path | str") -> tuple[bool, str]:
         return False, "SKILL.md not found"
 
     # Read and validate frontmatter
-    content = skill_md.read_text()
+    content = skill_md.read_text(encoding="utf-8")
     if not content.startswith("---"):
         return False, "No YAML frontmatter found"
 

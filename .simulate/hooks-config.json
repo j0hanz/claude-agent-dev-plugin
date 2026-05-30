@@ -6,7 +6,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Users\\PC\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe .simulate\\observer.py",
+            "command": "C:\\agent-dev\\.venv\\Scripts\\python.exe .simulate\\observer.py",
             "timeout": 5
           }
         ]
@@ -18,7 +18,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Users\\PC\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe .simulate\\observer.py",
+            "command": "C:\\agent-dev\\.venv\\Scripts\\python.exe .simulate\\observer.py",
             "timeout": 5
           }
         ]
@@ -30,7 +30,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "C:\\Users\\PC\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe .simulate\\observer.py",
+            "command": "C:\\agent-dev\\.venv\\Scripts\\python.exe .simulate\\observer.py",
             "timeout": 5
           }
         ]

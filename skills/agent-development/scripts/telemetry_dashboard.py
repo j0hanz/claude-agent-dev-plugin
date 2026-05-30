@@ -25,7 +25,7 @@ def main():
     events_by_subagent = defaultdict(list)
     total_events = 0
 
-    with open(TELEMETRY_FILE, "r") as f:
+    with open(TELEMETRY_FILE, "r", encoding="utf-8") as f:
         for line in f:
             if not line.strip():
                 continue

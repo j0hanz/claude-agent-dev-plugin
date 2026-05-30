@@ -39,7 +39,7 @@ def main(policy_file):
         sys.exit(1)
 
     try:
-        with open(policy_file, "r") as f:
+        with open(policy_file, "r", encoding="utf-8") as f:
             policy_data = yaml.safe_load(f)
     except yaml.YAMLError as e:
         print(f"Error parsing YAML: {e}")
