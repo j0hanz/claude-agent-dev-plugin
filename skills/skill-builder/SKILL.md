@@ -48,6 +48,8 @@ Start by understanding the user's intent. The current conversation might already
 
 One non-obvious question to always answer before drafting: **Should we set up test cases?** Skills with objectively verifiable outputs (file transforms, data extraction, code generation, fixed workflow steps) benefit from them. Skills with subjective outputs (writing style, art) often don't. Suggest the appropriate default based on the skill type, but let the user decide.
 
+**After clarifying questions, produce a draft.** Don't stop after the interview. Draft a SKILL.md based on what you've learned, marking uncertain sections with placeholders (e.g., `[USER TO CONFIRM: exact output format]`). This gives the user something concrete to react to and iterate on — they can then refine the draft rather than starting from scratch. This is especially important for users new to skill-building who may not know what a "good" skill looks like.
+
 ### Interview and Research
 
 Get edge cases, input/output formats, example files, success criteria, and dependencies locked down before writing test prompts. Check available MCPs — if useful for research, query them in parallel via subagents rather than sequentially.
@@ -327,7 +329,9 @@ Before touching the skill file, make sure you understand the actual problem. If 
 
 A hypothesis like "the skill's output template is missing, so Claude invents a different structure every time" is far more actionable than "the skill is vague." Without a concrete example, you risk writing a revision that fixes the wrong thing.
 
-Before rewriting: ask the user for one example of a bad output (or one example of what good looks like), or propose running a single test case to see what's actually happening. This takes 30 seconds and prevents a wasted iteration.
+**Context matters.** If the user has provided the skill's SKILL.md inline in the message (e.g., "Here's my draft skill... Help me fix this"), read it directly and diagnose from there. Analyze what you see and propose improvements. Only ask for additional examples if something is truly ambiguous. Don't ask for the skill file if it's already in front of you.
+
+If the user has NOT provided the skill (e.g., "My installed skill is giving inconsistent outputs"), then ask for one example of a bad output (or one example of what good looks like), or propose running a single test case to see what's actually happening. This takes 30 seconds and prevents a wasted iteration.
 
 ### Before you start iterating
 

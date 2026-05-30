@@ -1,0 +1,73 @@
+{
+  "skill_name": "skill-builder",
+  "evals": [
+    {
+      "id": 0,
+      "prompt": "I want to create a skill that helps Claude write good git commit messages. It should analyze git diffs and generate conventional commit format messages (feat:, fix:, chore:, docs:, etc). I'm pretty new to this whole skill-building thing.",
+      "expected_output": "The skill-builder asks clarifying questions before writing anything, then produces a complete SKILL.md with YAML frontmatter, proper description with trigger phrases, and proposes test cases.",
+      "files": [],
+      "assertions": [
+        "At least one clarifying question is asked before producing a SKILL.md",
+        "A SKILL.md is produced (in the response) with valid YAML frontmatter containing both name and description fields",
+        "The description field contains specific git/commit-related trigger phrases",
+        "Test cases are proposed after a complete skill draft is presented"
+      ]
+    },
+    {
+      "id": 1,
+      "prompt": "I want to turn this workflow into a skill. When users ask for a performance audit of their Python code, I always do: 1) Profile the code using cProfile or line_profiler, 2) Identify the top 3 bottlenecks from the profile data, 3) Research idiomatic Python optimization patterns relevant to those bottlenecks, 4) Rewrite the hot paths with optimizations, 5) Run benchmarks before/after and generate a comparison report. Can you turn this into a skill called perf-audit?",
+      "expected_output": "The skill-builder extracts all 5 workflow steps, confirms or proceeds confidently with the user, then writes a complete SKILL.md named perf-audit with all steps captured.",
+      "files": [],
+      "assertions": [
+        "A SKILL.md (in the response) is produced with name: perf-audit in the frontmatter",
+        "All 5 workflow steps are present in the skill content (profiling, bottleneck identification, research, rewriting, benchmarking/comparison report)",
+        "The description includes trigger phrases related to performance audit or Python optimization"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Here's my draft skill that's giving inconsistent outputs - sometimes it formats things differently, sometimes it misses endpoints:\n\n---\nname: api-docs-gen\ndescription: Generates API documentation from source code\n---\n# API Docs Generator\nWhen the user asks for API docs, read their code and generate documentation.\nOutput: Markdown with all endpoints documented.\n\nHelp me fix this inconsistency issue.",
+      "expected_output": "The skill-builder diagnoses the root cause, proposes specific improvements including an explicit output template, and produces an improved SKILL.md that preserves the original name.",
+      "files": [],
+      "assertions": [
+        "An improved SKILL.md is produced (in the response) within the same conversational turn, preserving the original name (api-docs-gen) in the frontmatter",
+        "The improved skill includes an explicit output template or structured format section",
+        "The improved skill includes guidance to ensure completeness (all endpoints/classes captured)",
+        "The skill-builder explains why the original was inconsistent before proposing the fix"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "make a skill",
+      "expected_output": "The skill-builder asks multiple clarifying questions about purpose, trigger conditions, and output format. It does NOT immediately write a SKILL.md.",
+      "files": [],
+      "assertions": [
+        "No SKILL.md content is written or produced in the response",
+        "At least 2 clarifying questions are asked (about purpose, trigger conditions, or output format)",
+        "The response invites the user to describe intent before proceeding"
+      ]
+    },
+    {
+      "id": 4,
+      "prompt": "I need a quick skill for summarizing Slack threads. Just write me something solid - I don't need any formal testing or evals, let's skip all that and just ship it.",
+      "expected_output": "The skill-builder respects the user preference and writes a SKILL.md directly without proposing evals or setting up test infrastructure.",
+      "files": [],
+      "assertions": [
+        "A SKILL.md is produced with content relevant to Slack thread summarization",
+        "No evals.json setup, no formal test runner proposal, and no eval execution is invoked or suggested",
+        "The description includes Slack-related trigger phrases"
+      ]
+    },
+    {
+      "id": 5,
+      "prompt": "My skill for generating markdown documentation from Python source code is really inconsistent. Sometimes it misses classes, sometimes it generates wrong method signatures. It's installed and I use it regularly but the output quality is all over the place. Help me fix it.",
+      "expected_output": "The skill-builder does NOT immediately rewrite the skill. It asks for the skill file or a bad output example, then diagnoses before proposing changes.",
+      "files": [],
+      "assertions": [
+        "The skill-builder explicitly asks for the skill file OR asks for a bad output example before proposing changes",
+        "No rewritten SKILL.md is produced without first seeing the current skill",
+        "The response includes at least one diagnostic question (what does correct output look like, can you share the skill file, etc.)"
+      ]
+    }
+  ]
+}
