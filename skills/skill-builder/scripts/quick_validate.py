@@ -17,6 +17,7 @@ _ALLOWED_PROPERTIES = {
     "allowed-tools",
     "metadata",
     "compatibility",
+    "disable-model-invocation",
 }
 
 

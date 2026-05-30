@@ -50,8 +50,8 @@ Progress the user through the skill development lifecycle:
 
 Fill in these components based on the interview:
 
-- **name**: Unique skill identifier.
-- **description**: When to trigger and what it does. This is the primary triggering mechanism. **Mandate:** Make descriptions "pushy" to ensure reliable triggering (e.g., "Use this whenever the user mentions X, Y, or Z, even if not explicitly requested").
+- **name**: Unique skill identifier. **Constraints:** kebab-case (lowercase, digits, hyphens), max 64 chars, no leading/trailing hyphens, no consecutive hyphens.
+- **description**: When to trigger and what it does. This is the primary triggering mechanism. **Mandate:** Make descriptions "pushy" to ensure reliable triggering (e.g., "Use this whenever the user mentions X, Y, or Z, even if not explicitly requested"). **Constraints:** No angle brackets (`<` or `>`), max 1024 chars.
 - **compatibility**: Tools/dependencies (optional).
 - **Instructions**: The core logic.
 
@@ -116,6 +116,12 @@ skill-name/
 Follow this sequence. Do NOT use `/skill-test`.
 
 **Workspace:** `<skill-name>-workspace/iteration-<N>/eval-<ID>/`
+
+### 0. Setup Workspace (Recommended)
+Run the initialization script to scaffold the directory structure and metadata:
+```bash
+python scripts/init_eval.py --skill-name <name> --eval-id <ID> --prompt "<prompt>"
+```
 
 ### 1. Spawn Runs (With-Skill & Baseline)
 
