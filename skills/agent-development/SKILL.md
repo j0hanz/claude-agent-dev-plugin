@@ -18,10 +18,10 @@ Compose first; build only where no sibling skill exists. The workspace has 20 si
 | **NEVER omit items during a Managed Agent update**                                 | `agents.update` replaces arrays wholesale — omitting a tool/skill/MCP silently deletes it                      |
 | **NEVER pin custom skills to `latest` in production**                              | Pin exact versions; `latest` moves under you                                                                   |
 | **NEVER apply `always_allow` broadly**                                             | Default `always_ask` for `agent_toolset`; `always_allow` only for explicitly pinned, fully trusted MCP servers |
-| **NEVER write a blocking hook when a non-blocking one solves it**                  | Blocking hooks break headless mode and `/loop`                                                                 |
+| **NEVER write a blocking hook when a non-blocking one solves it**                  | CI/CD pipelines, `-p`, and `/loop` cannot process interactive prompts — blocking hooks silently stall automation |
 | **NEVER skip `diff.py` before deploy**                                             | Deletions are silent in API responses; applies to subagents and plugin manifests too                           |
 | **NEVER use the `Agent` tool's `general-purpose` for tasks a typed subagent fits** | Re-derives context cold — more expensive                                                                       |
-| **NEVER configure hooks that prompt the user**                                     | Breaks headless mode (`-p` and `/loop` flows)                                                                  |
+| **NEVER configure hooks that prompt the user**                                     | Breaks headless mode (`-p` and `/loop` flows) — unattended automation cannot respond to prompts                |
 | **NEVER trust LLM-as-judge for deterministic checks**                              | Use a `PreToolUse` observer hook instead; LLM-judge is for output quality only                                 |
 
 ---
@@ -32,8 +32,10 @@ Compose first; build only where no sibling skill exists. The workspace has 20 si
 trigger: API-callable from external code          primitive: Managed Agent
 trigger: spawned by Claude during a session       primitive: Claude Code subagent
 trigger: long-running parallel workers            primitive: Agent team (/background, TeamCreate)
-trigger: behavior shaping only (no new context)   primitive: Skill + hooks (no agent needed)
+trigger: behavior shaping only (no new context)   primitive: Skill + hooks → use hook-development skill
 ```
+
+When the primitive is **Skill + hooks**, hand off to the **`hook-development`** skill for design, linting, and testing. This skill covers agent-specific hook patterns only (Phase 3 below).
 
 For the deep comparison (cost, observability, migration paths), read [`references/primitives.md`](references/primitives.md).
 
@@ -72,6 +74,8 @@ python ${CLAUDE_SKILL_DIR}/scripts/recommend.py path/to/your/agent.md
 | Managed Agent                                   | [`references/grounding-managed-agents.md`](references/grounding-managed-agents.md) |
 | Claude Code subagent / agent team / skill+hooks | [`references/grounding-claude-code.md`](references/grounding-claude-code.md)       |
 
+**Tell the user:** "Before writing any config, read the grounding file above in full — it has the exact API shape, field names, and permission policy syntax. Skipping it is the leading cause of silent misconfiguration."
+
 ### 1.3 Discover & Pin Composable Skills
 
 ```bash
@@ -82,7 +86,9 @@ Review top candidates. For each accepted, pin an exact version (NEVER `latest`).
 
 ### 1.4 Permission Model
 
-Default to least-privilege. The audit step will flag any `always_allow` outside a fully trusted MCP.
+Default to least-privilege.
+
+> **Critical — tell the user:** Never set `always_allow` for `agent_toolset` or apply it broadly across MCP servers. `always_allow` is safe only for a single, explicitly pinned, fully trusted MCP server where you control the server code. Everything else defaults to `always_ask`.
 
 ---
 
@@ -92,7 +98,7 @@ Default to least-privilege. The audit step will flag any `always_allow` outside 
 | -------------------- | ------------------------------------------------------------------------------------ | --------------------------------------------- |
 | Managed Agent        | [`templates/managed-agent.md`](references/templates/managed-agent.md)                | `audit.py` + `compile.py`                     |
 | Claude Code subagent | [`templates/claude-code-subagent.md`](references/templates/claude-code-subagent.md)  | `audit.py` + `compile.py` (auto-detects kind) |
-| Agent team           | compose from subagent templates; declare via `TeamCreate` API                        | `audit.py` per teammate                       |
+| Agent team           | same subagent template per teammate; parent spawns with `--bg` flag; results via `Monitor` tool or shared output file | `audit.py` per teammate |
 | Skill + hooks        | [`templates/hooks.json`](references/templates/hooks.json) + `hook-development` skill | `hook-development/scripts/hook-linter.sh`     |
 
 Validation gate (run in order, fail fast):
@@ -143,17 +149,21 @@ Heuristic only — skill bodies and hook prompt/agent invocations aren't counted
 
 **MANDATORY — READ ENTIRE FILE:** [`references/testing-patterns.md`](references/testing-patterns.md).
 
-```
-layer:   A — Hook-based assertions (deterministic)
-command: python ${CLAUDE_SKILL_DIR}/scripts/simulate.py path/to/your/agent.md tests/cases.yaml --runs 3 --sandbox
-checks:  Tool(arg-glob) assertions from cases.yaml
-reports: flakiness, p95 latency, cost per run
+Quick reference (share this with the user):
 
-layer:   B — LLM-as-judge (qualitative)
-use-for: clarity, reasoning, formatting — questions a hook cannot answer
+```
+Layer A — Deterministic (hook-based assertions):
+  python ${CLAUDE_SKILL_DIR}/scripts/simulate.py path/to/agent.md tests/cases.yaml --runs 3 --sandbox
+  ↳ checks: Tool(arg-glob) assertions in cases.yaml
+  ↳ reports: flakiness score, p95 latency, cost per run
+  ↳ --sandbox is REQUIRED for agents with side effects (writes, deploys, DB changes)
+
+Layer B — Qualitative (LLM-as-judge):
+  use-for: output clarity, reasoning quality, formatting
+  never-for: tool-call checks or deterministic outputs — those belong in Layer A
 ```
 
-Default: combine both layers.
+Default: run both layers. Write `cases.yaml` first (eval-first), then build the agent prompt.
 
 ---
 
