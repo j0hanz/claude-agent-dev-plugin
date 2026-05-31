@@ -4,8 +4,22 @@
   "defaultShell": "powershell",
   "spinnerTipsEnabled": true,
   "permissions": {
-    "allow": ["Bash", "Edit", "Read", "Write", "PowerShell"],
-    "additionalDirectories": ["c:\\agent-dev"],
+    "allow": [
+      "Bash(node --version:*)",
+      "Bash(node --test:*)",
+      "Bash(npm list:*)",
+      "Bash(npm view:*)",
+      "Bash(npm outdated:*)",
+      "Bash(npm run lint:*)",
+      "Bash(npm run format:check:*)",
+      "Bash(npm test:*)",
+      "Bash(python --version:*)",
+      "Bash(python3 --version:*)",
+      "Bash(python -m pytest:*)",
+      "Bash(ruff check:*)",
+      "Bash(ruff --version:*)"
+    ],
+    "additionalDirectories": ["C:\\agent-dev"],
     "defaultMode": "acceptEdits"
   },
   "sandbox": {
