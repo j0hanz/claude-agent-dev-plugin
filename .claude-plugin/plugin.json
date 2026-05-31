@@ -22,6 +22,12 @@
       "description": "Remind to brainstorm before implementing on UserPromptSubmit",
       "default": true
     },
+    "skills_announce": {
+      "type": "boolean",
+      "title": "Skills routing guide",
+      "description": "Inject the skill routing guide into context at SessionStart",
+      "default": true
+    },
     "telemetry_enabled": {
       "type": "boolean",
       "title": "Hook telemetry",

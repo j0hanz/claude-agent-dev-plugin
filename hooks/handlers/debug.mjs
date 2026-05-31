@@ -43,7 +43,7 @@ export function scan(input = {}) {
 
   if (!findings.length) return null;
 
-  appendJsonl('.claude/debug-scan.log', { ts: new Date().toISOString(), findings });
+  appendJsonl('.claude/debug-scan.log', { timestamp: new Date().toISOString(), findings });
   dbg(`debug scan: ${findings.length} artifact(s) in working diff`);
 
   // Non-blocking visibility: stderr is shown in verbose mode and never disrupts

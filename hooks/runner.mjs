@@ -103,7 +103,7 @@ async function main() {
     domain,
     action,
     event,
-    ms: Date.now() - started,
+    duration: Date.now() - started,
     status,
     ...(errMessage ? { error: errMessage } : {}),
   });

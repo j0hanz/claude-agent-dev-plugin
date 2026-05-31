@@ -79,7 +79,7 @@ export function readJsonlTail(relPath, n) {
 /** Write a telemetry record (gated by config). Side effect only. */
 export function writeTelemetry(record) {
   if (!telemetryEnabled()) return;
-  appendJsonl('.claude/telemetry.log', { ts: new Date().toISOString(), ...record });
+  appendJsonl('.claude/telemetry.log', { timestamp: new Date().toISOString(), ...record });
 }
 
 /**
