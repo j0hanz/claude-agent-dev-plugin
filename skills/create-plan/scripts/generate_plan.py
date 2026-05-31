@@ -2,13 +2,21 @@
 import sys
 import argparse
 from pathlib import Path
+from typing import Protocol
 
 # Add lib to path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent.parent / "lib"))
 from spec_parser import parse_spec
 
 
-def generate_plan(spec: object, purpose: str, component: str) -> str:
+class Spec(Protocol):
+    sections: dict[str, str]
+    reqs: list[str]
+    acs: list[str]
+    vals: list[str]
+
+
+def generate_plan(spec: Spec, purpose: str, component: str) -> str:
     plan_lines = []
 
     # 1. Header
@@ -87,15 +95,14 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    if not Path(args.spec).exists():
-        print(f"Error: Spec file {args.spec} not found.")
-        sys.exit(1)
-
     try:
         spec = parse_spec(args.spec)
         plan_content = generate_plan(spec, args.purpose, args.component)
+    except FileNotFoundError:
+        print(f"Error: Spec file {args.spec} not found.")
+        sys.exit(1)
     except Exception as e:
-        raise RuntimeError(f"Plan generation failed for '{args.spec}'") from e
+        raise RuntimeError(f"Plan generation failed for '{args.spec}': {e}") from e
 
     filename = f"{args.purpose}-{args.component}-1.md"
     print(f"--- GENERATED PLAN: {filename} ---")

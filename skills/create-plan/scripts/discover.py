@@ -14,8 +14,9 @@ import argparse
 import json
 import re
 import sys
+from collections.abc import Iterator
 from pathlib import Path
-from typing import Any, Iterator
+from typing import Any
 
 VERSION = "1.0.0"
 MAX_FILE_BYTES = 2_000_000

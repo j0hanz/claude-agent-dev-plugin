@@ -7,10 +7,7 @@ export async function breadcrumb(input) {
   const pattern = input?.tool_input?.pattern || input?.tool_input?.query || '?';
   const logPath = getBreadcrumbLogPath();
   const ts = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
-  await fs.appendFile(
-    logPath,
-    `${ts} [${tool}] ${pattern}\n`,
-  );
+  await fs.appendFile(logPath, `${ts} [${tool}] ${pattern}\n`);
   return null;
 }
 

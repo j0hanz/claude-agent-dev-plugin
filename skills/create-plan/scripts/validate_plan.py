@@ -93,11 +93,11 @@ def main() -> None:
     parser.add_argument("plan", help="Path to the plan.md file")
     args = parser.parse_args()
 
-    if not Path(args.plan).exists():
+    try:
+        errors, warnings = validate_plan(args.plan)
+    except FileNotFoundError:
         print(f"Error: Plan file {args.plan} not found.")
         sys.exit(1)
-
-    errors, warnings = validate_plan(args.plan)
 
     print(f"Plan Audit Results for: {args.plan}\n")
 
