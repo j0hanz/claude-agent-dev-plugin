@@ -29,7 +29,7 @@ def generate_plan(spec, purpose, component):
     plan_lines.append("Files: none")
     plan_lines.append("Symbols: none")
     plan_lines.append(
-        'Action: Run `node skills/create-plan/scripts/discover.mjs --files "src/**/*"` to identify relevant files.'
+        'Action: Run `python skills/create-plan/scripts/discover.py --files "src/**/*"` to identify relevant files.'
     )
     plan_lines.append("Validate: discovery output is non-empty")
     plan_lines.append("Expected result: List of verified files is available.")

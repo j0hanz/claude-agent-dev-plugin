@@ -6,20 +6,20 @@ Plans are executed by agents or developers unfamiliar with the repository. Every
 
 ## Running Discovery
 
-From the repository root, use `discover.mjs`:
+From the repository root, use `discover.py`:
 
 ```bash
 # Find TypeScript files matching a pattern
-node <skill>/scripts/discover.mjs --files "src/**/*.ts,src/**/*.tsx" --ext ts,tsx
+python <skill>/scripts/discover.py --files "src/**/*.ts,src/**/*.tsx" --ext ts,tsx
 
 # Find specific function/class names
-node <skill>/scripts/discover.mjs --names "parseConfig,UserService" --ext ts,tsx
+python <skill>/scripts/discover.py --names "parseConfig,UserService" --ext ts,tsx
 
 # Regex pattern (e.g., all React hooks)
-node <skill>/scripts/discover.mjs --names "/^use[A-Z]/" --ext ts,tsx
+python <skill>/scripts/discover.py --names "/^use[A-Z]/" --ext ts,tsx
 
 # Combined: files + symbols
-node <skill>/scripts/discover.mjs \
+python <skill>/scripts/discover.py \
   --files "src/auth/**/*.ts" \
   --names "SessionAccess,parseJWT,validateToken" \
   --ext ts,tsx
@@ -27,7 +27,7 @@ node <skill>/scripts/discover.mjs \
 
 ## Discovery Output Format
 
-```
+```text
 ## Files
 
 - [src/auth/session.ts](src/auth/session.ts)
@@ -70,13 +70,14 @@ node <skill>/scripts/discover.mjs \
 After saving the plan, re-verify all links:
 
 ```bash
-node <skill>/scripts/discover.mjs \
+python <skill>/scripts/discover.py \
   --files "src/auth/session.ts,src/auth/jwt.ts" \
   --names "validateToken,SessionAccess" \
   --ext ts,tsx
 ```
 
-**Check**: 
+**Check**:
+
 - Every file link matches discovery output
 - Every symbol link matches discovery output with correct line number
 - If line numbers drifted, update from latest discovery
@@ -84,5 +85,5 @@ node <skill>/scripts/discover.mjs \
 ## Full Discovery Options
 
 ```bash
-node skills/create-plan/scripts/discover.mjs --help
+python skills/create-plan/scripts/discover.py --help
 ```

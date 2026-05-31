@@ -4,34 +4,29 @@ These scripts are bundled with the skill. They run automatically during the work
 
 ---
 
-## discover.mjs — File & Symbol Discovery
+## discover.py — File & Symbol Discovery
 
 Find files matching a pattern and extract function/class symbols with line numbers.
 
 **Syntax**:
 
 ```bash
-node ${CLAUDE_SKILL_DIR}/scripts/discover.mjs \
-  --pattern "src/**/*.ts" \
-  --filter "generateToken|verifyToken" \
-  --output discovery.json
+python ${CLAUDE_SKILL_DIR}/scripts/discover.py \
+  --files "src/**/*.ts" \
+  --names "generateToken,verifyToken" \
+  --json
 ```
 
-**Output** (`discovery.json`):
+**Output** (`--json`):
 
 ```json
 {
-  "matches": [
+  "files": [],
+  "symbols": [
     {
       "file": "src/utils/jwt.ts",
-      "symbols": [
-        {
-          "name": "generateToken",
-          "type": "function",
-          "line": 15,
-          "markdown": "[generateToken](src/utils/jwt.ts#L15)"
-        }
-      ]
+      "line": 15,
+      "match": "export function generateToken(payload: JWTPayload): string {"
     }
   ]
 }
@@ -100,7 +95,7 @@ python ${CLAUDE_SKILL_DIR}/scripts/validate_plan.py \
 
 **Output**:
 
-```
+```text
 ✓ 27 tasks validated
 ✓ All 45 file links valid
 ✓ No circular dependencies detected

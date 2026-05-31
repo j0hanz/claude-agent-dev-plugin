@@ -4,7 +4,7 @@ description: |
   Creates a structured implementation plan for a specific technical task. Use when you already have a validated spec (from `create-specs`) or are handed a well-scoped task and need an executable plan. ROUTING: if the user is starting a feature from scratch with no spec yet, invoke `spec-driven-development` first — this skill is its Step 3 sub-skill, not a replacement for the full workflow. Triggers directly on: 'create a plan', 'write a plan for', 'plan this out', 'what are the steps to', or when `spec-driven-development` reaches its Planning Gate. Also use standalone for: refactoring a known component, upgrading a dependency, migrating infrastructure — tasks where scope is already clear. Offers quick-start flags (--quick for simple features, --compact for overviews, --assume-paths for multi-repo). Do NOT skip this for multi-step technical work.
 disable-model-invocation: false
 user-invocable: false
-allowed-tools: Bash(python *) Bash(python3 *) Bash(node *)
+allowed-tools: Bash(python *) Bash(python3 *)
 argument-hint: |
   [--atomic (default) | --compact (executive) | --narrative (runbook)]
   [--quick (skip discovery)] [--assume-paths (multi-repo)]
@@ -376,7 +376,7 @@ Why this breaks: Path might not exist, line might be wrong. Plan fails during ex
 ✅ **RIGHT** (discovered and verified):
 ```
 Files: [src/utils/jwt.ts](src/utils/jwt.ts)
-Symbols: [generateToken](src/utils/jwt.ts#L15)  # Verified via discover.mjs
+Symbols: [generateToken](src/utils/jwt.ts#L15)  # Verified via discover.py
 ```
 
 Why this works: Paths are markdown-linked and verified. Agent can follow them.
