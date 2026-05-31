@@ -1,0 +1,39 @@
+{
+  "skill_name": "brainstorming",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Let's just build a search feature for our product. Start coding.",
+      "expected_output": "Skill intercepts the 'just build it' request and initiates Phase 1 discovery before writing any code. Asks the user to confirm its understanding of the task. No code or scaffolding is produced.",
+      "files": [],
+      "expectations": [
+        "Skill does NOT write any code or scaffolding",
+        "Skill performs Phase 1 discovery (reads code/docs/git history) before asking questions",
+        "Skill states its current understanding in one paragraph and asks for confirmation",
+        "Skill asks only one question at a time"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "There's a bug where the login button doesn't respond on mobile. Fix it.",
+      "expected_output": "Skill correctly identifies this as a bug fix with a clearly defined problem and does NOT initiate brainstorming. Proceeds directly to investigation or fix.",
+      "files": [],
+      "expectations": [
+        "Skill does NOT initiate the brainstorming phase sequence",
+        "Skill treats the request as a bug fix and proceeds toward investigation or resolution"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "We need to add a 'workspace' concept to our app. We currently have 'accounts' and 'organizations' and I'm not sure how workspaces fit in.",
+      "expected_output": "Skill triggers Phase 2 (Domain Clarity) due to ambiguous overlapping terminology. Asks the user to define 'workspace' in their own words. Documents the term using the canonical output format. Does not propose a design until terminology is resolved.",
+      "files": [],
+      "expectations": [
+        "Skill enters Phase 2 (Domain Clarity) for the ambiguous term 'workspace'",
+        "Skill asks the user to define the term in their own words — does not lead with a definition",
+        "Skill does NOT propose a design or implementation approach before terminology is resolved",
+        "Skill uses the canonical term output format: [Canonical Term]: [Definition]. Aliases: ..."
+      ]
+    }
+  ]
+}

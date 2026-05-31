@@ -3,9 +3,11 @@ name: brainstorming
 description: |
   Structured requirements discovery and design brainstorming before implementation. Prevents rework by catching design problems, ambiguous terminology, and misaligned assumptions before any code is written.
 
-  Use when: starting any new feature, component, or significant behavior change; domain terminology is ambiguous; or foundational assumptions need validation.
+  Use this whenever the user says "let's build X", "add a feature", "we need a new Y", "I want to implement Z", or starts describing a new component or behavior — even if they don't explicitly ask for brainstorming or say "just build it". Proactively offer a quick brainstorm before any implementation begins.
 
-  Skip for: bug fixes (clear problem), refactors with no behavior change, documentation updates, or when design is already approved.
+  Also use when: domain terminology is ambiguous, foundational assumptions need validation, or the user is unsure how to approach a design problem.
+
+  Skip only for: bug fixes with a clearly defined problem, pure refactors with no behavior change, documentation-only updates, or when a design has already been explicitly approved and implementation is the next step.
 ---
 
 # Brainstorming
@@ -112,7 +114,7 @@ Avoid the "checklist trap" — don't run all four techniques as a script. Pick 1
 - Yes → apply one more technique, then move on regardless
 - No → document TBD items and proceed to Phase 4
 
-**Hard limit: 4 questions total** across all techniques. Unresolved questions become TBD items with an owner — don't loop indefinitely.
+**Hard limit: 4 questions total within Phase 3** across all techniques. Unresolved questions become TBD items with an owner — don't loop indefinitely.
 
 1. **The "Why" (Five Whys):** Drill down to the root problem. "Why is this needed *now*? What fails if we don't do this?"
 2. **The Premortem:** "Imagine we've implemented this and it's a disaster. What's the most likely thing that went wrong?" (Surfaces hidden technical or organizational risks.)
@@ -153,4 +155,4 @@ When the user approves a design:
    - **Architecture summary** (key components, data flows)
    - **Success criteria** (how you'll know it worked)
 
-   Pass this to `/plan` or your implementation team to move into detailed planning.
+   Produce this brief as your final output and stop — do not invoke `/plan` or write any code automatically. The user decides what to do next. If they want to proceed to planning, they can invoke `/plan` themselves or ask you to do so explicitly.
