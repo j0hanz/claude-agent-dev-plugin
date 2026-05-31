@@ -8,12 +8,13 @@ Use **npm** — `npm install`. JS and Python dependencies are separate.
 
 ```bash
 npm install
-pip install pytest ruff
+uv sync
 ```
 
 ## Dependency Locations
 
-- Node modules: `node_modules/` (no `.venv` — Python installed globally)
+- Node modules: `node_modules/`
+- Python virtual environment: `.venv/` (managed by uv)
 
 ## File-scoped commands
 
