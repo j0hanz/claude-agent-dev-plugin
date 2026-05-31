@@ -1,0 +1,39 @@
+// SessionStart handler — injects live repository context so the agent starts
+// each session already oriented, instead of spending its first turns probing
+// git. This belongs in a hook (not CLAUDE.md) because the content changes every
+// session: branch, uncommitted work, and recent commits.
+
+import { sh } from '../utils.mjs';
+
+/**
+ * Build a compact orientation block for the current repo state.
+ * Returns a string (injected as additionalContext) or null when not a git repo.
+ */
+export function start() {
+  const inside = sh('git', ['rev-parse', '--is-inside-work-tree'], { timeout: 3000 });
+  if (inside !== 'true') return null;
+
+  const branch = sh('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { timeout: 3000 });
+  const status = sh('git', ['status', '--porcelain'], { timeout: 5000 });
+  const changed = status ? status.split('\n').filter(Boolean) : [];
+  const log = sh('git', ['log', '-5', '--pretty=format:%h %s'], { timeout: 5000 });
+
+  const lines = ['## Repository context (auto-injected)'];
+  if (branch) lines.push(`Branch: \`${branch}\``);
+
+  if (changed.length) {
+    lines.push(`Uncommitted changes: ${changed.length} file(s)`);
+    const preview = changed.slice(0, 10).map((l) => `  ${l}`);
+    lines.push(...preview);
+    if (changed.length > 10) lines.push(`  …and ${changed.length - 10} more`);
+  } else {
+    lines.push('Working tree: clean');
+  }
+
+  if (log) {
+    lines.push('Recent commits:');
+    lines.push(...log.split('\n').map((l) => `  ${l}`));
+  }
+
+  return lines.join('\n');
+}
