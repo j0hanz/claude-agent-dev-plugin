@@ -10,6 +10,8 @@ Example:
     python scripts/package_skill.py skills/public/my-skill ./dist
 """
 
+from __future__ import annotations
+
 import fnmatch
 import sys
 import zipfile
@@ -19,25 +21,30 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from scripts.quick_validate import validate_skill
 
 # Patterns to exclude when packaging skills.
-EXCLUDE_DIRS = {"__pycache__", "node_modules"}
-EXCLUDE_GLOBS = {"*.pyc"}
-EXCLUDE_FILES = {".DS_Store"}
+EXCLUDE_DIRS = {"__pycache__", "node_modules", ".git", ".pytest_cache", ".ruff_cache"}
+EXCLUDE_GLOBS = {"*.pyc", "*.pyo", "*.pyd", ".DS_Store"}
+EXCLUDE_FILES = {".gitignore", ".prettierignore", ".prettierrc", "pyproject.toml"}
 # Directories excluded only at the skill root (not when nested deeper).
-ROOT_EXCLUDE_DIRS = {"evals"}
+ROOT_EXCLUDE_DIRS = {"evals", "tests", "benchmarks"}
 
 
 def should_exclude(rel_path: Path) -> bool:
     """Check if a path should be excluded from packaging."""
     parts = rel_path.parts
-    if any(part in EXCLUDE_DIRS for part in parts):
-        return True
-    # rel_path is relative to skill_path.parent, so parts[0] is the skill
-    # folder name and parts[1] (if present) is the first subdir.
-    if len(parts) > 1 and parts[1] in ROOT_EXCLUDE_DIRS:
-        return True
+    # First part is the skill folder name
+    if len(parts) > 1:
+        # Check root-level exclusions
+        if parts[1] in ROOT_EXCLUDE_DIRS:
+            return True
+
+    for part in parts:
+        if part in EXCLUDE_DIRS:
+            return True
+
     name = rel_path.name
     if name in EXCLUDE_FILES:
         return True
+
     return any(fnmatch.fnmatch(name, pat) for pat in EXCLUDE_GLOBS)
 
 
@@ -94,7 +101,7 @@ def package_skill(
     try:
         with zipfile.ZipFile(skill_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
             # Walk through the skill directory, excluding build artifacts
-            for file_path in skill_path.rglob("*"):
+            for file_path in sorted(skill_path.rglob("*")):
                 if not file_path.is_file():
                     continue
                 arcname = file_path.relative_to(skill_path.parent)
@@ -113,24 +120,21 @@ def package_skill(
 
 
 def main():
-    if len(sys.argv) < 2:
-        print(
-            "Usage: python utils/package_skill.py <path/to/skill-folder> [output-directory]"
-        )
-        print("\nExample:")
-        print("  python utils/package_skill.py skills/public/my-skill")
-        print("  python utils/package_skill.py skills/public/my-skill ./dist")
-        sys.exit(1)
+    import argparse
 
-    skill_path = sys.argv[1]
-    output_dir = sys.argv[2] if len(sys.argv) > 2 else None
+    parser = argparse.ArgumentParser(
+        description="Package a skill folder into a .skill file"
+    )
+    parser.add_argument("skill_path", help="Path to the skill folder")
+    parser.add_argument("output_dir", nargs="?", help="Optional output directory")
+    args = parser.parse_args()
 
-    print(f"Packaging skill: {skill_path}")
-    if output_dir:
-        print(f"   Output directory: {output_dir}")
+    print(f"Packaging skill: {args.skill_path}")
+    if args.output_dir:
+        print(f"   Output directory: {args.output_dir}")
     print()
 
-    result = package_skill(skill_path, output_dir)
+    result = package_skill(args.skill_path, args.output_dir)
 
     if result:
         sys.exit(0)

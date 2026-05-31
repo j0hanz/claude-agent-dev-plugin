@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import json
 import random
 import sys
@@ -21,14 +22,20 @@ def split_eval_set(
     no_trigger = [e for e in eval_set if not e["should_trigger"]]
     random.shuffle(trigger)
     random.shuffle(no_trigger)
-    n_trigger_test = max(1, int(len(trigger) * holdout))
-    n_no_trigger_test = max(1, int(len(no_trigger) * holdout))
+
+    n_trigger_test = (
+        max(1, int(len(trigger) * holdout)) if trigger and holdout > 0 else 0
+    )
+    n_no_trigger_test = (
+        max(1, int(len(no_trigger) * holdout)) if no_trigger and holdout > 0 else 0
+    )
+
     test_set = trigger[:n_trigger_test] + no_trigger[:n_no_trigger_test]
     train_set = trigger[n_trigger_test:] + no_trigger[n_no_trigger_test:]
     return train_set, test_set
 
 
-def _run_iteration(
+async def _run_iteration(
     iteration: int,
     current_description: str,
     train_set: list[dict],
@@ -43,22 +50,16 @@ def _run_iteration(
     all_queries = train_set + test_set
     project_root = find_project_root()
 
-    # Note: run_eval is now async, so this needs to be called with asyncio.run()
-    # However, this refactoring assumes we keep run_loop as the main entry
-    import asyncio
-
-    all_results = asyncio.run(
-        run_eval(
-            eval_set=all_queries,
-            skill_name=skill_name,
-            description=current_description,
-            num_workers=num_workers,
-            timeout=timeout,
-            project_root=project_root,
-            runs_per_query=runs_per_query,
-            trigger_threshold=trigger_threshold,
-            model=model,
-        )
+    all_results = await run_eval(
+        eval_set=all_queries,
+        skill_name=skill_name,
+        description=current_description,
+        num_workers=num_workers,
+        timeout=timeout,
+        project_root=project_root,
+        runs_per_query=runs_per_query,
+        trigger_threshold=trigger_threshold,
+        model=model,
     )
 
     train_queries_set = {q["query"] for q in train_set}
@@ -96,7 +97,7 @@ def _run_iteration(
     return train_results, test_results
 
 
-def run_loop(
+async def run_loop_async(
     eval_set: list[dict],
     skill_path: Path,
     description_override: str | None,
@@ -119,7 +120,10 @@ def run_loop(
     history = []
 
     for iteration in range(1, max_iterations + 1):
-        train_results, test_results = _run_iteration(
+        if verbose:
+            print(f"Iteration {iteration}/{max_iterations}...")
+
+        train_results, test_results = await _run_iteration(
             iteration,
             current_description,
             train_set,
@@ -150,24 +154,28 @@ def run_loop(
         )
 
         if live_report_path:
-            live_report_path.write_text(
-                generate_html(
-                    {
-                        "original_description": original_description,
-                        "best_description": current_description,
-                        "iterations_run": len(history),
-                        "history": history,
-                    },
-                    auto_refresh=True,
-                    skill_name=name,
-                ),
-                encoding="utf-8",
+            report_html = generate_html(
+                {
+                    "original_description": original_description,
+                    "best_description": current_description,
+                    "iterations_run": len(history),
+                    "history": history,
+                    "train_size": len(train_set),
+                    "test_size": len(test_set),
+                },
+                auto_refresh=True,
+                skill_name=name,
+            )
+            await asyncio.to_thread(
+                live_report_path.write_text, report_html, encoding="utf-8"
             )
 
         if train_results["summary"]["failed"] == 0 or iteration == max_iterations:
             break
 
-        current_description = improve_description(
+        # Assuming improve_description is sync, wrap in to_thread
+        current_description = await asyncio.to_thread(
+            improve_description,
             name,
             content,
             current_description,
@@ -177,13 +185,14 @@ def run_loop(
                 for h in history
             ],
             model,
-            None,
+            test_results,
             log_dir,
             iteration,
         )
 
     best = max(
-        history, key=lambda h: h["test_passed"] if test_set else h["train_passed"]
+        history,
+        key=lambda h: (h["test_passed"] if test_set else h["train_passed"]) or 0,
     )
     return {
         "best_description": best["description"],
@@ -196,11 +205,39 @@ def main():
     parser.add_argument("--eval-set", required=True)
     parser.add_argument("--skill-path", required=True)
     parser.add_argument("--model", required=True)
-    # ... rest of args ...
+    parser.add_argument("--description", default=None)
+    parser.add_argument("--num-workers", type=int, default=10)
+    parser.add_argument("--timeout", type=int, default=30)
+    parser.add_argument("--max-iterations", type=int, default=5)
+    parser.add_argument("--runs-per-query", type=int, default=3)
+    parser.add_argument("--trigger-threshold", type=float, default=0.5)
+    parser.add_argument("--holdout", type=float, default=0.2)
+    parser.add_argument("--verbose", action="store_true")
+    parser.add_argument("--live-report", help="Path to write live HTML report")
+    parser.add_argument("--log-dir", help="Directory for detailed iteration logs")
     args = parser.parse_args()
 
     eval_set = load_json(Path(args.eval_set))
-    output = run_loop(eval_set, Path(args.skill_path), **vars(args))
+    live_report_path = Path(args.live_report) if args.live_report else None
+    log_dir = Path(args.log_dir) if args.log_dir else None
+
+    output = asyncio.run(
+        run_loop_async(
+            eval_set=eval_set,
+            skill_path=Path(args.skill_path),
+            description_override=args.description,
+            num_workers=args.num_workers,
+            timeout=args.timeout,
+            max_iterations=args.max_iterations,
+            runs_per_query=args.runs_per_query,
+            trigger_threshold=args.trigger_threshold,
+            holdout=args.holdout,
+            model=args.model,
+            verbose=args.verbose,
+            live_report_path=live_report_path,
+            log_dir=log_dir,
+        )
+    )
     print(json.dumps(output, indent=2))
 
 

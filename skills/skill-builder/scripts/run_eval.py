@@ -14,8 +14,9 @@ from scripts.utils import parse_skill_md
 _TRIGGER_TOOLS = frozenset({"Skill", "Read"})
 
 
-def find_project_root() -> Path:
-    current = Path.cwd()
+def find_project_root(start_path: Path | None = None) -> Path:
+    """Find the project root by searching for .claude directory."""
+    current = start_path or Path.cwd()
     for parent in [current, *current.parents]:
         if (parent / ".claude").is_dir():
             return parent
@@ -36,8 +37,8 @@ async def run_single_query(
     command_file = project_commands_dir / f"{clean_name}.md"
 
     try:
-        project_commands_dir.mkdir(parents=True, exist_ok=True)
-        indented_desc = "\n  ".join(skill_description.split("\n"))
+        await asyncio.to_thread(project_commands_dir.mkdir, parents=True, exist_ok=True)
+        indented_desc = "\n  ".join(skill_description.splitlines())
         command_content = (
             f"---\n"
             f"description: |\n"
@@ -46,7 +47,9 @@ async def run_single_query(
             f"# {skill_name}\n\n"
             f"This skill handles: {skill_description}\n"
         )
-        command_file.write_text(command_content, encoding="utf-8")
+        await asyncio.to_thread(
+            command_file.write_text, command_content, encoding="utf-8"
+        )
 
         cmd = [
             "claude",
@@ -73,11 +76,15 @@ async def run_single_query(
         try:
             stdout, _ = await asyncio.wait_for(process.communicate(), timeout=timeout)
         except asyncio.TimeoutError:
-            process.terminate()
+            try:
+                process.terminate()
+                await process.wait()
+            except ProcessLookupError:
+                pass
             return False
 
         triggered = False
-        pending_tool_name = None
+        pending_tool_name: str | None = None
         accumulated_json = ""
 
         for raw_line in stdout.decode(errors="replace").splitlines():
@@ -120,19 +127,19 @@ async def run_single_query(
                         continue
                     tool_name = content_item.get("name", "")
                     tool_input = content_item.get("input", {})
-                    if tool_name == "Skill" and clean_name in tool_input.get(
-                        "skill", ""
+                    if tool_name == "Skill" and clean_name in str(
+                        tool_input.get("skill", "")
                     ):
                         triggered = True
-                    elif tool_name == "Read" and clean_name in tool_input.get(
-                        "file_path", ""
+                    elif tool_name == "Read" and clean_name in str(
+                        tool_input.get("file_path", "")
                     ):
                         triggered = True
 
         return triggered
     finally:
-        if command_file.exists():
-            command_file.unlink()
+        if await asyncio.to_thread(command_file.exists):
+            await asyncio.to_thread(command_file.unlink)
 
 
 async def run_eval(

@@ -10,7 +10,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 
-@dataclass
+@dataclass(slots=True)
 class SpecDocument:
     """Parsed representation of a spec markdown file."""
 
@@ -23,10 +23,7 @@ class SpecDocument:
 
 
 _HEADING_RE = re.compile(r"^(#+)\s+(?:\d+\.\s+)?(.+)$")
-_REQ_RE = re.compile(r"\b(REQ|SEC|PERF|COMP)-\d+\b")
-_AC_RE = re.compile(r"\bAC-\d+\b")
-_VAL_RE = re.compile(r"\bVAL-\d+\b")
-_CON_RE = re.compile(r"\bCON-\d+\b")
+_IDS_RE = re.compile(r"\b((?:REQ|SEC|PERF|COMP|AC|VAL|CON)-\d+)\b")
 
 
 def parse_spec(path: str | Path) -> SpecDocument:
@@ -42,33 +39,37 @@ def parse_spec(path: str | Path) -> SpecDocument:
         FileNotFoundError: If the path doesn't exist.
         OSError: If the file cannot be read.
     """
-    content = Path(path).read_text(encoding="utf-8")
+    path = Path(path)
+    content = path.read_text(encoding="utf-8")
     lines = content.splitlines()
 
     doc = SpecDocument(raw_lines=lines)
     current_section: str | None = None
     section_lines: list[str] = []
 
+    def _flush_section():
+        if current_section is not None:
+            doc.sections[current_section] = "\n".join(section_lines).strip()
+
     for line in lines:
-        m = _HEADING_RE.match(line)
-        if m:
-            if current_section is not None:
-                doc.sections[current_section] = "\n".join(section_lines).strip()
+        if m := _HEADING_RE.match(line):
+            _flush_section()
             current_section = m.group(2).strip()
             section_lines = []
         elif current_section is not None:
             section_lines.append(line)
 
-        for rm in _REQ_RE.finditer(line):
-            doc.reqs.add(rm.group(0))
-        for am in _AC_RE.finditer(line):
-            doc.acs.add(am.group(0))
-        for vm in _VAL_RE.finditer(line):
-            doc.vals.add(vm.group(0))
-        for cm in _CON_RE.finditer(line):
-            doc.cons.add(cm.group(0))
+        for match in _IDS_RE.finditer(line):
+            id_str = match.group(1)
+            if id_str.startswith("AC-"):
+                doc.acs.add(id_str)
+            elif id_str.startswith("VAL-"):
+                doc.vals.add(id_str)
+            elif id_str.startswith("CON-"):
+                doc.cons.add(id_str)
+            else:
+                doc.reqs.add(id_str)
 
-    if current_section is not None:
-        doc.sections[current_section] = "\n".join(section_lines).strip()
+    _flush_section()
 
     return doc

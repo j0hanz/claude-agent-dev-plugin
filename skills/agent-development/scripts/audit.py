@@ -6,18 +6,19 @@ Exit: 0=clean, 1=warnings, 2=errors
 """
 
 from __future__ import annotations
+
 import argparse
 import dataclasses
 import re
 import sys
 from pathlib import Path
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from lib.agent_parser import parse_agent, ParseError, detect_agent_kind, AgentSpec
-from lib.report import Finding, render_human, render_json, compute_exit_code
+from lib.agent_parser import AgentSpec, ParseError, detect_agent_kind, parse_agent
 from lib.constants import SHELL_TOOLS
+from lib.report import Finding, compute_exit_code, render_human, render_json
 
 _MUST_NOT: List[str] = ["never", "must not", "do not", "don't", "cannot", "prohibited"]
 _ERR_HANDLING: List[str] = [
@@ -56,10 +57,7 @@ _SKILL_TASK_HINTS: Dict[str, List[str]] = {
 
 
 def check_skill_composition(frontmatter: Dict[str, Any], body: str) -> List[Finding]:
-    """Detect strong task-phrase hints without matching pinned skills.
-    Returns a list of Finding objects.
-    Suppressible via `skill_composition: declined` frontmatter flag.
-    """
+    """Detect strong task-phrase hints without matching pinned skills."""
     if frontmatter.get("skill_composition") == "declined":
         return []
 
@@ -88,12 +86,12 @@ def check_skill_composition(frontmatter: Dict[str, Any], body: str) -> List[Find
                         "",
                     )
                 )
-                break  # one finding per skill is enough
+                break
     return findings
 
 
 def check_cc_subagent_specific(frontmatter: Dict[str, Any], body: str) -> List[Finding]:
-    """CC subagent-specific validation (CCSA001, CCSA002)."""
+    """CC subagent-specific validation."""
     findings: List[Finding] = []
     tools = frontmatter.get("tools") or []
     if not all(isinstance(t, str) for t in tools):
@@ -127,6 +125,7 @@ def audit(spec: AgentSpec, strict: bool = False) -> List[Finding]:
     findings: List[Finding] = []
     p = spec.path
 
+    # Permission checks
     for tool in spec.tools:
         if tool.permission == "always_allow":
             findings.append(
@@ -138,7 +137,6 @@ def audit(spec: AgentSpec, strict: bool = False) -> List[Finding]:
                 )
             )
 
-    for tool in spec.tools:
         if tool.name.lower() in SHELL_TOOLS and tool.permission != "always_ask":
             findings.append(
                 Finding(
@@ -161,6 +159,7 @@ def audit(spec: AgentSpec, strict: bool = False) -> List[Finding]:
                 )
             )
 
+    # Pinning checks
     for skill in spec.skills:
         if skill.version == "latest":
             findings.append(
@@ -171,9 +170,7 @@ def audit(spec: AgentSpec, strict: bool = False) -> List[Finding]:
                     p,
                 )
             )
-
-    for skill in spec.skills:
-        if skill.version is None:
+        elif skill.version is None:
             findings.append(
                 Finding(
                     "warn",
@@ -183,6 +180,7 @@ def audit(spec: AgentSpec, strict: bool = False) -> List[Finding]:
                 )
             )
 
+    # Prompt quality checks
     prompt_l = spec.system_prompt.lower()
 
     if not any(kw in prompt_l for kw in _MUST_NOT):
@@ -229,6 +227,7 @@ def audit(spec: AgentSpec, strict: bool = False) -> List[Finding]:
             )
         )
 
+    # Meta metadata checks
     if "<example>" not in spec.description:
         findings.append(
             Finding(
@@ -249,6 +248,7 @@ def audit(spec: AgentSpec, strict: bool = False) -> List[Finding]:
             )
         )
 
+    # Beta tracking
     if "managed-agents-2026-04-01" not in (spec.description + " " + spec.system_prompt):
         findings.append(
             Finding(
@@ -260,7 +260,7 @@ def audit(spec: AgentSpec, strict: bool = False) -> List[Finding]:
             )
         )
 
-    # Detect agent kind and route to subagent-specific checks
+    # Specialized Kind checks
     kind = detect_agent_kind(spec.raw_frontmatter)
     if kind == "cc_subagent":
         for finding in check_cc_subagent_specific(
@@ -268,7 +268,7 @@ def audit(spec: AgentSpec, strict: bool = False) -> List[Finding]:
         ):
             findings.append(dataclasses.replace(finding, path=p))
 
-    # Append skill composition check to findings (works for both managed and cc_subagent)
+    # Skill composition is relevant for all
     for finding in check_skill_composition(spec.raw_frontmatter, spec.system_prompt):
         findings.append(dataclasses.replace(finding, path=p))
 
@@ -284,7 +284,7 @@ def main():
     parser.add_argument(
         "--strict",
         action="store_true",
-        help="Treat warnings as errors (e.g. PIN001 becomes error)",
+        help="Treat warnings as errors",
     )
     args = parser.parse_args()
 

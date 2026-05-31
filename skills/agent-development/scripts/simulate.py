@@ -8,14 +8,15 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import asyncio
 import json
 import os
 import shutil
-import subprocess
 import sys
 import tempfile
 import time
 from pathlib import Path
+from typing import Any
 
 # Add lib to path
 sys.path.insert(0, str(Path(__file__).parent / "lib"))
@@ -50,15 +51,15 @@ def _safety_check(args) -> tuple[bool, str]:
         )
 
 
-def _write_observer(simulate_dir: Path) -> Path:
-    simulate_dir.mkdir(parents=True, exist_ok=True)
+async def _write_observer(simulate_dir: Path) -> Path:
+    await asyncio.to_thread(simulate_dir.mkdir, parents=True, exist_ok=True)
     obs = simulate_dir / "observer.py"
     src = Path(__file__).parent / "lib" / "observer.py"
-    shutil.copy2(src, obs)
+    await asyncio.to_thread(shutil.copy2, src, obs)
     return obs
 
 
-def _write_hooks_config(simulate_dir: Path, observer: Path) -> Path:
+async def _write_hooks_config(simulate_dir: Path, observer: Path) -> Path:
     cfg = {
         "hooks": {
             ev: [
@@ -77,7 +78,7 @@ def _write_hooks_config(simulate_dir: Path, observer: Path) -> Path:
         }
     }
     out = simulate_dir / "hooks-config.json"
-    out.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
+    await asyncio.to_thread(out.write_text, json.dumps(cfg, indent=2), encoding="utf-8")
     return out
 
 
@@ -87,34 +88,26 @@ def _load_cases(path: Path) -> dict:
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
-def run_case(
+async def run_case(
     case: dict, agent_file: Path, hooks_config: Path, runs: int, simulate_dir: Path
 ) -> list[RunResult]:
-    prompt = case.get("prompt")
+    prompt = case.get("prompt", "")
     expect = case.get("expect", {})
     results = []
 
     for i in range(runs):
         run_id = f"{case.get('id', 'case')}-run-{i}"
         run_dir = simulate_dir / "runs" / run_id
-        run_dir.mkdir(parents=True, exist_ok=True)
+        await asyncio.to_thread(run_dir.mkdir, parents=True, exist_ok=True)
 
         env = os.environ.copy()
         env["SIMULATE_RUN_ID"] = run_id
         env["SIMULATE_OUT_DIR"] = str(simulate_dir / "runs")
-        env["CLAUDE_CONFIG_DIR"] = str(run_dir / ".claude-config")  # Isolated config
-
-        # We need to inject the hooks config. Since we can't easily modify the global
-        # config for a single run without affecting others, we use an env var that
-        # Claude Code's hook loader respects for dev overrides.
+        env["CLAUDE_CONFIG_DIR"] = str(run_dir / ".claude-config")
         env["CLAUDE_HOOKS_CONFIG"] = str(hooks_config)
 
-        start_time = time.time()
-
+        effective_prompt = prompt
         if agent_file:
-            # claude -p does not have a dedicated --agent-file flag.
-            # Inject the agent's system prompt as a preamble so the model
-            # runs with the intended persona during simulation.
             try:
                 from lib.agent_parser import parse_agent  # noqa: PLC0415
 
@@ -122,35 +115,39 @@ def run_case(
                 system_preamble = f"[SYSTEM PROMPT]\n{agent_spec.system_prompt}\n[END SYSTEM PROMPT]\n\n"
                 effective_prompt = system_preamble + prompt
             except Exception:
-                effective_prompt = prompt
-        else:
-            effective_prompt = prompt
+                pass
 
         cmd = ["claude", "-p", effective_prompt, "--output-format", "json"]
 
+        start_time = time.time()
+        process = await asyncio.create_subprocess_exec(
+            *cmd,
+            stdout=asyncio.subprocess.PIPE,
+            stderr=asyncio.subprocess.PIPE,
+            env=env,
+        )
+
         try:
-            res = subprocess.run(
-                cmd, env=env, capture_output=True, text=True, timeout=300
-            )
+            stdout, stderr = await asyncio.wait_for(process.communicate(), timeout=300)
             duration_s = time.time() - start_time
 
-            # Parse output
             try:
-                out_data = json.loads(res.stdout)
+                out_data = json.loads(stdout.decode())
                 final_response = out_data.get("result", "")
                 tokens_in = out_data.get("usage", {}).get("input_tokens", 0)
                 tokens_out = out_data.get("usage", {}).get("output_tokens", 0)
             except Exception:
-                final_response = res.stdout
+                final_response = stdout.decode(errors="replace")
                 tokens_in = tokens_out = 0
 
-            # Parse tool calls from observer log
             log_file = run_dir / "tool-calls.jsonl"
             calls = []
-            if log_file.exists():
-                calls = parse_tool_calls_jsonl(log_file.read_text())
+            if await asyncio.to_thread(log_file.exists):
+                log_content = await asyncio.to_thread(
+                    log_file.read_text, encoding="utf-8"
+                )
+                calls = parse_tool_calls_jsonl(log_content)
 
-            # Evaluate
             eval_res = evaluate_assertions(calls, final_response, expect, duration_s)
 
             results.append(
@@ -162,7 +159,9 @@ def run_case(
                 )
             )
 
-        except subprocess.TimeoutExpired:
+        except asyncio.TimeoutError:
+            process.terminate()
+            await process.wait()
             results.append(RunResult(False, 300000, 0, 0))
         except Exception as e:
             print(f"Run {run_id} failed: {e}")
@@ -171,7 +170,7 @@ def run_case(
     return results
 
 
-def main():
+async def main_async():
     p = argparse.ArgumentParser()
     p.add_argument("agent_file")
     p.add_argument("cases_file")
@@ -182,7 +181,6 @@ def main():
     p.add_argument(
         "--dry-run",
         action="store_true",
-        dest="dry_run",
         help="Validate config and write observer files without running claude",
     )
     p.add_argument(
@@ -203,8 +201,8 @@ def main():
     cases_data = _load_cases(cases_path)
 
     simulate_dir = Path(args.simulate_dir)
-    observer = _write_observer(simulate_dir)
-    hooks_cfg = _write_hooks_config(simulate_dir, observer)
+    observer = await _write_observer(simulate_dir)
+    hooks_cfg = await _write_hooks_config(simulate_dir, observer)
 
     if args.dry_run:
         if args.report == "json":
@@ -233,15 +231,16 @@ def main():
             print(f"[dry-run] Hooks config written to: {hooks_cfg}")
         sys.exit(0)
 
-    suite_results = {}
+    suite_results: dict[str, Any] = {}
 
     print(f"Running simulation suite: {cases_data.get('suite', 'default')}")
 
     for case in cases_data.get("cases", []):
-        print(f"  Case: {case.get('id', 'unknown')}...", end="", flush=True)
-        results = run_case(case, agent_path, hooks_cfg, args.runs, simulate_dir)
+        case_id = case.get("id", "unknown")
+        print(f"  Case: {case_id}...", end="", flush=True)
+        results = await run_case(case, agent_path, hooks_cfg, args.runs, simulate_dir)
         summary = aggregate_runs(results)
-        suite_results[case.get("id")] = summary
+        suite_results[case_id] = summary
         print(f" {summary['pass_rate'] * 100:.0f}% pass")
 
     # Final report
@@ -268,4 +267,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    asyncio.run(main_async())

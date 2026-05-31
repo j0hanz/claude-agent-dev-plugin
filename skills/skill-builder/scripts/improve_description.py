@@ -7,6 +7,7 @@ uses the session's Claude Code auth, no separate ANTHROPIC_API_KEY needed).
 """
 
 import argparse
+import asyncio
 import json
 import os
 import re
@@ -17,6 +18,38 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from scripts.utils import parse_skill_md
+
+
+async def _call_claude_async(prompt: str, model: str | None, timeout: int = 300) -> str:
+    """Run `claude -p` with the prompt on stdin and return the text response asynchronously."""
+    cmd = ["claude", "-p", "--output-format", "text"]
+    if model:
+        cmd.extend(["--model", model])
+
+    env = {k: v for k, v in os.environ.items() if k != "CLAUDECODE"}
+
+    process = await asyncio.create_subprocess_exec(
+        *cmd,
+        stdin=asyncio.subprocess.PIPE,
+        stdout=asyncio.subprocess.PIPE,
+        stderr=asyncio.subprocess.PIPE,
+        env=env,
+    )
+
+    try:
+        stdout, stderr = await asyncio.wait_for(
+            process.communicate(input=prompt.encode()), timeout=timeout
+        )
+    except asyncio.TimeoutError:
+        process.terminate()
+        await process.wait()
+        raise RuntimeError(f"claude -p timed out after {timeout}s")
+
+    if process.returncode != 0:
+        raise RuntimeError(
+            f"claude -p exited {process.returncode}\nstderr: {stderr.decode()}"
+        )
+    return stdout.decode()
 
 
 def _call_claude(prompt: str, model: str | None, timeout: int = 300) -> str:
@@ -199,6 +232,68 @@ def _write_log(log_dir: Path, iteration: int | None, transcript: dict) -> None:
     log_file.write_text(json.dumps(transcript, indent=2), encoding="utf-8")
 
 
+async def improve_description_async(
+    skill_name: str,
+    skill_content: str,
+    current_description: str,
+    eval_results: dict,
+    history: list[dict],
+    model: str,
+    test_results: dict | None = None,
+    log_dir: Path | None = None,
+    iteration: int | None = None,
+) -> str:
+    """Call Claude to improve the description based on eval results asynchronously."""
+    prompt = _build_prompt(
+        skill_name,
+        skill_content,
+        current_description,
+        eval_results,
+        history,
+        test_results,
+    )
+    text = await _call_claude_async(prompt, model)
+    description = _parse_description(text)
+
+    transcript: dict = {
+        "iteration": iteration,
+        "prompt": prompt,
+        "response": text,
+        "parsed_description": description,
+        "char_count": len(description),
+        "over_limit": len(description) > 1024,
+    }
+
+    if len(description) > 1024:
+        shorten_prompt = (
+            f"{prompt}\n\n"
+            f"---\n\n"
+            f"A previous attempt produced this description, which at "
+            f"{len(description)} characters is over the 1024-character hard limit:\n\n"
+            f'"{description}"\n\n'
+            f"Rewrite it to be under 1024 characters while keeping the most "
+            f"important trigger words and intent coverage. Respond with only "
+            f"the new description in <new_description> tags."
+        )
+        shorten_text = await _call_claude_async(shorten_prompt, model)
+        description = _parse_description(shorten_text)
+        transcript.update(
+            {
+                "rewrite_prompt": shorten_prompt,
+                "rewrite_response": shorten_text,
+                "rewrite_description": description,
+                "rewrite_char_count": len(description),
+            }
+        )
+
+    transcript["final_description"] = description
+
+    if log_dir:
+        await asyncio.to_thread(_write_log, log_dir, iteration, transcript)
+
+    return description
+
+
 def improve_description(
     skill_name: str,
     skill_content: str,
@@ -211,34 +306,20 @@ def improve_description(
     iteration: int | None = None,
 ) -> str:
     """Call Claude to improve the description based on eval results."""
-    prompt = _build_prompt(
-        skill_name,
-        skill_content,
-        current_description,
-        eval_results,
-        history,
-        test_results,
+    # This remains synchronous for backward compatibility but can call the async version
+    return asyncio.run(
+        improve_description_async(
+            skill_name,
+            skill_content,
+            current_description,
+            eval_results,
+            history,
+            model,
+            test_results,
+            log_dir,
+            iteration,
+        )
     )
-    text = _call_claude(prompt, model)
-    description = _parse_description(text)
-
-    transcript: dict = {
-        "iteration": iteration,
-        "prompt": prompt,
-        "response": text,
-        "parsed_description": description,
-        "char_count": len(description),
-        "over_limit": len(description) > 1024,
-    }
-
-    description, extra = _shorten_if_needed(description, prompt, model)
-    transcript.update(extra)
-    transcript["final_description"] = description
-
-    if log_dir:
-        _write_log(log_dir, iteration, transcript)
-
-    return description
 
 
 def main():

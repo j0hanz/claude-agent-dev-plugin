@@ -5,6 +5,8 @@ Usage: python scripts/recommend.py <agent.md> [--json]
 Exit: always 0 (advisory tool)
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import sys
@@ -12,16 +14,19 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from lib.agent_parser import parse_agent, ParseError, AgentSpec
+from lib.agent_parser import AgentSpec, ParseError, parse_agent
 from lib.constants import TIER_MODELS as _TIER_MODELS
-from lib.heuristics import score_complexity, score_to_tier, has_shell_tool
+from lib.heuristics import has_shell_tool, score_complexity, score_to_tier
 
 
 def recommend(spec: AgentSpec) -> dict:
+    """Generate recommendations for model tier based on agent complexity."""
     score, reasons = score_complexity(spec)
     tier = score_to_tier(score, spec)
 
-    current_tier = next((k for k in _TIER_MODELS if k in spec.model.lower()), None)
+    current_tier = next(
+        (k for k in _TIER_MODELS if k.lower() in spec.model.lower()), None
+    )
     drift = None
     if current_tier and current_tier != tier:
         drift = (
@@ -41,6 +46,7 @@ def recommend(spec: AgentSpec) -> dict:
 
 
 def render_human_rec(r: dict) -> str:
+    """Render the recommendation in a human-readable format."""
     lines = [
         "=== Model recommendation ===",
         f"  Recommended: {r['recommended_tier'].upper()} ({r['recommended_model']})",

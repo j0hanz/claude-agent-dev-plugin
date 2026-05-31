@@ -10,16 +10,23 @@ def _parse_frontmatter(text: str) -> dict[str, str]:
         import yaml
 
         result = yaml.safe_load(text) or {}
-        return {k: str(v) for k, v in result.items() if isinstance(k, str)}
+        if not isinstance(result, dict):
+            return {}
+        return {str(k): str(v) for k, v in result.items()}
     except ImportError:
         pass
 
     # Fallback: hand-rolled parser for environments without PyYAML
     result: dict[str, str] = {}
-    lines = text.split("\n")
+    lines = text.splitlines()
     i = 0
     while i < len(lines):
-        m = re.match(r"^([a-zA-Z_][a-zA-Z0-9_-]*):\s*(.*)", lines[i])
+        line = lines[i]
+        if not line.strip():
+            i += 1
+            continue
+
+        m = re.match(r"^([a-zA-Z_][a-zA-Z0-9_-]*):\s*(.*)", line)
         if m:
             key, value = m.group(1), m.group(2).strip()
             if value in (">", "|", ">-", "|-", ""):
@@ -41,26 +48,18 @@ def _parse_frontmatter(text: str) -> dict[str, str]:
 
 def parse_skill_md(skill_path: Path) -> tuple[str, str, str]:
     """Parse a SKILL.md file, returning (name, description, full_content)."""
-    content = (skill_path / "SKILL.md").read_text(encoding="utf-8")
+    skill_md_path = skill_path / "SKILL.md"
+    if not skill_md_path.exists():
+        raise FileNotFoundError(f"SKILL.md not found in {skill_path}")
+
+    content = skill_md_path.read_text(encoding="utf-8")
 
     match = re.match(r"^---\n(.*?)\n---\n", content, re.DOTALL)
     if not match:
-        raise ValueError("SKILL.md missing frontmatter")
+        raise ValueError(f"SKILL.md in {skill_path} missing frontmatter")
 
-    frontmatter_text = match.group(1)
-
-    try:
-        import yaml
-
-        fm = yaml.safe_load(frontmatter_text) or {}
-        name = str(fm.get("name", "")).strip()
-        description = fm.get("description", "")
-        if isinstance(description, list):
-            description = " ".join(description)
-        description = str(description).strip()
-    except ImportError:
-        fm = _parse_frontmatter(frontmatter_text)
-        name = fm.get("name", "").strip().strip('"').strip("'")
-        description = fm.get("description", "").strip().strip('"').strip("'")
+    fm = _parse_frontmatter(match.group(1))
+    name = fm.get("name", "").strip()
+    description = fm.get("description", "").strip()
 
     return name, description, content
