@@ -27,9 +27,10 @@ import shlex
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 
-def run_case(cmd: str, payload: dict, shell_cmd: bool) -> dict:
+def run_case(cmd: str, payload: dict[str, Any], shell_cmd: bool) -> dict[str, Any]:
     """Run the hook once with `payload` on stdin; return a result dict."""
     stdin = json.dumps(payload)
     args = cmd if shell_cmd else shlex.split(cmd, posix=(sys.platform != "win32"))
@@ -45,7 +46,7 @@ def run_case(cmd: str, payload: dict, shell_cmd: bool) -> dict:
         try:
             parsed = json.loads(proc.stdout)
         except json.JSONDecodeError:
-            parsed = None  # non-JSON stdout is valid for many events
+            pass  # non-JSON stdout is valid for many events
     return {
         "exit": proc.returncode,
         "stdout": proc.stdout,
@@ -54,7 +55,7 @@ def run_case(cmd: str, payload: dict, shell_cmd: bool) -> dict:
     }
 
 
-def report(name: str, result: dict, expect_exit: int | None) -> bool:
+def report(name: str, result: dict[str, Any], expect_exit: int | None) -> bool:
     decision = {0: "no objection / proceed", 2: "BLOCK"}.get(
         result["exit"], "non-blocking error"
     )
@@ -89,19 +90,31 @@ def main() -> int:
     ap.add_argument("--shell", action="store_true", help="Run --cmd through the shell.")
     args = ap.parse_args()
 
-    cases: list[dict] = []
+    cases: list[dict[str, Any]] = []
     if args.cases:
-        data = json.loads(Path(args.cases).read_text(encoding="utf-8"))
+        try:
+            data = json.loads(Path(args.cases).read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            print(f"error: --cases file contains invalid JSON: {e}", file=sys.stderr)
+            return 1
         if not isinstance(data, list):
             print("error: --cases file must contain a JSON array", file=sys.stderr)
             return 1
         cases = data
     elif args.input_file:
-        cases = [
-            {"input": json.loads(Path(args.input_file).read_text(encoding="utf-8"))}
-        ]
+        try:
+            payload = json.loads(Path(args.input_file).read_text(encoding="utf-8"))
+        except json.JSONDecodeError as e:
+            print(f"error: --input-file contains invalid JSON: {e}", file=sys.stderr)
+            return 1
+        cases = [{"input": payload}]
     elif args.input:
-        cases = [{"input": json.loads(args.input), "expect_exit": args.expect_exit}]
+        try:
+            payload = json.loads(args.input)
+        except json.JSONDecodeError as e:
+            print(f"error: --input contains invalid JSON: {e}", file=sys.stderr)
+            return 1
+        cases = [{"input": payload, "expect_exit": args.expect_exit}]
     else:
         print("error: provide --input, --input-file, or --cases", file=sys.stderr)
         return 1
