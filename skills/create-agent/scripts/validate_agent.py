@@ -17,6 +17,12 @@ import argparse
 import re
 import sys
 from pathlib import Path
+from typing import Any
+
+NAME_MAX_LEN = 64
+DESC_MAX_LEN = 1024
+DESC_MIN_LEN = 30
+BODY_MIN_LEN = 80
 
 KEBAB = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 FULL_MODEL_ID = re.compile(r"^claude-(opus|sonnet|haiku)-[0-9].*$")
@@ -61,7 +67,7 @@ class Report:
     def info(self, code: str, msg: str) -> None:
         self.infos.append(f"{code}: {msg}")
 
-    def print(self) -> None:
+    def display(self) -> None:
         status = "FAIL" if self.errors else ("WARN" if self.warnings else "OK")
         print(f"\n[{status}] {self.path}")
         for line in self.errors:
@@ -83,10 +89,10 @@ def split_frontmatter(text: str) -> tuple[str | None, str]:
     return m.group(1), m.group(2)
 
 
-def parse_frontmatter(block: str) -> dict[str, object]:
+def parse_frontmatter(block: str) -> dict[str, Any]:
     """Minimal YAML subset: scalars, `key:` block scalars (| or >),
     inline `[a, b]` lists, and `- item` block lists."""
-    data: dict[str, object] = {}
+    data: dict[str, Any] = {}
     lines = block.split("\n")
     i = 0
     key_re = re.compile(r"^([A-Za-z_][A-Za-z0-9_-]*):\s?(.*)$")
@@ -108,6 +114,7 @@ def parse_frontmatter(block: str) -> dict[str, object]:
             # Block scalar: gather more-indented following lines.
             collected, i = _gather_indented(lines, i + 1)
             data[key] = " ".join(s.strip() for s in collected).strip()
+            continue
         elif val == "":
             # Possibly a block list (- item) following.
             items, ni = _gather_block_list(lines, i + 1)
@@ -139,7 +146,7 @@ def _gather_indented(lines: list[str], start: int) -> tuple[list[str], int]:
             i += 1
         else:
             break
-    return out, i - 1
+    return out, i
 
 
 def _gather_block_list(lines: list[str], start: int) -> tuple[list[str], int]:
@@ -225,8 +232,8 @@ def validate(path: Path) -> Report:
     if not name or not isinstance(name, str):
         rep.error("NAME001", "`name` is required.")
     else:
-        if len(name) > 64:
-            rep.error("NAME002", f"`name` exceeds 64 chars ({len(name)}).")
+        if len(name) > NAME_MAX_LEN:
+            rep.error("NAME002", f"`name` exceeds {NAME_MAX_LEN} chars ({len(name)}).")
         if not KEBAB.match(name):
             rep.error(
                 "NAME003",
@@ -238,14 +245,16 @@ def validate(path: Path) -> Report:
     if not desc or not isinstance(desc, str):
         rep.error("DESC001", "`description` is required.")
     else:
-        if len(desc) > 1024:
-            rep.error("DESC002", f"`description` exceeds 1024 chars ({len(desc)}).")
+        if len(desc) > DESC_MAX_LEN:
+            rep.error(
+                "DESC002", f"`description` exceeds {DESC_MAX_LEN} chars ({len(desc)})."
+            )
         if "<" in desc or ">" in desc:
             rep.warn(
                 "DESC003",
                 "`description` contains angle brackets (< or >); some loaders reject these.",
             )
-        if len(desc) < 30:
+        if len(desc) < DESC_MIN_LEN:
             rep.warn(
                 "DESC004",
                 "`description` is very short; make it pushy and concrete so the agent triggers reliably.",
@@ -322,7 +331,7 @@ def validate(path: Path) -> Report:
     if not body_stripped:
         rep.error("BODY001", "system prompt body is empty; the body IS the agent.")
     else:
-        if len(body_stripped) < 80:
+        if len(body_stripped) < BODY_MIN_LEN:
             rep.warn(
                 "BODY002",
                 "system prompt is very short; specify role, procedure, boundaries, and output contract.",
@@ -343,17 +352,18 @@ def validate(path: Path) -> Report:
 
 
 def main(argv: list[str]) -> int:
-    ap = argparse.ArgumentParser(
+    parser = argparse.ArgumentParser(
         description="Validate Claude Code subagent definition files."
     )
-    ap.add_argument("paths", nargs="+", help="Path(s) to agent .md file(s).")
-    args = ap.parse_args(argv)
+    parser.add_argument("paths", nargs="+", help="Path(s) to agent .md file(s).")
+    args = parser.parse_args(argv)
 
     any_error = False
     for p in args.paths:
         rep = validate(Path(p))
-        rep.print()
-        any_error = any_error or bool(rep.errors)
+        rep.display()
+        if rep.errors:
+            any_error = True
 
     print()
     return 1 if any_error else 0
