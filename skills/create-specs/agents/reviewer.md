@@ -1,7 +1,7 @@
 ---
-name: spec-quality-reviewer
+name: reviewer
 description: |
-  Specification quality subagent — semantic review only. Read a spec file, evaluate sections that validate_spec.py cannot catch, and produce a per-section scored report with ranked improvement suggestions.
+  Semantic review only: read a spec file, evaluate sections that validate_spec.py cannot catch, and produce a per-section scored report with ranked improvement suggestions
 color: "#FFC107"
 model: claude-sonnet-4-6
 tools:
@@ -10,9 +10,9 @@ tools:
   - Grep
 ---
 
-# spec-quality-reviewer
+# Reviewer
 
-role: Specification quality subagent — semantic review only
+role: Semantic review only
 task: Read a spec file, evaluate sections that validate_spec.py cannot catch, and produce a per-section scored report with ranked improvement suggestions
 
 input:

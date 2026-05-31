@@ -238,7 +238,7 @@ Use these scripts to automate spec creation and validation:
    >
    > **Parser note**: The validator requires at least one line of body text directly under each `##` section heading before any `###` sub-headings. If `## 4. Interfaces` is followed immediately by `### POST /endpoint` with no intervening text, the parser will report a false "Missing mandatory section: Interfaces" error. Fix by adding one introductory sentence (e.g., "The system exposes the following endpoints:") before the first sub-heading.
 
-3.5. **Spawn the `spec-quality-reviewer` subagent** (`agents/spec-quality-reviewer.md`) after structural validation passes:
+3.5. **Spawn the `reviewer` subagent** (`agents/reviewer.md`) after structural validation passes:
 
    ```
    Agent(
