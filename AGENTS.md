@@ -4,7 +4,7 @@ Claude Code plugin for authoring and testing agents, skills, and hooks.
 
 ## Package Manager
 
-Use **npm** — `npm install`. JS and Python dependencies are separate.
+Use **npm** — `npm install`.
 
 ```bash
 npm install
@@ -27,8 +27,7 @@ uv sync
 | Format (Py) | `ruff format <file.py>`               |
 | Test (Py)   | `python -m pytest <path/to/test.py>`  |
 | All tests   | `npm test`                            |
-
-Full Python test suite: `npm run test:python` (targets `skills/agent-development/scripts/tests/` and `skills/skill-builder/tests/` per `pyproject.toml`).
+| All Python  | `npm run test:python`                 |
 
 ## Key Conventions
 

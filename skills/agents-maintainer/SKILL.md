@@ -20,7 +20,9 @@ Design for a reader who is skimming at 200 words per second.
 
 ## Workflow
 
-This is a three-phase Process. Do not skip phases.
+This is a three-phase process. Do not skip phases.
+
+> **Resolving `<skill-dir>`:** Every script command below uses `<skill-dir>` as a placeholder for the absolute path to this skill's directory. In Claude Code, resolve it as `$CLAUDE_PLUGIN_ROOT/skills/agents-maintainer` or use the path returned by the skill loader. Example: `python /home/user/.claude/skills/agents-maintainer/scripts/run.py analyze-env .`
 
 ### Express Mode (Skip Phases)
 
@@ -32,7 +34,9 @@ If the project environment is already well-understood (e.g., standard Node.js/Ty
 
 *Note: If you skip Phase 1 and 1.5, you MUST explicitly ask the user to confirm the project stack (package manager, test runner) before finalizing.*
 
-Run the analysis subcommands to instantly discover the project structure, tooling, and conventions.
+### Phase 1 — Environment Discovery
+
+Run these analysis subcommands against the project root to discover its structure, tooling, and conventions:
 
 ```bash
 python <skill-dir>/scripts/run.py analyze-env .
@@ -40,11 +44,18 @@ python <skill-dir>/scripts/run.py find-dependencies .
 python <skill-dir>/scripts/run.py scan-structure . --max-depth 2
 ```
 
+Or run all three at once:
+
+```bash
+python <skill-dir>/scripts/run.py analyze-all . --max-depth 2
+```
+
 **What each subcommand does:**
 
-- `run.py analyze-env` — Detects package manager, test runner, linter, monorepo structure
-- `run.py find-dependencies` — Locates installed dependencies and their package locations (silent if none found)
-- `run.py scan-structure` — Outputs directory tree while respecting .gitignore rules
+- `run.py analyze-env [dir]` — Detects package manager, test runner, linter, monorepo structure
+- `run.py find-dependencies [dir]` — Locates installed dependency directories with sizes (silent if none found)
+- `run.py scan-structure [dir] [--max-depth N]` — Outputs directory tree while respecting .gitignore rules
+- `run.py analyze-all [dir] [--max-depth N]` — Runs all three above sequentially
 
 If a project signal is missing or ambiguous, ask the user before guessing. NEVER hallucinate test runners or linters.
 
@@ -140,7 +151,11 @@ If any checklist item fails, go back to Phase 2 and refine.
 
 **MANDATORY — READ ENTIRE FILE:** `references/guide.md` to finish wiring.
 
-Use the `python <skill-dir>/scripts/run.py wire-agents AGENTS.md CLAUDE.md GEMINI.md` command. This script will safely attempt to create symlinks, and will automatically fall back to hardlinks or file copies if symlinks are not supported by the environment (e.g., on Windows without Developer Mode).
+Use the `wire-agents` subcommand to wire `AGENTS.md` to agent-specific files. It attempts symlink first, then hardlink, then file copy:
+
+```bash
+python <skill-dir>/scripts/run.py wire-agents AGENTS.md CLAUDE.md GEMINI.md
+```
 
 As a final gut-check: would any section be embarrassing on a code review for being obvious or vague? If yes, cut it.
 

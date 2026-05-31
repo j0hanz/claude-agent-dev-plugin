@@ -416,6 +416,8 @@ python scripts/run.py <command> [args]
 - `lint-agents-md <path_to_AGENTS.md>` — Validate AGENTS.md length, filler text, commit attribution
 - `wire-agents <source_file> <target1> [target2...]` — Create symlink/hardlink/copy fallbacks
 
+**Hook integration:** `scripts/run_lint.sh` is a thin shell wrapper that runs `lint-agents-md` using `$CLAUDE_PLUGIN_ROOT` and `$CLAUDE_PROJECT_DIR` environment variables. It is intended for use in Claude Code hooks (e.g., `PostToolUse`) to automatically lint the AGENTS.md after edits. Invoke it directly only if those env vars are set.
+
 ## 4. File Setup & Symlinking
 
 Create a canonical `AGENTS.md` and link agent-specific files to it. Use the provided wiring script to safely handle platform differences (especially on Windows):

@@ -8,7 +8,9 @@ from __future__ import annotations
 import argparse
 import fnmatch
 import json
+import os
 import re
+import shutil
 import sys
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -426,6 +428,7 @@ _GENERIC_ADVICE_RE = re.compile(
     r"\b(always|be sure|remember|carefully|thoroughly|best practice|make sure|important|test thoroughly|be careful)\b",
     re.IGNORECASE,
 )
+_FILE_SCOPED_COMMANDS_RE = re.compile(r"##\s+file-scoped commands", re.IGNORECASE)
 
 
 def validate_agents_md_file(file_path: Path) -> ValidationResult:
@@ -496,7 +499,7 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
             )
 
         if (
-            "## File-scoped commands" not in content
+            not _FILE_SCOPED_COMMANDS_RE.search(content)
             and "| Tool | File | Command |" not in content
         ):
             issues.append(
@@ -623,6 +626,46 @@ def validate_manifest_file(manifest_file: Path) -> ValidationResult:
     )
 
 
+def wire_agents_files(source: Path, targets: list[Path]) -> int:
+    """Wire agent files by attempting symlink, hardlink, then file copy."""
+    source = source.resolve()
+    if not source.exists():
+        safe_print(f"FAIL: Source file not found: {source}", file=sys.stderr)
+        return 1
+
+    exit_code = 0
+    for target in targets:
+        target = target.resolve()
+        if target.exists() or target.is_symlink():
+            target.unlink()
+
+        # Try symlink first
+        try:
+            target.symlink_to(source)
+            safe_print(f"Symlinked: {target.name} -> {source}")
+            continue
+        except (OSError, NotImplementedError):
+            pass
+
+        # Try hardlink
+        try:
+            os.link(source, target)
+            safe_print(f"Hardlinked: {target.name} -> {source}")
+            continue
+        except (OSError, NotImplementedError):
+            pass
+
+        # Fall back to copy
+        try:
+            shutil.copy2(source, target)
+            safe_print(f"Copied: {source.name} -> {target.name}")
+        except OSError as e:
+            safe_print(f"FAIL: Could not wire {target}: {e}", file=sys.stderr)
+            exit_code = 1
+
+    return exit_code
+
+
 def print_validation_issues(result: ValidationResult) -> None:
     """Print validation issues with appropriate levels."""
     for issue in result.issues:
@@ -651,9 +694,7 @@ def print_audit_report(root_dir: Path, results: AuditResults) -> int:
         for dep in results.dependencies:
             prefix = ">" if dep.size_truncated else ""
             size_str = f"{prefix}{dep.size_mb} MB"
-            safe_print(
-                f"- **{dep.name}** ({dep.type}) \u2192 `{dep.path}` [{size_str}]"
-            )
+            safe_print(f"- **{dep.name}** ({dep.type}) → `{dep.path}` [{size_str}]")
     else:
         safe_print("- None detected in root directory.")
     safe_print("")
@@ -714,6 +755,11 @@ def run_full_audit(root_dir: Path) -> int:
     return print_audit_report(root_dir, results)
 
 
+def _resolve_target(raw: Path | None, fallback: Path) -> Path:
+    """Resolve an optional target_dir argument, falling back to cwd."""
+    return (raw or fallback).resolve()
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(
         description="Consolidated plugin maintenance utilities."
@@ -726,13 +772,80 @@ def main() -> int:
     )
     subparsers.add_parser("check-manifest", help="Validate plugin manifest.")
     subparsers.add_parser("validate-skills", help="Check SKILL.md frontmatter.")
+
     lint_parser = subparsers.add_parser("lint-agents-md", help="Validate AGENTS.md.")
     lint_parser.add_argument(
         "file_path", type=Path, nargs="?", default=Path("AGENTS.md")
     )
 
-    subparsers.add_parser("analyze-env", help="Detect project environment.")
-    subparsers.add_parser("scan-structure", help="Show directory structure.")
+    analyze_env_parser = subparsers.add_parser(
+        "analyze-env", help="Detect project environment."
+    )
+    analyze_env_parser.add_argument(
+        "target_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Directory to analyze (default: current directory).",
+    )
+
+    find_deps_parser = subparsers.add_parser(
+        "find-dependencies", help="Locate installed dependency directories."
+    )
+    find_deps_parser.add_argument(
+        "target_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Directory to search (default: current directory).",
+    )
+
+    scan_parser = subparsers.add_parser(
+        "scan-structure", help="Show directory structure."
+    )
+    scan_parser.add_argument(
+        "target_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Directory to scan (default: current directory).",
+    )
+    scan_parser.add_argument(
+        "--max-depth",
+        type=int,
+        default=3,
+        help="Maximum depth to recurse (default: 3).",
+    )
+
+    analyze_all_parser = subparsers.add_parser(
+        "analyze-all",
+        help="Run analyze-env, find-dependencies, and scan-structure sequentially.",
+    )
+    analyze_all_parser.add_argument(
+        "target_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Directory to analyze (default: current directory).",
+    )
+    analyze_all_parser.add_argument(
+        "--max-depth",
+        type=int,
+        default=3,
+        help="Maximum depth for scan-structure (default: 3).",
+    )
+
+    wire_parser = subparsers.add_parser(
+        "wire-agents",
+        help="Wire AGENTS.md to agent-specific files via symlink/hardlink/copy.",
+    )
+    wire_parser.add_argument("source", type=Path, help="Source file (e.g. AGENTS.md).")
+    wire_parser.add_argument(
+        "targets",
+        type=Path,
+        nargs="+",
+        help="Target files to create (e.g. CLAUDE.md GEMINI.md).",
+    )
 
     args = parser.parse_args()
     root = Path(".").resolve()
@@ -765,15 +878,58 @@ def main() -> int:
                 safe_print("PASS: AGENTS.md is valid.")
             return 0 if result.success else 1
         case "analyze-env":
-            env = analyze_project_env(root)
-            safe_print(f"Env: {env}")
+            target = _resolve_target(args.target_dir, root)
+            env = analyze_project_env(target)
+            safe_print(f"Package Manager: {env.package_manager}")
+            safe_print(f"Test Runner:     {env.test_runner}")
+            safe_print(f"Linter:          {env.linter}")
+            safe_print(f"Monorepo:        {env.is_monorepo}")
+            return 0
+        case "find-dependencies":
+            target = _resolve_target(args.target_dir, root)
+            deps = get_dependencies(target)
+            if deps:
+                for dep in deps:
+                    prefix = ">" if dep.size_truncated else ""
+                    size_str = f"{prefix}{dep.size_mb} MB"
+                    safe_print(f"{dep.name} ({dep.type}) -> {dep.path} [{size_str}]")
+            else:
+                safe_print("No dependency directories found.")
             return 0
         case "scan-structure":
-            patterns = load_gitignore(root) | Config.DEFAULT_IGNORE_PATTERNS
-            lines = get_tree_lines(root, patterns)
+            target = _resolve_target(args.target_dir, root)
+            patterns = load_gitignore(target) | Config.DEFAULT_IGNORE_PATTERNS
+            lines = get_tree_lines(target, patterns, args.max_depth)
             for line in lines:
                 safe_print(line)
             return 0
+        case "analyze-all":
+            target = _resolve_target(args.target_dir, root)
+            safe_print("### Environment")
+            env = analyze_project_env(target)
+            safe_print(f"Package Manager: {env.package_manager}")
+            safe_print(f"Test Runner:     {env.test_runner}")
+            safe_print(f"Linter:          {env.linter}")
+            safe_print(f"Monorepo:        {env.is_monorepo}")
+            safe_print("")
+            safe_print("### Dependencies")
+            deps = get_dependencies(target)
+            if deps:
+                for dep in deps:
+                    prefix = ">" if dep.size_truncated else ""
+                    size_str = f"{prefix}{dep.size_mb} MB"
+                    safe_print(f"{dep.name} ({dep.type}) -> {dep.path} [{size_str}]")
+            else:
+                safe_print("None found.")
+            safe_print("")
+            safe_print("### Structure")
+            patterns = load_gitignore(target) | Config.DEFAULT_IGNORE_PATTERNS
+            lines = get_tree_lines(target, patterns, args.max_depth)
+            for line in lines:
+                safe_print(line)
+            return 0
+        case "wire-agents":
+            return wire_agents_files(args.source, args.targets)
         case _:
             return 1
 
