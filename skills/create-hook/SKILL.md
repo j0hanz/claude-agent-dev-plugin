@@ -56,21 +56,25 @@ This sentence determines the event (the *when*), the matcher (the *which*), and 
 
 Choose the lifecycle point from the *when*. The most common:
 
-| Goal | Event | Can block? |
-| :--- | :--- | :--- |
-| Guard / block a tool call before it runs | `PreToolUse` | Yes |
-| React after a tool succeeds (format, lint, log) | `PostToolUse` | No (already ran) |
-| Inject context / env at session begin or resume | `SessionStart` | No |
-| Validate or add context to a prompt before Claude sees it | `UserPromptSubmit` | Yes |
-| Force Claude to keep working until a condition holds | `Stop` | Yes |
-| Auto-answer or modify a permission dialog | `PermissionRequest` | Yes |
-| Desktop notification when Claude needs input | `Notification` | No |
-| Re-inject context after compaction | `SessionStart` (matcher `compact`) | No |
-| Audit/guard config edits | `ConfigChange` | Yes (except policy) |
+| Goal | Event | Can block? | Output schema shortcut |
+| :--- | :--- | :--- | :--- |
+| Guard / block a tool call before it runs | `PreToolUse` | Yes | exit 2 + stderr, or `hookSpecificOutput.permissionDecision` (allow/deny/ask/defer) |
+| React after a tool **actually ran** (format, lint, log) | `PostToolUse` | No (already ran) | `decision: "block"` + `reason` to feed back to Claude |
+| Inject context / env at session begin or resume | `SessionStart` | No | plain stdout on exit 0 becomes context automatically |
+| Validate or add context to a prompt before Claude sees it | `UserPromptSubmit` | Yes | plain stdout on exit 0 becomes context; exit 2 erases prompt |
+| Force Claude to keep working until a condition holds | `Stop` | Yes | exit 2 + stderr reason; **check `stop_hook_active` first** |
+| Auto-answer or modify a permission dialog | `PermissionRequest` | Yes | `hookSpecificOutput.decision.behavior` (allow/deny) |
+| Desktop notification when Claude needs input | `Notification` | No | side effects only |
+| Re-inject context after compaction | `SessionStart` (matcher `compact`) | No | plain stdout on exit 0 becomes context automatically |
+| Audit/guard config edits | `ConfigChange` | Yes (except policy) | `decision: "block"` + `reason` |
+
+**Timing rule:** Use `PreToolUse` to block or modify before execution. Use `PostToolUse` to react to commands that *actually ran* — `PreToolUse` fires even for commands later blocked by other hooks, so audit logs and formatters belong on `PostToolUse`.
 
 **The full table of ~30 events, their input fields, output schemas, and exit-code-2 behavior lives in [references/events.md](references/events.md). Read it before committing to an event** — pick the one whose timing and blocking ability match the guarantee.
 
 **Coverage trap:** `PreToolUse`/`PostToolUse` on `Edit|Write` does **not** catch files changed via `Bash` (e.g. `sed`, `>`). For compliance scanning, add a `Stop` hook that scans the working tree once per turn, or also match `Bash`.
+
+**Context injection:** For `SessionStart` and `UserPromptSubmit`, plain stdout on exit 0 is automatically appended to Claude's context — no JSON required. This is the primary mechanism for injecting dynamic content (git log, env state, etc.). For `SessionStart`, prefer a hook over `CLAUDE.md` only when the content changes between sessions; static instructions belong in `CLAUDE.md`.
 
 ---
 
@@ -85,6 +89,8 @@ Choose the lifecycle point from the *when*. The most common:
 
 Default to `command`. Reach for `prompt`/`agent` only when a deterministic rule genuinely can't express the check (e.g. "are all the user's tasks actually done?").
 
+**Fire-and-forget side effects** (logging, notifications, metrics) should set `"async": true` on the hook. This runs the command in the background so it adds zero latency to the event's hot path. Never use `async` when the hook needs to block or return a decision.
+
 `prompt`/`agent` are supported only on: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `Stop`, `SubagentStop`, `TaskCreated`, `TaskCompleted`, `UserPromptSubmit`.
 
 ---
@@ -92,7 +98,7 @@ Default to `command`. Reach for `prompt`/`agent` only when a deterministic rule 
 ## 4 — Narrow with matcher and `if`
 
 - **`matcher`** filters at the group level. For tool events it matches the **tool name** (regex): `Bash`, `Edit|Write`, `mcp__github__.*`. For other events it matches that event's field (e.g. `SessionStart` → `startup|resume`, `compact`). Empty/absent = fire on every occurrence. Matchers are **case-sensitive**.
-- **`if`** (Claude Code v2.1.85+) filters by tool name **and arguments** using permission-rule syntax, so the hook process only spawns on a real match: `"if": "Bash(git *)"`, `"if": "Edit(*.ts)"`. Tool events only.
+- **`if`** (Claude Code v2.1.85+) filters by tool name **and arguments** using permission-rule syntax, so the hook process only spawns on a real match: `"if": "Bash(git *)"`, `"if": "Edit(*.ts)"`. Tool events only. **Use `if` to restrict by file extension at the config level** — this prevents the hook process from spawning for non-matching files entirely, which is faster and cleaner than a script-level check. Example: `"if": "Edit(*.ts) | Write(*.ts)"` restricts a Prettier hook to TypeScript files without needing any extension check inside the script.
 
 MCP tools are named `mcp__<server>__<tool>`. Match a whole server with `mcp__memory__.*`.
 
@@ -193,9 +199,11 @@ exit 0
 - [ ] Use `// empty` (jq) / null-guards; fields are event-specific and may be absent.
 - [ ] Keep **stdout clean** for JSON; send logs/diagnostics to **stderr**.
 - [ ] Make scripts executable: `chmod +x` (macOS/Linux). Reference via `$CLAUDE_PROJECT_DIR`.
-- [ ] `Stop`/`SubagentStop` hooks: check `stop_hook_active` and exit `0` early to avoid infinite loops.
-- [ ] Set a sensible `timeout` (seconds); command default is 600, `UserPromptSubmit` caps at 30.
+- [ ] **`Stop`/`SubagentStop` handlers: read `stop_hook_active` from stdin and `exit 0` immediately when it is `true`** — skipping this causes an infinite loop. The block cap fires after 8 consecutive blocks; raise it with `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`.
+- [ ] Set a sensible `timeout` (seconds); command default is 600, `UserPromptSubmit` caps at 30. Stop hooks running test suites should set a realistic timeout (e.g. 120).
 - [ ] If a profile prints to stdout for non-interactive shells, guard it (`[[ $- == *i* ]]`) — it corrupts hook JSON.
+- [ ] PowerShell handlers require `"shell": "powershell"` in the hook config — without it the command runs under bash/sh and will fail.
+- [ ] Fire-and-forget hooks (logging, notifications) should set `"async": true` to avoid adding latency.
 
 Env vars available: `$CLAUDE_PROJECT_DIR` (all hooks), `${CLAUDE_PLUGIN_ROOT}`/`${CLAUDE_PLUGIN_DATA}` (plugins), `$CLAUDE_ENV_FILE` (`SessionStart`/`CwdChanged`/`FileChanged` — write `export KEY=val` to persist into Bash).
 
@@ -229,6 +237,44 @@ When you produce a hook for the user, always give all three:
 3. **One test command** — sample stdin proving it blocks/allows correctly.
 
 State which settings file it goes in and any `chmod`/`jq` prerequisite.
+
+### Quick reference — correct JSON output by event
+
+The required output schema differs by event. Use the right one or the hook is silently ignored:
+
+| Event | Correct output to stdout |
+| :--- | :--- |
+| `PreToolUse` (block) | exit 2 + `stderr` message, OR exit 0 + `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"deny","permissionDecisionReason":"..."}}` |
+| `PreToolUse` (allow, skip prompt) | exit 0 + `{"hookSpecificOutput":{"hookEventName":"PreToolUse","permissionDecision":"allow"}}` |
+| `PostToolUse`, `Stop`, `UserPromptSubmit`, `ConfigChange` | exit 0 + `{"decision":"block","reason":"..."}` — or exit 2 + stderr |
+| `PermissionRequest` (allow) | exit 0 + `{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"allow"}}}` |
+| `PermissionRequest` (deny) | exit 0 + `{"hookSpecificOutput":{"hookEventName":"PermissionRequest","decision":{"behavior":"deny","message":"..."}}}` |
+| `SessionStart`, `UserPromptSubmit` (inject context) | exit 0, plain stdout — automatically appended to Claude's context |
+
+**PermissionRequest example** (auto-approve ExitPlanMode):
+
+```json
+{
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PermissionRequest\",\"decision\":{\"behavior\":\"allow\"}}}'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}
+```
+
+Test: `echo '{"tool_name":"ExitPlanMode","tool_input":{}}' | bash -c "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PermissionRequest\",\"decision\":{\"behavior\":\"allow\"}}}'"`
+
+Security: `PermissionRequest` with an empty or `.*` matcher silently auto-approves every permission dialog including writes and shell commands. Always name the exact tool. This event does **not** fire in `-p` (headless) mode — use `PreToolUse` there.
 
 ---
 
