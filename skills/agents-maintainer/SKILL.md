@@ -1,9 +1,9 @@
 ---
 name: agents-maintainer
-description: |
-  Create, audit, refactor, or shorten AGENTS.md / CLAUDE.md / GEMINI.md and other agent-facing instruction files, or generate a codebase onboarding guide. Use when: user mentions agent docs, "instructions for Claude", project memory files, asks to "onboard me to this codebase" or "help me understand this repo", or an instruction file needs setup, trimming, deduplication, migration — or is over 100 lines, repeats linter rules, or drifts from real conventions.
+description: Create, audit, refactor AGENTS.md, CLAUDE.md, instruction files and onboarding guides. Trigger on 'agent docs', 'instructions', 'onboard', 'understand repo', file needs setup.
 disable-model-invocation: true
 allowed-tools: Bash(python *) Bash(python3 *)
+version: 1.0.0
 ---
 
 # agents-maintainer

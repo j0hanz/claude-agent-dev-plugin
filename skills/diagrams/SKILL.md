@@ -1,9 +1,9 @@
 ---
 name: diagrams
-description: |
-  Expert heuristics for architectural modeling and visual communication using Mermaid. Use when asked to design systems, untangle complex architectures, map out distributed workflows, or generate C4/DDD/ERD/Sequence diagrams. Triggers on phrases like 'visualize architecture', 'draw a diagram', 'C4 model', 'sequence flow', 'database schema', 'spot architectural coupling', 'simplify complex architecture', 'untangle microservice design', 'data model design'. Do NOT use for basic Mermaid syntax help.
+description: Expert Mermaid architectural modeling. Trigger on 'visualize architecture', 'draw diagram', 'C4 model', 'sequence flow', 'schema', 'coupling', 'simplify', 'microservice design'.
 disable-model-invocation: false
 allowed-tools: Bash(node *)
+version: 1.0.0
 ---
 
 # Architectural Diagrams

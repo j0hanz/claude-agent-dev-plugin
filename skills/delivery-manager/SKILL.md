@@ -1,8 +1,8 @@
 ---
 name: delivery-manager
-description: |
-  Transitions a feature from "code complete" to "delivered". Use when the user says "deliver this", "create a PR", "finish the feature", "wrap up", or asks to generate a PR description. Orchestrates final validation, PR metadata generation, attribution, and changelog updates.
+description: Transition feature to 'delivered'. Trigger on 'deliver this', 'create PR', 'finish feature', 'wrap up'. Validates, generates PR metadata, attribution, changelog.
 disable-model-invocation: true
+version: 1.0.0
 ---
 
 # Delivery Manager

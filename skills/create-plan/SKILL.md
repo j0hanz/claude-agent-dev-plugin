@@ -1,7 +1,6 @@
 ---
 name: create-plan
-description: |
-  Creates a structured implementation plan for a specific technical task. Use when you already have a validated spec (from `create-specs`) or are handed a well-scoped task and need an executable plan. ROUTING: if the user is starting a feature from scratch with no spec yet, invoke `spec-driven-development` first — this skill is its Step 3 sub-skill, not a replacement for the full workflow. Triggers directly on: 'create a plan', 'write a plan for', 'plan this out', 'what are the steps to', or when `spec-driven-development` reaches its Planning Gate. Also use standalone for: refactoring a known component, upgrading a dependency, migrating infrastructure — tasks where scope is already clear. Offers quick-start flags (--quick for simple features, --compact for overviews, --assume-paths for multi-repo). Do NOT skip this for multi-step technical work.
+description: Structured implementation plan for scoped tasks. Trigger on 'create plan', 'write plan', 'what are steps'. For specs, refactoring, upgrades, infrastructure. Flags: --quick, --compact, --assume-paths.
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *)
@@ -11,6 +10,7 @@ argument-hint: |
   Examples:
   - /create-plan --atomic "Add login feature"
   - /create-plan --compact --assume-paths "Migrate to K8s"
+version: 1.0.0
 ---
 
 # Create Plan

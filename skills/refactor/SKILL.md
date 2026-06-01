@@ -1,18 +1,8 @@
 ---
 name: refactor
-description: >-
-  Apply when the user asks to "clean up", "refactor", "simplify", "improve",
-  "modernize", or "restructure" code — or says it is messy, hard to read, hard
-  to extend, or hard to test. Also trigger proactively when you spot obvious
-  structural problems while working on something else: long functions,
-  copy-pasted logic, god classes, magic numbers, tangled conditionals, or
-  misleading names. ALSO use when: the user asks to change a public API or
-  exported function signature; you discover a pre-existing bug while working on
-  structural changes; the code has no tests and a structural change is being
-  considered; the user's request is vague ("make it better", "clean this up")
-  and clarification would prevent wasted effort. Use for targeted,
-  behavior-preserving improvements to existing code. Not for full rewrites.
+description: Apply to 'clean up', 'refactor', 'simplify', 'improve', 'modernize', 'messy'/'hard to read'/'hard to test'. Also: API changes, discovered bugs, structural problems, proactive cleanup.
 disable-model-invocation: false
+version: 1.0.0
 ---
 
 # Refactor

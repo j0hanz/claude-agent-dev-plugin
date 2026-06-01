@@ -1,12 +1,8 @@
 ---
 name: verification-before-completion
-description: |
-  Use before declaring any task, feature, or fix complete. Verifies actual behavior matches
-  expected through running code and tests — not code inspection alone. Triggers when the
-  user says "done", "finished", "looks good", "ready to review", "ready to merge",
-  "it should work", or "I think this is complete". Also applies when evaluating whether
-  to commit, create a PR, or sign off on any change.
+description: Verify before completion. Trigger on 'done', 'finished', 'looks good', 'ready to review', 'ready to merge'. Test actual behavior, not code inspection alone.
 disable-model-invocation: false
+version: 1.0.0
 ---
 
 # Verification Before Completion

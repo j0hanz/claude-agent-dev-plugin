@@ -13,7 +13,7 @@ Current branch: !`git branch --show-current`
 Recent changes: !`git diff HEAD --name-only`
 Test output: !`npm test 2>&1 | tail -30`
 
-## When to Use
+## Usage
 
 - You have a concrete error message or failing test and need root-cause analysis
 - A regression appeared after a recent change and you need to trace where it broke

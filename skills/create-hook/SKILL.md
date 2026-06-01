@@ -1,9 +1,9 @@
 ---
 name: create-hook
-description: |
-  Design, write, and test Claude Code hooks — the event system that runs deterministic shell commands at lifecycle points (PreToolUse, PostToolUse, Stop, SessionStart, and ~30 more). Use this whenever the user wants to "add a hook", "block a tool/command", "auto-format on save", "run tests before Claude stops", "inject context at session start", "notify me when Claude needs input", "guard protected files", "audit tool use", or edits hooks.json / the hooks block in settings.json. Also use when choosing between command, http, prompt, and agent hook types, picking an event or matcher, or debugging a hook that won't fire. Covers exit-code vs JSON output, matcher and `if` filtering, scope/location, and security.
+description: Design, write, test Claude Code hooks. Trigger on 'add hook', 'block tool', 'auto-format', 'run tests', 'inject context'. Also: hook types, lifecycle events, debugging non-firing hooks.
 disable-model-invocation: false
 argument-hint: "[what the hook should guarantee]"
+version: 1.0.0
 ---
 
 # Create Hook

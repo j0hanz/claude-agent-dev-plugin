@@ -1,14 +1,16 @@
 ---
 name: brainstorming
-description: |
-  Structured requirements discovery and design brainstorming before implementation. Prevents rework by catching design problems, ambiguous terminology, and misaligned assumptions before any code is written.
-
-  Use this whenever the user says "let's build X", "add a feature", "we need a new Y", "I want to implement Z", or starts describing a new component or behavior — even if they don't explicitly ask for brainstorming or say "just build it". Proactively offer a quick brainstorm before any implementation begins.
-
-  Also use when: domain terminology is ambiguous, foundational assumptions need validation, or the user is unsure how to approach a design problem.
-
-  Skip only for: bug fixes with a clearly defined problem, pure refactors with no behavior change, documentation-only updates, or when a design has already been explicitly approved and implementation is the next step.
+description: Structured requirements discovery before implementation. Trigger on feature building, ambiguous design, or unclear terminology. Prevents rework by catching problems early.
+version: 1.0.0
 ---
+
+## When to Apply
+
+Use this whenever the user says "let's build X", "add a feature", "we need a new Y", "I want to implement Z", or describes a new component or behavior — even if they don't explicitly ask for brainstorming or say "just build it". Proactively offer a quick brainstorm before any implementation begins.
+
+Also use when: domain terminology is ambiguous, foundational assumptions need validation, or the user is unsure how to approach a design problem.
+
+Skip only for: bug fixes with a clearly defined problem, pure refactors with no behavior change, documentation-only updates, or when a design has already been explicitly approved and implementation is the next step.
 
 # Brainstorming
 

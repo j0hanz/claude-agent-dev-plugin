@@ -1,15 +1,9 @@
 ---
 name: github-automation
-description: >-
-  GitHub automation — two paths. PATH A (ACTIONS): Writing, editing, linting, hardening, or
-  debugging GitHub Actions workflows (.github/workflows/*.yml), reusable workflows,
-  composite/JS/Docker actions, OIDC cloud deploys, SHA pinning, GITHUB_TOKEN scopes, matrices,
-  caching, concurrency, environments, or migrating from Jenkins/CircleCI/GitLab/Travis. Triggers
-  on "add CI", "set up release", "pin these actions", "fix this YAML", "deploy to AWS from
-  GitHub". PATH B (CLI): Building `gh` CLI scripts, headless automation, cross-repo bots, `gh
-  api` batch operations, pagination, rate-limit-safe workflows, or production-grade gh scripting.
+description: GitHub automation: PATH A (Actions workflows, OIDC, hardening) or PATH B (gh CLI, bots, batch ops). Trigger on 'add CI', 'set up release', 'pin actions', 'deploy AWS'.
 disable-model-invocation: true
 allowed-tools: Bash(python *) Bash(python3 *)
+version: 1.0.0
 ---
 
 # GitHub Automation

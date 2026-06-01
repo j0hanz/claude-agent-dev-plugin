@@ -17,7 +17,7 @@ Hooks config: @hooks/hooks.json
 Runner: @hooks/runner.mjs
 Handlers: !`ls hooks/handlers/`
 
-## When to Use
+## Usage
 
 - **check**: After adding or modifying a hook handler, or when hook behavior seems silently broken
 - **new**: Scaffolding a handler for a new hook event (PreToolUse, PostToolUse, Stop, etc.)

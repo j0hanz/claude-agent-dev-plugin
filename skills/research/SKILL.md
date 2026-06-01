@@ -1,16 +1,9 @@
 ---
 name: research
-description: |
-  Lookup current developer docs, API references, and code examples using Context7.
-  Also manage Context7 skills and setup. Use this skill whenever the user asks for
-  library/framework API help, modern code examples, Context7 setup, or skill management.
-  Trigger on queries like "how do I use React hooks", "find the latest AWS SDK docs",
-  "install a Context7 skill", "set up ctx7", or any mention of Context7 / ctx7.
-  For ctx7 skills commands (install, search, suggest, generate, list, remove) and
-  Context7 setup/authentication, this skill is required — do not guess CLI commands
-  from memory, as the correct syntax is in the reference files.
+description: Developer docs, API references, code examples via Context7. Trigger on 'React hooks', 'AWS SDK', 'library API', 'Context7', 'ctx7'. Manage Context7 skills and setup.
 disable-model-invocation: false
 argument-hint: "[library/framework or ctx7 command]"
+version: 1.0.0
 ---
 
 ## NEVER

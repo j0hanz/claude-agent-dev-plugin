@@ -1,12 +1,8 @@
 ---
 name: using-agent-dev
-description: |
-  Navigation guide for agent-dev plugin skills — establishes routing and priority order.
-  Use when asking "which skill should I use for X?", when a task doesn't clearly map to
-  an existing skill, or when working within the agent-dev plugin context. Essential for 
-  choosing between process skills (diagnose vs TDD), overlapping domains (refactor vs architecture), 
-  and understanding workflow sequences.
+description: Navigation guide for agent-dev skills. Trigger on 'which skill for X', task unclear, agent-dev context. Routing between process/domain skills, workflow sequences.
 disable-model-invocation: false
+version: 1.0.0
 ---
 
 > **Invocation:** When installed as the `agent-dev` plugin, prefix skill names with `agent-dev:` — e.g., `/agent-dev:brainstorming`. In a standalone `.claude/skills/` installation, use bare names — e.g., `/brainstorming`.

@@ -14,7 +14,7 @@ Diff from main: !`git diff main...HEAD --stat`
 Commits ahead: !`git log main..HEAD --oneline`
 Test status: !`npm test 2>&1 | tail -20`
 
-## When to Use
+## Usage
 
 - Work is complete and all local tests pass
 - AGENTS.md is up to date for any new agents or skills added

@@ -14,7 +14,7 @@ Skills: !`ls skills/`
 Hook handlers: !`ls hooks/handlers/`
 Hook config: @hooks/hooks.json
 
-## When to Use
+## Usage
 
 - Documenting how a new agent or skill fits into the plugin architecture
 - Visualizing hook lifecycle flow for debugging or onboarding

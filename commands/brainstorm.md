@@ -13,7 +13,7 @@ Current skills: !`ls skills/`
 Current agents: !`ls agents/`
 Project config: @AGENTS.md
 
-## When to Use
+## Usage
 
 - Scope or approach is unclear before starting a feature
 - Domain terminology is ambiguous ("task", "session", "context")

@@ -1,8 +1,8 @@
 ---
 name: skill-builder
-description: |
-  Build, test, and iteratively improve Claude Agent Skills — from first draft through description optimization and benchmarked iteration. Use this skill whenever the user says things like "I want to make a skill for X", "help me build a skill", "my skill isn't triggering / isn't working", "turn this workflow into a skill", "run evals on my skill", "improve my existing skill", or "optimize my skill's description". Also invoke when someone hands you a SKILL.md and asks for feedback, or when you're designing a new skill from scratch and want a rigorous testing loop.
+description: Build, test, improve Claude Agent Skills. Trigger on 'make skill', 'build skill', 'skill not working', 'turn workflow into skill', 'run evals', 'optimize skill', SKILL.md feedback.
 disable-model-invocation: false
+version: 1.0.0
 ---
 
 # Skill Builder

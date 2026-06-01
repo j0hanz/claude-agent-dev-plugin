@@ -1,12 +1,8 @@
 ---
 name: spec-driven-development
-description: |
-  Implement features or fixes using Spec-Driven Development — spec → plan → code, in that order.
-  Use when the user says "build X", "add X", "implement X", "let's design X", or any time
-  implementation is on the horizon. Even for "just build it" requests: offer a Sketch spec (15
-  min) first. Mandatory workflow: clarify scope → create-specs → create-plan → implement with
-  TDD → validate acceptance criteria. Do not skip sub-skills or gates.
+description: Spec-driven development: spec→plan→code. Trigger on 'build', 'add', 'implement', 'design'. Mandatory workflow enforces specs before code. Even for 'just build' requests.
 disable-model-invocation: false
+version: 1.0.0
 ---
 
 # Spec-Driven Development

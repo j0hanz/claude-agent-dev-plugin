@@ -13,7 +13,7 @@ Project config: @AGENTS.md
 Agents: !`ls agents/`
 Skills: !`ls skills/`
 
-## When to Use
+## Usage
 
 - "Where is X defined?" or "which files reference Y?"
 - Researching a library, framework, or API before writing code

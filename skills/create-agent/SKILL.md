@@ -1,10 +1,10 @@
 ---
 name: create-agent
-description: |
-  Design, write, and test agents — Claude Code subagents, agent teams, dynamic workflows, and API-callable Managed Agents. Use this whenever the user wants to "build an agent", "create a subagent", "write an agent prompt", "spin up a multi-agent pipeline", "design a code-reviewer / debugger / researcher agent", "scope an agent's tools or permissions", "pick a model for an agent", "run agents in parallel", or edits a file under .claude/agents/ or an agents[] config. Also use when choosing between a subagent, a skill, a hook, an agent team, and a workflow; when deciding which tools and permission mode an agent should get; or when an agent misfires, over-delegates, or has the wrong context. Covers the agent system prompt, tool/permission scoping, model and effort routing, context isolation, skill/hook/MCP composition, and eval-first testing.
+description: Design, write, test agents and subagents. Trigger on 'build agent', 'subagent', 'agent prompt', 'multi-agent'. Also: agent role selection, misfires, permission and tool scoping.
 disable-model-invocation: false
 argument-hint: "[what the agent should do]"
 allowed-tools: Bash(python *) Bash(python3 *)
+version: 1.0.0
 ---
 
 # Create Agent

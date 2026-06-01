@@ -1,9 +1,9 @@
 ---
 name: diagnose
-description: |
-  Disciplined debugging methodology for any bug—software crashes, performance regressions, flaky tests, infrastructure failures, API errors, race conditions. Use when the user says "debug this", "fix this crash", "why is this slow", "diagnose", "my code is broken", "test is flaking", or describes unexpected behavior. Works for code (C/JavaScript/Python/etc), infrastructure (logs, services, deployments), and everything in between.
+description: Disciplined debugging for any bug. Trigger on "debug this", "fix crash", "why slow", "diagnose", "broken code", or unexpected behavior. Works for software, infrastructure, everything.
 disable-model-invocation: false
 argument-hint: "[symptom or file path]"
+version: 1.0.0
 ---
 
 # Skill: diagnose

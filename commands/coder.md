@@ -14,7 +14,7 @@ Uncommitted changes: !`git status --short`
 Recent commits: !`git log --oneline -5`
 Project conventions: @AGENTS.md
 
-## When to Use
+## Usage
 
 - Implementing a scoped feature or fix where the approach is decided
 - Refactoring a specific file or module without behavior change

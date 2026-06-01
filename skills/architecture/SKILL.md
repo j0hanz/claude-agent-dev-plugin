@@ -1,14 +1,9 @@
 ---
 name: architecture
-description: >-
-  Software architecture — two modes. MODE A (DIAGNOSE existing codebase): circular dependencies,
-  God modules, infra leaking into domain, "code is a mess", "hard to test", "one change touches
-  5 files", "utils folder chaos", "can't test without a database", files 300+ lines, tangled
-  dependencies, scattered logic. MODE B (DESIGN new systems or modules): how to organize a
-  feature, where business logic should live, which architectural pattern to choose, how to design
-  clear module boundaries, or evolving existing boundaries toward a better design.
+description: Software architecture: diagnose (circular deps, God modules, testing issues) or design (organize features, module boundaries, patterns, clear boundaries).
 disable-model-invocation: false
 allowed-tools: Bash(node *)
+version: 1.0.0
 ---
 
 # Architecture
