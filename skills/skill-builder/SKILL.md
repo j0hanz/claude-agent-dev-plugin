@@ -64,7 +64,8 @@ For users who identify as new to skill-building, add one orienting sentence befo
 
 1. `name` — must be kebab-case (lowercase, digits, hyphens only), max 64 chars. If the user supplied an invalid name (spaces, uppercase), convert it immediately and note the change inline (e.g., `name adjusted to kebab-case: my-skill-name`). Do not ask for confirmation.
 2. `description` — must have no angle brackets (`<` or `>`), max 1024 chars.
-3. Skill body — must use imperative form throughout. No "you should", "you might", "maybe".
+3. **MANDATORY**: Run the `@agent-prompt-auditor` on your drafted `SKILL.md` to ensure it adheres to design principles, clarity, and safety constraints. Note the auditor's findings and remediations in your final output.
+4. Skill body — must use imperative form throughout. No "you should", "you might", "maybe".
 
 Fill in these components based on the interview:
 
