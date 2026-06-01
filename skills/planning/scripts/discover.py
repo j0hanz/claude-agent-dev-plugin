@@ -294,9 +294,7 @@ def find_symbols(
             continue
         # Emit at most one hit per (file, line) regardless of how many patterns match
         if any(any(pat.search(n) for n in decl_names) for pat in matching):
-            hits.append(
-                {"file": file_path, "line": i + 1, "match": line.strip()[:200]}
-            )
+            hits.append({"file": file_path, "line": i + 1, "match": line.strip()[:200]})
     return hits
 
 
