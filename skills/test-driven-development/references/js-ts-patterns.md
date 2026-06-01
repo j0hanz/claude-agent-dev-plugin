@@ -2,14 +2,14 @@
 
 ## Test Runner Equivalents
 
-| Python (pytest)       | JavaScript (Jest/Vitest)            |
-|-----------------------|-------------------------------------|
-| `def test_foo():`     | `test('foo', () => { ... })`        |
-| `assert x == y`       | `expect(x).toBe(y)`                 |
+| Python (pytest)             | JavaScript (Jest/Vitest)       |
+| --------------------------- | ------------------------------ |
+| `def test_foo():`           | `test('foo', () => { ... })`   |
+| `assert x == y`             | `expect(x).toBe(y)`            |
 | `pytest.raises(ValueError)` | `expect(() => fn()).toThrow()` |
-| `pytest test_foo.py`  | `npx jest foo.test.ts`              |
-| `ModuleNotFoundError` | `Cannot find module './foo'`        |
-| `AssertionError`      | `Expected X to equal Y`             |
+| `pytest test_foo.py`        | `npx jest foo.test.ts`         |
+| `ModuleNotFoundError`       | `Cannot find module './foo'`   |
+| `AssertionError`            | `Expected X to equal Y`        |
 
 ## Basic RED-GREEN Cycle
 
@@ -98,7 +98,7 @@ test('fetches user', async () => {
 
 // RIGHT — explicitly check assertion reached
 test('fetches user', async () => {
-  expect.assertions(1);  // Jest: fails if no assertion runs
+  expect.assertions(1); // Jest: fails if no assertion runs
   const user = await fetchUser('u-123');
   expect(user.name).toBe('Alice');
 });
@@ -132,15 +132,15 @@ const mockGet = jest.fn().mockResolvedValue({ id: '123', name: 'Alice' });
 (httpClient.get as jest.Mock) = mockGet;
 
 // WRONG — mocking an internal collaborator
-jest.mock('./userRepository');  // internal class — test the real thing
+jest.mock('./userRepository'); // internal class — test the real thing
 ```
 
 ## Failure Analysis in JavaScript
 
-| Failure message | Type | Action |
-|-----------------|------|--------|
-| `Cannot find module './foo'` | Environment | Create the module with a stub export |
-| `foo is not a function` | Environment | Add the missing export |
-| `Expected X, received undefined` | Logic | Function returned wrong value — fix impl |
-| `Expected: true, Received: false` | Logic | Wrong boolean logic — fix condition |
-| `TypeError: Cannot read property 'x' of null` | Unexpected | Debug — may be flawed test setup or missing null guard |
+| Failure message                               | Type        | Action                                                 |
+| --------------------------------------------- | ----------- | ------------------------------------------------------ |
+| `Cannot find module './foo'`                  | Environment | Create the module with a stub export                   |
+| `foo is not a function`                       | Environment | Add the missing export                                 |
+| `Expected X, received undefined`              | Logic       | Function returned wrong value — fix impl               |
+| `Expected: true, Received: false`             | Logic       | Wrong boolean logic — fix condition                    |
+| `TypeError: Cannot read property 'x' of null` | Unexpected  | Debug — may be flawed test setup or missing null guard |

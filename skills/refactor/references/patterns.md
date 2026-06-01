@@ -12,10 +12,10 @@ When to use each pattern, and what the before/after looks like. These are not te
 
 ```ts
 function calculateShipping(order: Order, method: string): number {
-  if (method === "standard") return order.total > 50 ? 0 : 5.99;
-  if (method === "express") return order.total > 100 ? 9.99 : 14.99;
-  if (method === "overnight") return 29.99;
-  throw new Error("Unknown method");
+  if (method === 'standard') return order.total > 50 ? 0 : 5.99;
+  if (method === 'express') return order.total > 100 ? 9.99 : 14.99;
+  if (method === 'overnight') return 29.99;
+  throw new Error('Unknown method');
 }
 ```
 
@@ -52,7 +52,7 @@ function calculateShipping(order: Order, method: string): number {
 ```ts
 function renderUser(user: User | null) {
   if (user === null) {
-    return "<Anonymous>";
+    return '<Anonymous>';
   }
   return `${user.firstName} ${user.lastName}`;
 }
@@ -67,13 +67,13 @@ function getUserPermissions(user: User | null): string[] {
 
 ```ts
 const ANONYMOUS_USER: User = {
-  firstName: "Anonymous",
-  lastName: "",
+  firstName: 'Anonymous',
+  lastName: '',
   permissions: [],
 };
 
 function renderUser(user: User) {
-  return `${user.firstName} ${user.lastName}`.trim() || "Anonymous";
+  return `${user.firstName} ${user.lastName}`.trim() || 'Anonymous';
 }
 
 function getUserPermissions(user: User): string[] {
@@ -95,13 +95,13 @@ function getUserPermissions(user: User): string[] {
 
 ```ts
 const report = new Report(
-  "Q4 Summary",
-  new Date("2024-10-01"),
-  new Date("2024-12-31"),
+  'Q4 Summary',
+  new Date('2024-10-01'),
+  new Date('2024-12-31'),
   true,
   null,
-  "pdf",
-  ["sales", "marketing"],
+  'pdf',
+  ['sales', 'marketing'],
   null,
 );
 ```
@@ -109,11 +109,11 @@ const report = new Report(
 **After:**
 
 ```ts
-const report = Report.builder("Q4 Summary")
-  .dateRange(new Date("2024-10-01"), new Date("2024-12-31"))
+const report = Report.builder('Q4 Summary')
+  .dateRange(new Date('2024-10-01'), new Date('2024-12-31'))
   .includeCharts(true)
-  .format("pdf")
-  .sections(["sales", "marketing"])
+  .format('pdf')
+  .sections(['sales', 'marketing'])
   .build();
 ```
 
@@ -131,7 +131,7 @@ const report = Report.builder("Q4 Summary")
 // Scattered across UI handlers
 async function onSave() {
   await db.update(user);
-  await audit.log("user.update", user);
+  await audit.log('user.update', user);
   await cache.invalidate(`user:${user.id}`);
 }
 ```
@@ -154,7 +154,7 @@ class UpdateUserCommand implements Command {
 
   async execute() {
     await this.db.update(this.user);
-    await this.audit.log("user.update", this.user);
+    await this.audit.log('user.update', this.user);
     await this.cache.invalidate(`user:${this.user.id}`);
   }
 
@@ -177,11 +177,11 @@ class UpdateUserCommand implements Command {
 ```ts
 function validate(user: User): string[] {
   const errors: string[] = [];
-  if (!user.email) errors.push("Email required");
-  else if (!isValidEmail(user.email)) errors.push("Invalid email");
-  if (!user.name) errors.push("Name required");
-  if (user.age < 18) errors.push("Must be 18+");
-  if (user.country === "blocked") errors.push("Country not supported");
+  if (!user.email) errors.push('Email required');
+  else if (!isValidEmail(user.email)) errors.push('Invalid email');
+  if (!user.name) errors.push('Name required');
+  if (user.age < 18) errors.push('Must be 18+');
+  if (user.country === 'blocked') errors.push('Country not supported');
   return errors;
 }
 ```
@@ -192,11 +192,11 @@ function validate(user: User): string[] {
 type Validator = (user: User) => string | null;
 
 const validators: Validator[] = [
-  (u) => (!u.email ? "Email required" : null),
-  (u) => (u.email && !isValidEmail(u.email) ? "Invalid email" : null),
-  (u) => (!u.name ? "Name required" : null),
-  (u) => (u.age < 18 ? "Must be 18+" : null),
-  (u) => (u.country === "blocked" ? "Country not supported" : null),
+  (u) => (!u.email ? 'Email required' : null),
+  (u) => (u.email && !isValidEmail(u.email) ? 'Invalid email' : null),
+  (u) => (!u.name ? 'Name required' : null),
+  (u) => (u.age < 18 ? 'Must be 18+' : null),
+  (u) => (u.country === 'blocked' ? 'Country not supported' : null),
 ];
 
 function validate(user: User): string[] {
@@ -219,7 +219,7 @@ async function createOrder(data: OrderData) {
   const order = await db.orders.create(data);
   await emailService.sendConfirmation(order);
   await inventoryService.reserve(order.items);
-  await analyticsService.track("order.created", order);
+  await analyticsService.track('order.created', order);
   return order;
 }
 ```
@@ -229,16 +229,14 @@ async function createOrder(data: OrderData) {
 ```ts
 async function createOrder(data: OrderData) {
   const order = await db.orders.create(data);
-  await eventBus.emit("order.created", order);
+  await eventBus.emit('order.created', order);
   return order;
 }
 
 // Each listener registered independently:
-eventBus.on("order.created", (order) => emailService.sendConfirmation(order));
-eventBus.on("order.created", (order) => inventoryService.reserve(order.items));
-eventBus.on("order.created", (order) =>
-  analyticsService.track("order.created", order),
-);
+eventBus.on('order.created', (order) => emailService.sendConfirmation(order));
+eventBus.on('order.created', (order) => inventoryService.reserve(order.items));
+eventBus.on('order.created', (order) => analyticsService.track('order.created', order));
 ```
 
 **Payoff:** `createOrder` doesn't need to know what reacts. New side effects add without changing the core.

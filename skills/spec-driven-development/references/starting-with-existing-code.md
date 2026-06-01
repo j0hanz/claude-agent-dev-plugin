@@ -5,8 +5,8 @@ This guide explains how to apply SDD when code already exists.
 
 ## The Core Principle
 
-**Do NOT retrofit a spec from existing code.** This creates a "Retrofitted Spec" — 
-an anti-pattern where requirements are written to match already-present behavior, 
+**Do NOT retrofit a spec from existing code.** This creates a "Retrofitted Spec" —
+an anti-pattern where requirements are written to match already-present behavior,
 making the spec redundant rather than authoritative.
 
 ## Two Paths
@@ -67,10 +67,12 @@ Does the existing code work correctly?
 ### Example 1 — Path 1 (Incremental)
 
 Existing: User login works, but:
+
 - (Missing) TOTP 2FA support
 - (Bug) Password reset emails don't include reset link
 
 **Spec for remaining work**:
+
 ```
 Goal: Complete user authentication with 2FA and fix password reset
 
@@ -93,6 +95,7 @@ New VAL:
 Existing: Dashboard has hardcoded data, no real API calls, auth is missing.
 
 **Spec for complete dashboard**:
+
 ```
 (Write as if building from scratch; ignore existing code.)
 ```

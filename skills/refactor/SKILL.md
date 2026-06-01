@@ -93,14 +93,14 @@ Why: mixing structural and behavioral changes makes regressions undiagnosable. I
 
 **Automated Tooling First:** Before making manual stylistic changes, check if an ecosystem tool can do the heavy lifting safely and automatically.
 
-| Language | Tool | Command |
-| --- | --- | --- |
-| JS/TS | Prettier | `prettier --write <file>` |
-| JS/TS | ESLint | `eslint --fix <file>` |
-| Python | Ruff | `ruff format <file>` |
-| Python | Black | `black <file>` |
-| Go | gofmt | `go fmt ./...` |
-| Rust | rustfmt | `cargo fmt` |
+| Language | Tool     | Command                   |
+| -------- | -------- | ------------------------- |
+| JS/TS    | Prettier | `prettier --write <file>` |
+| JS/TS    | ESLint   | `eslint --fix <file>`     |
+| Python   | Ruff     | `ruff format <file>`      |
+| Python   | Black    | `black <file>`            |
+| Go       | gofmt    | `go fmt ./...`            |
+| Rust     | rustfmt  | `cargo fmt`               |
 
 Suggest running the tool first and only proceed to manual changes for things the tool can't fix (naming, structure, duplication).
 
@@ -173,7 +173,7 @@ Keep it short. Skip obvious things. Focus on the _why_, not the _what_.
 
   **How to tell the difference — reason both sides before deciding:**
 
-  Before extracting, explicitly argue the case *against* merging, not just the case for it. State at least one concrete future scenario in which the two blocks would need to diverge. If you cannot construct one, say so and explain why. A one-sided conclusion ("these are clearly the same thing") is a smell — ambiguous cases deserve ambiguous answers.
+  Before extracting, explicitly argue the case _against_ merging, not just the case for it. State at least one concrete future scenario in which the two blocks would need to diverge. If you cannot construct one, say so and explain why. A one-sided conclusion ("these are clearly the same thing") is a smell — ambiguous cases deserve ambiguous answers.
 
   Signals that concepts are different despite structural similarity:
   - Different domain labels in error messages or variable names (`billing` vs `shipping`, `invoice` vs `receipt`)
@@ -181,7 +181,8 @@ Keep it short. Skip obvious things. Focus on the _why_, not the _what_.
   - Different ownership — one is owned by Finance, one by Logistics
   - One has already diverged slightly (e.g., has an extra field) — that extra field is a preview of future divergence
 
-  If you conclude extraction is correct after thinking both ways, state the condition that makes it safe: *"These can be merged as long as [specific invariant]. If that changes, split them back."*
+  If you conclude extraction is correct after thinking both ways, state the condition that makes it safe: _"These can be merged as long as [specific invariant]. If that changes, split them back."_
+
 - **NEVER apply high-risk patterns without test coverage:** If there are no tests for complex logic, NEVER apply structural patterns like Strategy or Observer. Limit yourself to safe, mechanical renames or variable extractions unless you write characterization tests first.
 
 ---

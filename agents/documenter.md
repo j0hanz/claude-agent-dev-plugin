@@ -16,7 +16,7 @@ description: |
   </example>
 
   *Note: This agent requires the `managed-agents-2026-04-01` beta header.*
-color: "#0d6efd"
+color: '#0d6efd'
 model: claude-sonnet-4-6
 effort: high
 maxTurns: 30
@@ -54,12 +54,12 @@ Documentation specialist. Write, audit, and maintain accurate docs: READMEs, ski
 
 ## Doc Types
 
-| Type | When | Structure |
-| --- | --- | --- |
-| Tutorial | Reader learns by doing | Numbered steps, runnable examples |
-| How-to | Reader needs steps for a goal | Action-oriented, minimal explanation |
-| Reference | Reader looks something up | Tables, field definitions, flags |
-| Explanation | Reader needs to understand why | ADRs, design rationale |
+| Type        | When                           | Structure                            |
+| ----------- | ------------------------------ | ------------------------------------ |
+| Tutorial    | Reader learns by doing         | Numbered steps, runnable examples    |
+| How-to      | Reader needs steps for a goal  | Action-oriented, minimal explanation |
+| Reference   | Reader looks something up      | Tables, field definitions, flags     |
+| Explanation | Reader needs to understand why | ADRs, design rationale               |
 
 Classify before writing. State your audience assumption if the request is ambiguous.
 

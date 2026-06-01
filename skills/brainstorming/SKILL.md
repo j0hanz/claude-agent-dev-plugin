@@ -41,6 +41,7 @@ Ask **one question at a time** throughout all phases — wait for each answer be
 ## Phase 1: Discovery (Read Before Asking)
 
 **Discovery checklist — complete before asking questions:**
+
 1. **Code patterns** — Find 3-5 files related to this area; grep for related functions/classes
 2. **Recent history** — Check `git log --oneline -20` on affected files; what changed recently?
 3. **Existing glossaries** — Search for `glossary.md`, `CONTEXT.md`, `docs/glossary/`, `docs/terminology/`
@@ -70,6 +71,7 @@ Summarize your understanding of the task in one paragraph and ask the user to co
 **Skip this phase** if domain terminology is clear and consistent throughout code, docs, and user language.
 
 **Definition is clear when:**
+
 - ✓ User can explain WHAT the concept IS (not just what it does)
 - ✓ User can explain how it differs from similar terms (Account vs Organization vs Customer)
 - ✓ User can point to where it appears in code/docs/conversations
@@ -102,25 +104,26 @@ Offer to write findings to `glossary.md` or `CONTEXT.md` at Phase 5 transition.
 
 **Technique selection** — use 1-2 based on what the conversation reveals:
 
-| Situation | Use This | Reason |
-|-----------|----------|--------|
-| User says "just build it" or requirements seem obvious | **Why (Five Whys)** | Uncovers hidden motivation |
-| Large scope or complex dependencies | **Premortem** | Surfaces organizational/technical risks |
-| Success criteria vague ("just make it fast") | **Success Logic** | Clarifies acceptance criteria |
-| Feature creep risk or unclear boundaries | **Anti-Scope** | Defines what we're explicitly NOT building |
+| Situation                                              | Use This            | Reason                                     |
+| ------------------------------------------------------ | ------------------- | ------------------------------------------ |
+| User says "just build it" or requirements seem obvious | **Why (Five Whys)** | Uncovers hidden motivation                 |
+| Large scope or complex dependencies                    | **Premortem**       | Surfaces organizational/technical risks    |
+| Success criteria vague ("just make it fast")           | **Success Logic**   | Clarifies acceptance criteria              |
+| Feature creep risk or unclear boundaries               | **Anti-Scope**      | Defines what we're explicitly NOT building |
 
 Avoid the "checklist trap" — don't run all four techniques as a script. Pick 1-2 based on signals from discovery.
 
 **Depth check:** After 1-2 techniques, ask: "Are there other risks or unknowns that could derail this?"
+
 - Yes → apply one more technique, then move on regardless
 - No → document TBD items and proceed to Phase 4
 
 **Hard limit: 4 questions total within Phase 3** across all techniques. Unresolved questions become TBD items with an owner — don't loop indefinitely.
 
-1. **The "Why" (Five Whys):** Drill down to the root problem. "Why is this needed *now*? What fails if we don't do this?"
+1. **The "Why" (Five Whys):** Drill down to the root problem. "Why is this needed _now_? What fails if we don't do this?"
 2. **The Premortem:** "Imagine we've implemented this and it's a disaster. What's the most likely thing that went wrong?" (Surfaces hidden technical or organizational risks.)
 3. **Success Logic:** "How will we know this is a success without using the word 'functional'? What behavior change should we see in users or the system?"
-4. **The "Anti-Scope":** Instead of asking "what's out of scope," ask: "What's a related feature that we are *strictly* choosing NOT to build today?"
+4. **The "Anti-Scope":** Instead of asking "what's out of scope," ask: "What's a related feature that we are _strictly_ choosing NOT to build today?"
 
 ## Phase 4: Design Proposal
 
@@ -138,6 +141,7 @@ Present the design in sections. Validate each section before continuing to the n
 Before moving to Phase 5, ask explicitly: "Which approach should we move forward with and why?"
 
 Wait for a clear commitment like:
+
 - "We'll go with Approach B because..."
 - "Let's do Option 1, here's why..."
 - "The second option aligns best with..."

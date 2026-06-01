@@ -38,37 +38,37 @@ Subagents are loaded at session start. Changes made through `/agents` apply imme
 
 ## Frontmatter fields
 
-| Field | Required | Description |
-| :--- | :--- | :--- |
-| `name` | Yes | Unique id, lowercase + hyphens. Used as `agent_type` in hooks. Need not match filename. |
-| `description` | Yes | When Claude should delegate here. Include "use proactively" to encourage auto-delegation. |
-| `tools` | No | Allowlist of tools. Inherits **all** tools if omitted. `Agent(worker, researcher)` syntax restricts which subagents it may spawn. |
-| `disallowedTools` | No | Denylist removed from inherited/specified tools. Applied **before** `tools` if both are set. |
-| `model` | No | `sonnet` · `opus` · `haiku` · a full model ID (`claude-opus-4-8`) · or `inherit`. Default: `inherit`. |
-| `permissionMode` | No | See [permission modes](#permission-modes). Ignored for plugin subagents. |
-| `maxTurns` | No | Max agentic turns before the subagent stops. |
-| `skills` | No | Skills to preload (full content injected, not just description). Cannot preload skills with `disable-model-invocation: true`. |
-| `mcpServers` | No | MCP servers for this subagent: a server-name string (reuses parent connection) or an inline definition. Ignored for plugin subagents. |
-| `hooks` | No | Lifecycle hooks scoped to this subagent. `Stop` → auto-converted to `SubagentStop`. Ignored for plugin subagents. |
-| `memory` | No | Persistent memory scope: `user` · `project` · `local`. |
-| `background` | No | `true` = always run as a background task. Default `false`. |
-| `effort` | No | `low` · `medium` · `high` · `xhigh` · `max`. Default: inherits session. |
-| `isolation` | No | `worktree` = run in a temp git worktree, isolated from the parent checkout. Auto-cleaned if no changes. |
-| `color` | No | Display color (`red`, `blue`, `green`, `yellow`, `purple`, `orange`, `pink`, `cyan`). |
-| `initialPrompt` | No | Auto-submitted first user turn when the agent runs as the **main** session (via `--agent`/`agent` setting). |
+| Field             | Required | Description                                                                                                                           |
+| :---------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------ |
+| `name`            | Yes      | Unique id, lowercase + hyphens. Used as `agent_type` in hooks. Need not match filename.                                               |
+| `description`     | Yes      | When Claude should delegate here. Include "use proactively" to encourage auto-delegation.                                             |
+| `tools`           | No       | Allowlist of tools. Inherits **all** tools if omitted. `Agent(worker, researcher)` syntax restricts which subagents it may spawn.     |
+| `disallowedTools` | No       | Denylist removed from inherited/specified tools. Applied **before** `tools` if both are set.                                          |
+| `model`           | No       | `sonnet` · `opus` · `haiku` · a full model ID (`claude-opus-4-8`) · or `inherit`. Default: `inherit`.                                 |
+| `permissionMode`  | No       | See [permission modes](#permission-modes). Ignored for plugin subagents.                                                              |
+| `maxTurns`        | No       | Max agentic turns before the subagent stops.                                                                                          |
+| `skills`          | No       | Skills to preload (full content injected, not just description). Cannot preload skills with `disable-model-invocation: true`.         |
+| `mcpServers`      | No       | MCP servers for this subagent: a server-name string (reuses parent connection) or an inline definition. Ignored for plugin subagents. |
+| `hooks`           | No       | Lifecycle hooks scoped to this subagent. `Stop` → auto-converted to `SubagentStop`. Ignored for plugin subagents.                     |
+| `memory`          | No       | Persistent memory scope: `user` · `project` · `local`.                                                                                |
+| `background`      | No       | `true` = always run as a background task. Default `false`.                                                                            |
+| `effort`          | No       | `low` · `medium` · `high` · `xhigh` · `max`. Default: inherits session.                                                               |
+| `isolation`       | No       | `worktree` = run in a temp git worktree, isolated from the parent checkout. Auto-cleaned if no changes.                               |
+| `color`           | No       | Display color (`red`, `blue`, `green`, `yellow`, `purple`, `orange`, `pink`, `cyan`).                                                 |
+| `initialPrompt`   | No       | Auto-submitted first user turn when the agent runs as the **main** session (via `--agent`/`agent` setting).                           |
 
 ---
 
 ## Permission modes
 
-| Mode | Behavior |
-| :--- | :--- |
-| `default` | Standard permission checking with prompts. |
-| `acceptEdits` | Auto-accept file edits and common filesystem commands in the working dir. |
-| `auto` | Background classifier reviews commands and protected-dir writes. |
-| `dontAsk` | Auto-deny prompts (explicitly allowed tools still work). |
+| Mode                | Behavior                                                                                |
+| :------------------ | :-------------------------------------------------------------------------------------- |
+| `default`           | Standard permission checking with prompts.                                              |
+| `acceptEdits`       | Auto-accept file edits and common filesystem commands in the working dir.               |
+| `auto`              | Background classifier reviews commands and protected-dir writes.                        |
+| `dontAsk`           | Auto-deny prompts (explicitly allowed tools still work).                                |
 | `bypassPermissions` | Skip all prompts. **Allows writes to `.git`, `.claude`, `.vscode`** — use with caution. |
-| `plan` | Read-only exploration (plan mode). |
+| `plan`              | Read-only exploration (plan mode).                                                      |
 
 If the parent uses `bypassPermissions` or `acceptEdits`, that takes precedence and can't be overridden. If the parent uses `auto`, the subagent inherits it and frontmatter `permissionMode` is ignored.
 
@@ -86,12 +86,12 @@ Control access with `tools` (allowlist) or `disallowedTools` (denylist). If both
 
 Common profiles:
 
-| Profile | Tools |
-| :--- | :--- |
-| Read-only search | `Read, Grep, Glob` |
+| Profile           | Tools                                              |
+| :---------------- | :------------------------------------------------- |
+| Read-only search  | `Read, Grep, Glob`                                 |
 | Reviewer/reporter | `Read, Grep, Glob` (+ analysis; no `Edit`/`Write`) |
-| Implementer | `Read, Edit, Write, Bash, Glob, Grep` |
-| Orchestrator | above + `Agent(worker, researcher)` |
+| Implementer       | `Read, Edit, Write, Bash, Glob, Grep`              |
+| Orchestrator      | above + `Agent(worker, researcher)`                |
 
 ---
 
@@ -118,13 +118,13 @@ Allowlist only — other agent types can't be spawned. Use bare `Agent` to allow
 
 ## Scope & priority
 
-| Location | Scope | Priority |
-| :--- | :--- | :--- |
-| Managed settings | Organization-wide | 1 (highest) |
-| `--agents` CLI flag | Current session | 2 |
-| `.claude/agents/` | Current project | 3 |
-| `~/.claude/agents/` | All projects | 4 |
-| Plugin `agents/` dir | Where plugin is enabled | 5 (lowest) |
+| Location             | Scope                   | Priority    |
+| :------------------- | :---------------------- | :---------- |
+| Managed settings     | Organization-wide       | 1 (highest) |
+| `--agents` CLI flag  | Current session         | 2           |
+| `.claude/agents/`    | Current project         | 3           |
+| `~/.claude/agents/`  | All projects            | 4           |
+| Plugin `agents/` dir | Where plugin is enabled | 5 (lowest)  |
 
 Higher priority wins on name conflicts. Directories scan recursively; keep `name` unique within a scope.
 
@@ -134,32 +134,36 @@ Higher priority wins on name conflicts. Directories scan recursively; keep `name
 
 For non-fork subagents:
 
-| What | Loads? |
-| :--- | :--- |
-| Subagent's own system prompt | Yes |
-| Full Claude Code system prompt | No |
+| What                           | Loads?                            |
+| :----------------------------- | :-------------------------------- |
+| Subagent's own system prompt   | Yes                               |
+| Full Claude Code system prompt | No                                |
 | `CLAUDE.md` + memory hierarchy | Yes (except `Explore` and `Plan`) |
-| Git status (parent snapshot) | Yes (except `Explore` and `Plan`) |
-| Skills listed in `skills:` | Yes (full content injected) |
-| Parent conversation history | No |
-| Previously invoked skills | No |
+| Git status (parent snapshot)   | Yes (except `Explore` and `Plan`) |
+| Skills listed in `skills:`     | Yes (full content injected)       |
+| Parent conversation history    | No                                |
+| Previously invoked skills      | No                                |
 
 ---
 
 ## Invocation modes
 
 **Natural language** — Claude decides whether to delegate:
+
 ```
 Use the test-runner subagent to fix failing tests
 ```
 
 **@-mention** — guarantees it runs for one task:
+
 ```
 @agent-code-reviewer look at the auth changes
 ```
+
 (`@agent-<name>` local; `@agent-<plugin>:<name>` for plugin subagents.)
 
 **Session-wide** — the whole session runs as that agent:
+
 ```bash
 claude --agent code-reviewer
 ```
@@ -172,11 +176,11 @@ claude --agent code-reviewer
 
 ## Foreground vs background
 
-| | Foreground | Background |
-| :--- | :--- | :--- |
-| Blocks main conversation | Yes | No |
-| Permission prompts | Passed to you | Auto-denied |
-| Run concurrently | No | Yes |
+|                          | Foreground    | Background  |
+| :----------------------- | :------------ | :---------- |
+| Blocks main conversation | Yes           | No          |
+| Permission prompts       | Passed to you | Auto-denied |
+| Run concurrently         | No            | Yes         |
 
 Background a task by asking Claude to "run this in the background", pressing `Ctrl+B`, or `background: true` in frontmatter. Disable all background tasks: `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`.
 

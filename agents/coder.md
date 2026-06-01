@@ -15,11 +15,11 @@ description: |
   </example>
 
   *Note: This agent requires the `managed-agents-2026-04-01` beta header.*
-color: "#198754"
+color: '#198754'
 model: claude-sonnet-4-6
 effort: high
 maxTurns: 40
-isolation: "worktree"
+isolation: 'worktree'
 tools:
   - name: Bash
     permission: always_ask

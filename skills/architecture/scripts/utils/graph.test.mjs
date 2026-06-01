@@ -7,7 +7,7 @@ test('finds simple cycles in an adjacency list', () => {
     'a.ts': ['b.ts'],
     'b.ts': ['c.ts'],
     'c.ts': ['a.ts'],
-    'd.ts': ['a.ts']
+    'd.ts': ['a.ts'],
   };
   const cycles = findCycles(graph);
   assert.strictEqual(cycles.length, 1);
@@ -15,11 +15,11 @@ test('finds simple cycles in an adjacency list', () => {
 });
 
 test('handles graphs without cycles', () => {
-    const graph = {
-        'a.ts': ['b.ts'],
-        'b.ts': ['c.ts'],
-        'c.ts': []
-    };
-    const cycles = findCycles(graph);
-    assert.strictEqual(cycles.length, 0);
+  const graph = {
+    'a.ts': ['b.ts'],
+    'b.ts': ['c.ts'],
+    'c.ts': [],
+  };
+  const cycles = findCycles(graph);
+  assert.strictEqual(cycles.length, 0);
 });

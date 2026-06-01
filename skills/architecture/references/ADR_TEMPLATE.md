@@ -23,6 +23,7 @@ Use this template to record architectural decisions that should not be revisited
 [1-2 sentences describing the architectural tension or constraint that prompted this decision]
 
 Example: "We've been treating order management and payment processing as separate domains, but they're tightly coupled. We need to decide whether to:
+
 1. Merge them into a single OrderPayment module
 2. Keep them separate with explicit boundaries and message passing"
 
@@ -43,6 +44,7 @@ Example: "Separating these domains lets us test each in isolation, reuse Payment
 [What this means for future refactoring, testing, and new feature work]
 
 Example:
+
 - Order logic never imports from Payment
 - Payment adapters (Stripe, PayPal, etc.) live in infra/, not domain/
 - Any feature touching both Order and Payment must go through order-workflow orchestrator
@@ -69,6 +71,7 @@ Example: "Supersedes ADR-0003 (merge Order and Payment)"
 **Rationale**: This lets us test password and token logic without any dependencies. Authenticate can be tested with mock user objects. Future auth methods (OAuth, SAML) can be added as new adapters without changing domain code.
 
 **Implications**:
+
 - Domain code never imports Express, database drivers, or external libraries
 - All password hashing is tested with bcrypt behavior captured in tests
 - Routes import from infra/auth-adapter, not directly from domain/auth
@@ -89,6 +92,7 @@ Example: "Supersedes ADR-0003 (merge Order and Payment)"
 **Rationale**: Interfaces decouple domain from infrastructure. Tests don't need a database. We can swap Postgres for MongoDB without touching domain code.
 
 **Implications**:
+
 - Domain modules have interfaces (IUserRepository, IOrderRepository)
 - Tests instantiate in-memory adapters
 - Production wires up concrete database adapters
@@ -107,6 +111,7 @@ Example: "Supersedes ADR-0003 (merge Order and Payment)"
 **Rationale**: Linear dependencies are easier to reason about, test, and split. Cycles hide coupling and make refactoring risky.
 
 **Implications**:
+
 - No `import { notifyOrderCreated } from '../order'` from within payment
 - Orchestrators in infra/ compose domain modules
 - Events emitted in infra/ to decouple producers from listeners
@@ -125,6 +130,7 @@ Example: "Supersedes ADR-0003 (merge Order and Payment)"
 **Rationale**: Domain organization reflects how the code is actually used. Date logic stays with features that use it. New developers can understand a module by reading one folder, not jumping between domain and utils.
 
 **Implications**:
+
 - No more /utils folder
 - Duplication is OK if it improves locality (a simple dateToIso function can be defined in two modules)
 - Small, focused utility modules are OK if they're in the domain they serve (e.g., order/order-utils.ts)

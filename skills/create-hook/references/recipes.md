@@ -27,9 +27,21 @@ Ready-to-paste patterns, troubleshooting, and security review. For per-event sch
 `Notification` event. macOS / Linux / Windows variants:
 
 ```json
-{ "hooks": { "Notification": [ { "matcher": "", "hooks": [
-  { "type": "command", "command": "osascript -e 'display notification \"Claude needs your attention\" with title \"Claude Code\"'" }
-] } ] } }
+{
+  "hooks": {
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "osascript -e 'display notification \"Claude needs your attention\" with title \"Claude Code\"'"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
 - Linux: `"notify-send 'Claude Code' 'Claude Code needs your attention'"`
@@ -42,10 +54,21 @@ Narrow with matcher `permission_prompt` or `idle_prompt` to fire only on those.
 `PostToolUse` + `Edit|Write`. Extract the path from stdin and format it:
 
 ```json
-{ "hooks": { "PostToolUse": [ {
-  "matcher": "Edit|Write",
-  "hooks": [ { "type": "command", "command": "jq -r '.tool_input.file_path' | xargs npx prettier --write" } ]
-} ] } }
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | xargs npx prettier --write"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
 Project scope (`.claude/settings.json`) so the team shares it. Requires `jq`.
@@ -71,10 +94,18 @@ exit 0
 `chmod +x .claude/hooks/protect-files.sh`, then:
 
 ```json
-{ "hooks": { "PreToolUse": [ {
-  "matcher": "Edit|Write",
-  "hooks": [ { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh" } ]
-} ] } }
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/protect-files.sh" }
+        ]
+      }
+    ]
+  }
+}
 ```
 
 Note: only catches the file tools. Files written via `Bash` (`>`, `sed -i`) bypass this — also match `Bash` or add a `Stop`-time scan if coverage must be total.
@@ -101,13 +132,24 @@ Use `"if": "Bash(rm *)"` in the handler to only spawn the process for `rm` subco
 `SessionStart`; stdout becomes context. Matcher `compact` re-injects after compaction:
 
 ```json
-{ "hooks": { "SessionStart": [ {
-  "matcher": "compact",
-  "hooks": [ { "type": "command", "command": "echo 'Reminder: use Bun not npm. Run bun test before committing.'" } ]
-} ] } }
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo 'Reminder: use Bun not npm. Run bun test before committing.'"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
-Swap `echo` for dynamic output like `git log --oneline -5`. For *every* session, prefer `CLAUDE.md`.
+Swap `echo` for dynamic output like `git log --oneline -5`. For _every_ session, prefer `CLAUDE.md`.
 
 ### Add context to a prompt
 
@@ -118,17 +160,41 @@ Swap `echo` for dynamic output like `git log --oneline -5`. For *every* session,
 Append-only logging. Tool use:
 
 ```json
-{ "hooks": { "PostToolUse": [ { "matcher": "Bash", "hooks": [
-  { "type": "command", "command": "jq -r '.tool_input.command' >> ~/.claude/command-log.txt" }
-] } ] } }
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.command' >> ~/.claude/command-log.txt"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
 Config changes (`ConfigChange`, matcher filters by source):
 
 ```json
-{ "hooks": { "ConfigChange": [ { "matcher": "", "hooks": [
-  { "type": "command", "command": "jq -c '{ts: now|todate, source: .source, file: .file_path}' >> ~/claude-config-audit.log" }
-] } ] } }
+{
+  "hooks": {
+    "ConfigChange": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -c '{ts: now|todate, source: .source, file: .file_path}' >> ~/claude-config-audit.log"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
 ### Keep Claude working until a condition holds
@@ -136,9 +202,20 @@ Config changes (`ConfigChange`, matcher filters by source):
 `Stop` hook. Deterministic (exit 2 + stderr to continue) or judgment via `prompt`:
 
 ```json
-{ "hooks": { "Stop": [ { "hooks": [
-  { "type": "prompt", "prompt": "Check if all tasks are complete. If not, respond {\"ok\": false, \"reason\": \"what remains\"}." }
-] } ] } }
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "prompt",
+            "prompt": "Check if all tasks are complete. If not, respond {\"ok\": false, \"reason\": \"what remains\"}."
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
 For a `command` Stop hook, **always** short-circuit on `stop_hook_active`:
@@ -156,10 +233,21 @@ Use `agent` type when the check must run tests / read files.
 `PermissionRequest` + a **narrow** matcher, JSON `allow`:
 
 ```json
-{ "hooks": { "PermissionRequest": [ {
-  "matcher": "ExitPlanMode",
-  "hooks": [ { "type": "command", "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PermissionRequest\",\"decision\":{\"behavior\":\"allow\"}}}'" } ]
-} ] } }
+{
+  "hooks": {
+    "PermissionRequest": [
+      {
+        "matcher": "ExitPlanMode",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PermissionRequest\",\"decision\":{\"behavior\":\"allow\"}}}'"
+          }
+        ]
+      }
+    ]
+  }
+}
 ```
 
 Never use `.*` or empty matcher here — it auto-approves every prompt including writes and shell. Does not fire in `-p` mode (use `PreToolUse` there). To also switch mode, add `decision.updatedPermissions: [{"type":"setMode","mode":"acceptEdits","destination":"session"}]`.
@@ -169,10 +257,16 @@ Never use `.*` or empty matcher here — it auto-approves every prompt including
 Pair `SessionStart` + `CwdChanged`, both writing to `$CLAUDE_ENV_FILE`:
 
 ```json
-{ "hooks": {
-  "SessionStart": [ { "hooks": [ { "type": "command", "command": "direnv export bash > \"$CLAUDE_ENV_FILE\"" } ] } ],
-  "CwdChanged":  [ { "hooks": [ { "type": "command", "command": "direnv export bash > \"$CLAUDE_ENV_FILE\"" } ] } ]
-} }
+{
+  "hooks": {
+    "SessionStart": [
+      { "hooks": [{ "type": "command", "command": "direnv export bash > \"$CLAUDE_ENV_FILE\"" }] }
+    ],
+    "CwdChanged": [
+      { "hooks": [{ "type": "command", "command": "direnv export bash > \"$CLAUDE_ENV_FILE\"" }] }
+    ]
+  }
+}
 ```
 
 Or watch specific files with `FileChanged` + matcher `.envrc|.env`.

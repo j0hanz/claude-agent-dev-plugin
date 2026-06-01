@@ -74,7 +74,7 @@ A 5-10 minute interview prevents this.
 > Here's what the usage would look like:
 >
 > ```typescript
-> import { operation1, operation2 } from "./auth";
+> import { operation1, operation2 } from './auth';
 >
 > const result = await operation1(input);
 > ```
@@ -147,18 +147,12 @@ If red flag, go back to Step 3 and refine the boundaries.
 >
 > ```typescript
 > // What Auth exports
-> export async function authenticate(
->   user: User,
->   password: string,
-> ): Promise<Token>;
-> export async function register(
->   email: string,
->   password: string,
-> ): Promise<{ token: Token }>;
+> export async function authenticate(user: User, password: string): Promise<Token>;
+> export async function register(email: string, password: string): Promise<{ token: Token }>;
 > export function verifyToken(token: Token): { userId: string };
 >
 > // How routes use it
-> app.post("/login", async (req, res) => {
+> app.post('/login', async (req, res) => {
 >   const user = await findUserByEmail(req.body.email);
 >   const token = await authenticate(user, req.body.password);
 >   res.json({ token });

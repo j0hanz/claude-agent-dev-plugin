@@ -174,7 +174,7 @@ permissions:
 steps:
   - uses: actions/attest-build-provenance@v1 # pin to SHA
     with:
-      subject-path: "dist/*.tgz"
+      subject-path: 'dist/*.tgz'
 ```
 
 Consumers can verify with `gh attestation verify dist/foo.tgz --owner <org>`. Cheap to add; bumps your SLSA level meaningfully.

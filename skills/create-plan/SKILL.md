@@ -25,6 +25,7 @@ Creates one **executable implementation plan file** for a specific technical tas
 This creates `plan-feature-auth-middleware-1.md` with 9 atomic tasks, complete code examples, and test cases ready for execution.
 
 **Available flags** (optional):
+
 - `--atomic` — 15-40 detailed tasks for implementation (default, best for engineers)
 - `--compact` — 6-8 phases with executive summary (best for stakeholders/approval)
 - `--narrative` — With runbooks and operational procedures (best for DevOps/SRE)
@@ -32,6 +33,7 @@ This creates `plan-feature-auth-middleware-1.md` with 9 atomic tasks, complete c
 - `--assume-paths` — For multi-repo/microservices (skip cross-repo discovery)
 
 **Examples**:
+
 ```bash
 /create-plan --atomic "Add JWT auth to Express API"
 /create-plan --compact "Migrate to Kubernetes"
@@ -52,6 +54,7 @@ Before creating a plan, confirm these three things:
 ### ✅ Check 1: Do You Have Clear Scope?
 
 Ask yourself:
+
 - **Purpose**: What are we adding/changing/fixing? (be specific — "add login" not "improve auth")
 - **Component**: Which part of the system? (ideally 1-3 files, 1-2 main functions)
 - **Constraints**: Any hard limits? (deadline, tech stack, team size)
@@ -178,13 +181,13 @@ python <skill-builder-dir>/scripts/validate_plan.py plan-feature-auth-middleware
 
 This checks **all of these automatically**:
 
-| Check | What It Verifies | If It Fails |
-|-------|------------------|------------|
-| **File paths** | Every reference is markdown-linked `[file.ts](path)` | Plan has broken links |
-| **Symbols** | Every symbol has line anchor `[func](path#L42)` | Executor can't find functions |
-| **Task structure** | Each task has all required fields | Plan is incomplete |
-| **Dependencies** | Tasks form a valid DAG (no cycles) | Plan can deadlock |
-| **Cross-references** | TASK-001, PHASE-001 exist and link | Plan is internally broken |
+| Check                | What It Verifies                                     | If It Fails                   |
+| -------------------- | ---------------------------------------------------- | ----------------------------- |
+| **File paths**       | Every reference is markdown-linked `[file.ts](path)` | Plan has broken links         |
+| **Symbols**          | Every symbol has line anchor `[func](path#L42)`      | Executor can't find functions |
+| **Task structure**   | Each task has all required fields                    | Plan is incomplete            |
+| **Dependencies**     | Tasks form a valid DAG (no cycles)                   | Plan can deadlock             |
+| **Cross-references** | TASK-001, PHASE-001 exist and link                   | Plan is internally broken     |
 
 ### Example Validation
 
@@ -223,6 +226,7 @@ FIX: See lines 52-55 in plan-feature-auth-middleware-1.md
   ```
 
 The agent samples tasks and scores four dimensions: atomicity (one observable outcome per task), validation runability (commands that can execute verbatim), dependency order correctness, and effort estimate realism. Check the output:
+
 - `ready_for_execution: false` → resolve `blocking_issues` before handing the plan to an executor
 - `plan_wide_issues` → address pattern-level problems across the plan
 - `ready_for_execution: true` → plan is ready for execution
@@ -236,6 +240,7 @@ Learn what breaks plans, and how to fix them:
 ### Anti-Pattern 1: Vague Validation
 
 ❌ **WRONG**:
+
 ```
 Validate: Check that it works
 Expected result: Middleware is functioning
@@ -244,6 +249,7 @@ Expected result: Middleware is functioning
 Why this breaks: An agent can't execute "check that it works" — it's not a command. Plan will fail.
 
 ✅ **RIGHT**:
+
 ```
 Validate: npm test -- src/tests/auth.middleware.test.ts --verbose
 Expected result: All 6 tests pass, 0 skipped
@@ -256,6 +262,7 @@ Why this works: The agent can run the command and observe the exact result.
 ### Anti-Pattern 2: Bundled Tasks
 
 ❌ **WRONG**:
+
 ```
 Task 1: Create utils, add middleware, and write tests
 ```
@@ -263,6 +270,7 @@ Task 1: Create utils, add middleware, and write tests
 Why this breaks: "And" means multiple outcomes. Agent doesn't know when task is complete.
 
 ✅ **RIGHT**:
+
 ```
 Task 1: Create JWT utilities
 Task 2: Create authentication middleware
@@ -276,6 +284,7 @@ Why this works: One task = one observable outcome. Clear completion criteria.
 ### Anti-Pattern 3: Guessed Paths
 
 ❌ **WRONG** (without discovering):
+
 ```
 Files: src/utils/jwt.ts
 Symbols: [generateToken](src/utils/jwt.ts#L42)
@@ -284,6 +293,7 @@ Symbols: [generateToken](src/utils/jwt.ts#L42)
 Why this breaks: Path might not exist, line might be wrong. Plan fails during execution.
 
 ✅ **RIGHT** (discovered and verified):
+
 ```
 Files: [src/utils/jwt.ts](src/utils/jwt.ts)
 Symbols: [generateToken](src/utils/jwt.ts#L15)  # Verified via discover.py
@@ -296,6 +306,7 @@ Why this works: Paths are markdown-linked and verified. Agent can follow them.
 ### Anti-Pattern 4: Circular Dependencies
 
 ❌ **WRONG**:
+
 ```
 Task 1: Implement utils → Depends on Task 2
 Task 2: Implement middleware → Depends on Task 1
@@ -304,6 +315,7 @@ Task 2: Implement middleware → Depends on Task 1
 Why this breaks: Neither can start; plan is deadlocked forever.
 
 ✅ **RIGHT**:
+
 ```
 Task 1: Create JWT utilities
 Task 2: Create middleware → Depends on Task 1
@@ -383,11 +395,11 @@ For detailed script documentation (syntax, output format, flags), see **MANDATOR
 
 ## Reference Docs
 
-| Problem | Reference |
-| --- | --- |
-| Plan structure & template | [references/template.md](references/template.md) |
-| Finding files & symbols | [references/discovery.md](references/discovery.md) |
+| Problem                     | Reference                                                  |
+| --------------------------- | ---------------------------------------------------------- |
+| Plan structure & template   | [references/template.md](references/template.md)           |
+| Finding files & symbols     | [references/discovery.md](references/discovery.md)         |
 | Task sizing & decomposition | [references/decomposition.md](references/decomposition.md) |
-| Validation checklist | [references/validation.md](references/validation.md) |
-| Script syntax (manual use) | [references/scripts.md](references/scripts.md) |
-| Git workflow & team reviews | [references/git-workflow.md](references/git-workflow.md) |
+| Validation checklist        | [references/validation.md](references/validation.md)       |
+| Script syntax (manual use)  | [references/scripts.md](references/scripts.md)             |
+| Git workflow & team reviews | [references/git-workflow.md](references/git-workflow.md)   |

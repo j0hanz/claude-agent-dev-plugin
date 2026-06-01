@@ -35,14 +35,15 @@ Use this skill when the user says "build X", "add X", "implement X", "how should
 
 Match response length to the stage and maturity level. Do not over-explain.
 
-| Stage | Guideline |
-|---|---|
-| **Trivial fast-path (Sketch)** | 1 page max. Goal, ACs, validation. Nothing else. |
+| Stage                                    | Guideline                                                                                                              |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| **Trivial fast-path (Sketch)**           | 1 page max. Goal, ACs, validation. Nothing else.                                                                       |
 | **Scope interview (Contract/Blueprint)** | Answer the 5 interview questions in < 400 words. Do NOT pre-draft REQ/AC/VAL items here — that is `create-specs`' job. |
-| **Spec recovery (mid-impl change)** | Numbered list of steps. ≤ 15 items. Include the git command and the validation command. |
-| **Blueprint / decomposition** | Full detail appropriate. Focus on open questions and the decomposition table. |
+| **Spec recovery (mid-impl change)**      | Numbered list of steps. ≤ 15 items. Include the git command and the validation command.                                |
+| **Blueprint / decomposition**            | Full detail appropriate. Focus on open questions and the decomposition table.                                          |
 
 **Avoid these patterns in every response:**
+
 - Pre-drafting spec content (REQ/AC/VAL) before `create-specs` runs. It will be replaced — do not produce it during the scope interview.
 - Pre-drafting plan phases before `create-plan` runs. Same reason.
 - Repeating the full 5-step workflow at the bottom of every response. State where the conversation is and what the next action is.
@@ -71,14 +72,15 @@ For common mistakes and how to avoid them: [Anti-Patterns](references/anti-patte
 
 Different skills for different situations:
 
-| Situation | Skill | Output | Time |
-|-----------|-------|--------|------|
-| **Implementing a single feature or bug fix** (small-to-medium scope) | spec-driven-development (you are here) | spec-*.md + plan-*.md + validated code | 1–3 hours |
-| **Planning a large initiative, roadmap, or multi-sprint effort** | `create-plan` | high-level plan with phases and milestones | 2–4 hours |
-| **Designing system architecture, component interactions, API contracts** | `architecture` | architecture.md, ADRs, diagrams | 2–6 hours |
-| **Exploring unknown problem space or evaluating technologies** | `research-engineer` | research findings, recommendations, proof-of-concepts | varies |
+| Situation                                                                | Skill                                  | Output                                                | Time      |
+| ------------------------------------------------------------------------ | -------------------------------------- | ----------------------------------------------------- | --------- |
+| **Implementing a single feature or bug fix** (small-to-medium scope)     | spec-driven-development (you are here) | spec-_.md + plan-_.md + validated code                | 1–3 hours |
+| **Planning a large initiative, roadmap, or multi-sprint effort**         | `create-plan`                          | high-level plan with phases and milestones            | 2–4 hours |
+| **Designing system architecture, component interactions, API contracts** | `architecture`                         | architecture.md, ADRs, diagrams                       | 2–6 hours |
+| **Exploring unknown problem space or evaluating technologies**           | `research-engineer`                    | research findings, recommendations, proof-of-concepts | varies    |
 
 **Typical workflow** (large projects):
+
 1. Research → Understand the landscape (research-engineer)
 2. Architecture → Design system and interfaces (architecture)
 3. Multiple SDD cycles → Implement features one-by-one (spec-driven-development)
@@ -112,6 +114,7 @@ Examples that qualify: changing a constant, fixing a typo in an error message, u
 Examples that do NOT qualify: any change that touches an API endpoint, database schema, UI component, test file, or more than one file.
 
 **If YES** → Use Sketch maturity directly:
+
 1. Write the one-page spec using [sketch-template.md](references/sketch-template.md) (5 min).
 2. Confirm with the user.
 3. Proceed to Implementation Governance — no brainstorming, no `create-specs`, no `create-plan` required.
@@ -131,6 +134,7 @@ Before proceeding, ask: has the design space already been explored for this requ
 When in doubt, run a short brainstorm (5 min) rather than skipping — it often surfaces constraints that change the scope entirely.
 
 **If the `brainstorming` sub-skill is unavailable in this environment**, run an inline proxy instead. Keep it to ≤ 200 words covering exactly these five questions:
+
 1. What is the underlying problem this feature solves (not just the feature itself)?
 2. What are 2–3 different ways to implement it and their key tradeoff?
 3. What assumptions in the request might be wrong?
@@ -165,6 +169,7 @@ If **yes** — identify the dependency owner before proceeding to Step 2. Find t
 - **In Copilot CLI**: Run `copilot -s create-specs`
 
 If the `create-specs` skill is not available in your environment:
+
 1. Contact your workspace admin to ensure it's installed
 2. As a fallback, use the [Sketch Spec Template](references/sketch-template.md) and follow it directly (note: automated validation will not be available)
 
@@ -189,6 +194,7 @@ _Failure mode_: If `validate_spec.py` fails, analyze the output, run the `create
 - **In Copilot CLI**: Run `copilot -s create-plan -- <spec-file>`
 
 If the `create-plan` skill is not available:
+
 1. Contact your workspace admin to ensure it's installed
 2. As a fallback, manually create the plan by running `generate_plan.py <spec.md>` directly (note: automated validation will not be available)
 
@@ -259,21 +265,25 @@ Ask: _"Does the system now do what the spec says it must do?"_ If yes: done. If 
 Once the spec is validated, what if new information arrives or stakeholders request changes?
 
 ### Minor Clarification (Wording, Examples)
+
 Update the spec directly (no validation needed for cosmetic changes). Keep implementation on track.
 
 ### New Requirement (Additional AC/REQ)
+
 1. Add new REQ/AC/VAL to the spec alongside existing ones
 2. Run `validate_spec.py` again
 3. If validation passes: Update plan (add new tasks for new AC)
 4. Continue implementation
 
 ### Fundamental Change (Requirement Changes)
+
 1. Update the affected REQ items in the spec
 2. Run `validate_spec.py` again
 3. Evaluate: Does this change any AC/VAL items? If yes: update, revalidate, update plan
 4. Continue implementation
 
 ### Major Change (Spec is Fundamentally Different)
+
 See [Spec Recovery](references/spec-recovery.md) for how to handle major changes mid-implementation.
 
 ---
@@ -291,6 +301,7 @@ The key principle: **Do NOT retrofit a spec from existing code.** This creates a
 If your feature depends on other teams' APIs, schemas, or infrastructure, see [Multi-Team Specs](references/multi-team-specs.md).
 
 Key guidance:
+
 - Find the owning team's spec before finalizing yours
 - Model dependencies explicitly in the plan
 - Coordinate timelines and breaking changes

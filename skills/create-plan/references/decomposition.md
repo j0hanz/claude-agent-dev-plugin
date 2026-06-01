@@ -164,26 +164,26 @@ Detailed per-task-type breakdown. For the quick formula, see the [Effort Estimat
 
 ### Base Effort by Task Type
 
-| Task Type | Complexity | Base Time |
-| --- | --- | --- |
-| New file (implementation) | Simple (< 50 LOC) | 15-30 min |
-| New file (utility/helper) | Medium (50-150 LOC) | 30-60 min |
-| New file (integration) | Complex (150-300 LOC) | 60-90 min |
-| Modify existing file | Simple (1-20 changes) | 10-20 min |
-| Modify existing file | Complex (20+ changes) | 30-60 min |
-| Test file (unit tests) | Per 10 test cases | 20-30 min |
-| Test file (integration) | Per 5 test cases | 30-45 min |
-| Configuration (env vars) | Per section | 5-10 min |
-| Documentation | Per 500 words | 20-30 min |
+| Task Type                 | Complexity            | Base Time |
+| ------------------------- | --------------------- | --------- |
+| New file (implementation) | Simple (< 50 LOC)     | 15-30 min |
+| New file (utility/helper) | Medium (50-150 LOC)   | 30-60 min |
+| New file (integration)    | Complex (150-300 LOC) | 60-90 min |
+| Modify existing file      | Simple (1-20 changes) | 10-20 min |
+| Modify existing file      | Complex (20+ changes) | 30-60 min |
+| Test file (unit tests)    | Per 10 test cases     | 20-30 min |
+| Test file (integration)   | Per 5 test cases      | 30-45 min |
+| Configuration (env vars)  | Per section           | 5-10 min  |
+| Documentation             | Per 500 words         | 20-30 min |
 
 ### Multiplier for Context
 
-| Situation | Multiplier |
-| --- | --- |
-| Using familiar tech (Express, React, etc.) | 1.0x |
-| Using new library/framework | 1.3x |
-| Complex architecture change | 1.5x |
-| First time with this codebase | 1.2x |
+| Situation                                  | Multiplier |
+| ------------------------------------------ | ---------- |
+| Using familiar tech (Express, React, etc.) | 1.0x       |
+| Using new library/framework                | 1.3x       |
+| Complex architecture change                | 1.5x       |
+| First time with this codebase              | 1.2x       |
 
 ### Worked Estimates
 

@@ -5,9 +5,9 @@ import os from 'node:os';
 
 const filePath = process.argv[2];
 if (!filePath) {
-    console.error('Usage: node preview_diagram.js <file.mmd>');
-    process.exitCode = 1;
-    process.exit();
+  console.error('Usage: node preview_diagram.js <file.mmd>');
+  process.exitCode = 1;
+  process.exit();
 }
 
 const content = fs.readFileSync(filePath, 'utf-8');

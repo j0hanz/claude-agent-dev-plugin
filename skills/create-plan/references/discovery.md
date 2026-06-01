@@ -49,13 +49,13 @@ python <skill>/scripts/discover.py \
 
 ## When Discovery Fails
 
-| Situation | Action |
-|-----------|--------|
-| Pattern returns 0 results | Simplify glob pattern or check directory exists |
-| Symbol not found | Try `--names "/.*/"` to see all symbols, then narrow |
-| Expected path doesn't exist | Mark `UNVERIFIED: [path]` in plan; note resolution plan |
-| New files created during authoring | Re-run discovery before finalizing plan |
-| Cross-repo discovery needed | Use `--assume-paths` flag; document assumptions |
+| Situation                          | Action                                                  |
+| ---------------------------------- | ------------------------------------------------------- |
+| Pattern returns 0 results          | Simplify glob pattern or check directory exists         |
+| Symbol not found                   | Try `--names "/.*/"` to see all symbols, then narrow    |
+| Expected path doesn't exist        | Mark `UNVERIFIED: [path]` in plan; note resolution plan |
+| New files created during authoring | Re-run discovery before finalizing plan                 |
+| Cross-repo discovery needed        | Use `--assume-paths` flag; document assumptions         |
 
 ## Multi-Repo & Cross-Repo Scenarios
 

@@ -15,7 +15,7 @@ description: |
   </example>
 
   *Note: This agent requires the `managed-agents-2026-04-01` beta header.*
-color: "#8B4513"
+color: '#8B4513'
 model: claude-sonnet-4-6
 effort: high
 maxTurns: 15

@@ -2,7 +2,7 @@
 name: reviewer
 description: |
   Semantic review only: read a spec file, evaluate sections that validate_spec.py cannot catch, and produce a per-section scored report with ranked improvement suggestions
-color: "#FFC107"
+color: '#FFC107'
 model: claude-sonnet-4-6
 tools:
   - Read
@@ -16,9 +16,9 @@ role: Semantic review only
 task: Read a spec file, evaluate sections that validate_spec.py cannot catch, and produce a per-section scored report with ranked improvement suggestions
 
 input:
-  spec_path: path to the spec markdown file — required
-  project_root: root directory to resolve Context section file references — optional
-  maturity: sketch|contract|blueprint — optional, default: contract
+spec_path: path to the spec markdown file — required
+project_root: root directory to resolve Context section file references — optional
+maturity: sketch|contract|blueprint — optional, default: contract
 
 process:
 
@@ -30,14 +30,14 @@ process:
 6. Rank improvement suggestions by expected impact on implementation clarity
 
 section-scoring:
-  goal: 10 = one sentence with measurable completion signal; fail = two sentences mixing scope + "how", no observable success state
-  requirements: 10 = one obligation per REQ, uses MUST/SHALL, measurable thresholds; fail = AND in REQ, "fast" without latency number
-  constraints: 10 = each CON explicitly excludes something, no overlap with REQ; fail = restates REQs, vague "no breaking changes"
-  interfaces: 10 = every endpoint has input schema + output schema + error cases; fail = happy-path only, missing 401/403/500
-  context: 10 = references actual files with line anchors, describes current vs missing; fail = generic "we use Express" without paths
-  acceptance_criteria: 10 = each AC independently observable without reading code; fail = "System works correctly", ACs duplicating REQs
-  validation_steps: 10 = each VAL is a runnable shell command with expected output; fail = "Run tests" without path, "verify manually"
-  notes_and_risks: 10 = RISK items have named mitigation or explicit "accepted"; fail = generic "this might be slow"
+goal: 10 = one sentence with measurable completion signal; fail = two sentences mixing scope + "how", no observable success state
+requirements: 10 = one obligation per REQ, uses MUST/SHALL, measurable thresholds; fail = AND in REQ, "fast" without latency number
+constraints: 10 = each CON explicitly excludes something, no overlap with REQ; fail = restates REQs, vague "no breaking changes"
+interfaces: 10 = every endpoint has input schema + output schema + error cases; fail = happy-path only, missing 401/403/500
+context: 10 = references actual files with line anchors, describes current vs missing; fail = generic "we use Express" without paths
+acceptance_criteria: 10 = each AC independently observable without reading code; fail = "System works correctly", ACs duplicating REQs
+validation_steps: 10 = each VAL is a runnable shell command with expected output; fail = "Run tests" without path, "verify manually"
+notes_and_risks: 10 = RISK items have named mitigation or explicit "accepted"; fail = generic "this might be slow"
 
 cross-cutting:
 
@@ -66,14 +66,14 @@ schema:
   "maturity": "sketch|contract|blueprint",
   "overall_score": 0.0,
   "sections": {
-    "goal":                { "score": 0, "present": true, "evidence": "string" },
-    "requirements":        { "score": 0, "present": true, "evidence": "string" },
-    "constraints":         { "score": 0, "present": true, "evidence": "string" },
-    "interfaces":          { "score": 0, "present": true, "evidence": "string" },
-    "context":             { "score": 0, "present": true, "evidence": "string" },
+    "goal": { "score": 0, "present": true, "evidence": "string" },
+    "requirements": { "score": 0, "present": true, "evidence": "string" },
+    "constraints": { "score": 0, "present": true, "evidence": "string" },
+    "interfaces": { "score": 0, "present": true, "evidence": "string" },
+    "context": { "score": 0, "present": true, "evidence": "string" },
     "acceptance_criteria": { "score": 0, "present": true, "evidence": "string" },
-    "validation_steps":    { "score": 0, "present": true, "evidence": "string" },
-    "notes_and_risks":     { "score": 0, "present": true, "evidence": "string" }
+    "validation_steps": { "score": 0, "present": true, "evidence": "string" },
+    "notes_and_risks": { "score": 0, "present": true, "evidence": "string" }
   },
   "cross_cutting": {
     "unmeasured_adjectives": ["'fast' in REQ-003 — no latency threshold defined"],

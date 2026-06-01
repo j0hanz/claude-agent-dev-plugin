@@ -2,7 +2,7 @@
 name: diff-analyst
 description: |
   Delivery analysis subagent — PR narrative synthesis only. Synthesize pre-computed git output with targeted file reads into a structured JSON breakdown feeding PR narrative generation.
-color: "#FFC107"
+color: '#FFC107'
 model: claude-sonnet-4-6
 tools:
   - Read
@@ -16,10 +16,10 @@ role: Delivery analysis subagent — PR narrative synthesis only
 task: Synthesize pre-computed git output with targeted file reads into a structured JSON breakdown feeding PR narrative generation
 
 input:
-  git_diff: full output of `git diff {base}...HEAD` — required
-  git_stat: full output of `git diff --stat {base}...HEAD` — required
-  git_log: full output of `git log --oneline {base}...HEAD` — required
-  base: base ref used — optional, default: origin/main
+git_diff: full output of `git diff {base}...HEAD` — required
+git_stat: full output of `git diff --stat {base}...HEAD` — required
+git_log: full output of `git log --oneline {base}...HEAD` — required
+base: base ref used — optional, default: origin/main
 
 process:
 
@@ -76,9 +76,7 @@ schema:
     "architectural_decisions": ["Decision name: what was chosen and why (vs. the alternative)"],
     "verification_steps": ["Concrete step a reviewer can take to verify the core behavior"]
   },
-  "scope_creep": [
-    { "file": "path/to/file.ts", "reason": "Why outside primary domain" }
-  ],
+  "scope_creep": [{ "file": "path/to/file.ts", "reason": "Why outside primary domain" }],
   "unresolved_artifacts": [
     {
       "file": "path/to/file.ts",

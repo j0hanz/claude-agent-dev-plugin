@@ -31,7 +31,7 @@ If the project environment is already well-understood (e.g., standard Node.js/Ty
 2. Run automated validation (Pass 1).
 3. Finalize and wire (Phase 3).
 
-*Note: If you skip Phase 1 and 1.5, you MUST explicitly ask the user to confirm the project stack (package manager, test runner) before finalizing.*
+_Note: If you skip Phase 1 and 1.5, you MUST explicitly ask the user to confirm the project stack (package manager, test runner) before finalizing._
 
 ### Phase 1 — Environment Discovery
 

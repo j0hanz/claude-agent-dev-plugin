@@ -26,11 +26,11 @@ Use this template when modeling multi-step transactions across services:
 sequenceDiagram
     Client->>OrderService: PlaceOrder(items, paymentMethod)
     OrderService->>PaymentService: ChargeCard(amount)
-    
+
     alt Payment Success
         PaymentService-->>OrderService: Charged
         OrderService->>InventoryService: DecrementStock(items)
-        
+
         alt Inventory Available
             InventoryService-->>OrderService: Decremented
             OrderService->>ShippingService: CreateShipment(address)
@@ -42,7 +42,7 @@ sequenceDiagram
             PaymentService-->>OrderService: Refunded
             OrderService-->>Client: OrderFailed (insufficient inventory)
         end
-        
+
     else Payment Declined
         PaymentService-->>OrderService: Declined (insufficient funds)
         OrderService-->>Client: OrderFailed (payment declined)

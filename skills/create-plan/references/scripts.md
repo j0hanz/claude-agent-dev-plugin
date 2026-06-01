@@ -60,9 +60,13 @@ python ${CLAUDE_SKILL_DIR}/scripts/generate_plan.py \
 
 ```markdown
 # Phase 1: Setup
+
 ## Task 1: Configure Environment
+
 ...
+
 ## Task 2: Install Dependencies
+
 ...
 ```
 

@@ -81,9 +81,9 @@ Wait until actual duplication appears; don't "just in case" extract.
 
 ## The Pattern
 
-| Domain          | Minimal approach                                | Add more when...                     |
-| --------------- | ----------------------------------------------- | ------------------------------------ |
-| Math            | Direct formula                                  | Validation test arrives              |
-| Validation      | Simplest check that passes the assertion        | More specific validation test arrives|
-| Parsing         | Split/iterate only as required by the test      | Multi-line/edge case test arrives    |
-| Classes         | Each method standalone, no helpers              | Same logic appears in 2+ methods    |
+| Domain     | Minimal approach                           | Add more when...                      |
+| ---------- | ------------------------------------------ | ------------------------------------- |
+| Math       | Direct formula                             | Validation test arrives               |
+| Validation | Simplest check that passes the assertion   | More specific validation test arrives |
+| Parsing    | Split/iterate only as required by the test | Multi-line/edge case test arrives     |
+| Classes    | Each method standalone, no helpers         | Same logic appears in 2+ methods      |

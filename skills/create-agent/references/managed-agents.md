@@ -2,7 +2,7 @@
 
 A **Managed Agent** is an agent your own code invokes through the Agent API, outside any Claude Code session. Use it to productionize an agent as a service: a webhook handler, a scheduled job, a backend endpoint.
 
-> This file is a design-level orientation. For the authoritative, current API surface (exact request/response shapes, SDK calls, model IDs, beta headers), use the **`/claude-api`** reference — it tracks the live API. Treat this file as *how to think about* Managed Agents, not as the API contract.
+> This file is a design-level orientation. For the authoritative, current API surface (exact request/response shapes, SDK calls, model IDs, beta headers), use the **`/claude-api`** reference — it tracks the live API. Treat this file as _how to think about_ Managed Agents, not as the API contract.
 
 ## Table of contents
 
@@ -30,11 +30,11 @@ If the invoker is Claude during a session, you want a **subagent**. If it's you 
 
 ## Lifecycle
 
-| API call | Purpose |
-| :--- | :--- |
+| API call        | Purpose                                                                          |
+| :-------------- | :------------------------------------------------------------------------------- |
 | `agents.create` | Register an agent: system prompt, tools, skills, MCP servers, permission policy. |
-| `agents.update` | Modify an existing agent. **Replaces array fields wholesale** — see below. |
-| `agents.invoke` | Run the agent once. One invocation = one independent run. |
+| `agents.update` | Modify an existing agent. **Replaces array fields wholesale** — see below.       |
+| `agents.invoke` | Run the agent once. One invocation = one independent run.                        |
 
 The beta header for this surface is `managed-agents-2026-04-01`. Confirm the current header and call signatures via `/claude-api`.
 
@@ -68,7 +68,7 @@ This is the single most common way a Managed Agent silently loses a capability i
 
 ## Permission policy
 
-Default everything to **`always_ask`**. Reserve **`always_allow`** for a *single, explicitly pinned, fully-trusted* MCP server whose code you control. Never apply `always_allow` broadly across an `agent_toolset` — a broad always-allow turns the agent into an unsupervised actor with whatever blast radius its tools permit.
+Default everything to **`always_ask`**. Reserve **`always_allow`** for a _single, explicitly pinned, fully-trusted_ MCP server whose code you control. Never apply `always_allow` broadly across an `agent_toolset` — a broad always-allow turns the agent into an unsupervised actor with whatever blast radius its tools permit.
 
 Least privilege is the same discipline as for subagents (see SKILL.md Step 4): start read-only, escalate only with per-capability justification.
 

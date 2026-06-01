@@ -2,7 +2,7 @@
 name: research
 description: "Use when Context7 needs setup, authentication, or skill management. Trigger on 'Context7 setup', 'ctx7 auth', 'install ctx7 skill', 'context7 not working', 'ctx7 skills list'. Also guides MCP-to-CLI fallback when context7 tools fail."
 disable-model-invocation: false
-argument-hint: "[library/framework or ctx7 command]"
+argument-hint: '[library/framework or ctx7 command]'
 ---
 
 ## NEVER
@@ -122,6 +122,7 @@ ctx7 docs /react "how to use hooks"
 ```
 
 Or set an API key directly:
+
 ```bash
 export CONTEXT7_API_KEY=your_key
 ```

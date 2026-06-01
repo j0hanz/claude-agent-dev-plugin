@@ -233,6 +233,7 @@ Use these scripts to automate spec creation and validation:
 1. **Scaffold the spec** using `<skill-dir>/scripts/scaffold_spec.py` to get the correct structure and domain snippets.
 2. **Write the spec** following the generated template.
 3. **MANDATORY - VALIDATE**: Run `python <skill-dir>/scripts/validate_spec.py --level [sketch|contract|blueprint] <your_spec.md>`.
+
    > **GATEKEEPER**: Implementation planning MUST NOT begin until `validate_spec.py` returns 0 errors. You MUST resolve all **ERRORS** before proceeding. Address **WARNINGS** where possible to improve quality.
    >
    > **Parser note**: The validator requires at least one line of body text directly under each `##` section heading before any `###` sub-headings. If `## 4. Interfaces` is followed immediately by `### POST /endpoint` with no intervening text, the parser will report a false "Missing mandatory section: Interfaces" error. Fix by adding one introductory sentence (e.g., "The system exposes the following endpoints:") before the first sub-heading.

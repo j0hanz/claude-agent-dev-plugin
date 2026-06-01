@@ -17,14 +17,14 @@ If you cannot write a failing test first, that is a signal the interface is uncl
 
 ## Red Flags
 
-| Thought | Reality |
-|---------|---------|
-| "I'll add tests after I get it working" | Tests come first. Always. This is not negotiable. |
-| "This is too simple to need a test" | Simple code still breaks. Write the test. |
-| "Let me get the implementation working first" | HARD-GATE: no impl without a failing test. |
-| "The test structure isn't clear yet" | That means the design isn't clear. Figure it out in the test. |
-| "I'll write all tests first, then implement" | That's horizontal slicing — see Anti-Pattern section below. |
-| "It passed on the first try" | Two cases: **(1) Tautology** — the test passes even with `return None` / `return 0` as the implementation. This means you tested nothing. Delete and rewrite. **(2) Correct generalization** — the minimal impl from a prior cycle already handles this new scenario. This is fine. Verify it's not vacuous, note why it passes, and move on. The difference: would the test fail if you deleted the implementation? If yes, it's real. |
+| Thought                                       | Reality                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| --------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| "I'll add tests after I get it working"       | Tests come first. Always. This is not negotiable.                                                                                                                                                                                                                                                                                                                                                                                       |
+| "This is too simple to need a test"           | Simple code still breaks. Write the test.                                                                                                                                                                                                                                                                                                                                                                                               |
+| "Let me get the implementation working first" | HARD-GATE: no impl without a failing test.                                                                                                                                                                                                                                                                                                                                                                                              |
+| "The test structure isn't clear yet"          | That means the design isn't clear. Figure it out in the test.                                                                                                                                                                                                                                                                                                                                                                           |
+| "I'll write all tests first, then implement"  | That's horizontal slicing — see Anti-Pattern section below.                                                                                                                                                                                                                                                                                                                                                                             |
+| "It passed on the first try"                  | Two cases: **(1) Tautology** — the test passes even with `return None` / `return 0` as the implementation. This means you tested nothing. Delete and rewrite. **(2) Correct generalization** — the minimal impl from a prior cycle already handles this new scenario. This is fine. Verify it's not vacuous, note why it passes, and move on. The difference: would the test fail if you deleted the implementation? If yes, it's real. |
 
 ## The Critical Anti-Pattern: Horizontal Slicing
 
@@ -77,24 +77,27 @@ Tests written in bulk verify _imagined_ behavior. By the time you implement the 
 Before writing any tests, write down the public interface:
 
 1. **Function/Method Signatures**
+
    ```
    function_name(param1, param2) → return_type
    ```
 
 2. **Error Cases** (What happens when things go wrong?)
+
    ```
    - Invalid input: raise ValueError or return error?
    - Missing data: raise exception or return default?
    ```
 
 3. **Usage Examples** (2-3 realistic scenarios)
+
    ```python
    # Happy path
    calculate_discount(100, 10)  # → 90
-   
+
    # Edge case
    calculate_discount(100, 0)   # → 100
-   
+
    # Error case
    calculate_discount(-50, 10)  # → raises ValueError
    ```
@@ -113,6 +116,7 @@ This prevents mid-stream API changes and gives tests a target to hit.
 Write one scenario per test function. Do NOT batch multiple scenarios:
 
 **WRONG:**
+
 ```python
 def test_discount():
     assert calculate_discount(100, 10) == 90      # Scenario 1
@@ -121,6 +125,7 @@ def test_discount():
 ```
 
 **RIGHT:**
+
 ```python
 def test_basic_discount():
     assert calculate_discount(100, 10) == 90      # ONE scenario
@@ -141,11 +146,13 @@ Why: Each test = one reason to run. One scenario per test = clear diagnosis when
 A test suite is complete when it covers the **stated contract** — not when you run out of edge cases to imagine.
 
 **Add a test for:**
+
 - Each requirement from the spec or bug report
 - Each error case defined in your Pre-TDD interface doc
 - The boundary values (the value just inside and just outside a threshold)
 
 **Don't add a test for:**
+
 - Scenarios not in the specification — they need a spec update first
 - Combinations of already-tested rules (if length-check tests and uppercase-check tests both pass, you don't need a test for "too short AND no uppercase")
 - Implementation internals — if two inputs produce the same observable output, one test is enough
@@ -173,13 +180,15 @@ When asked to use TDD, follow this exact sequence via sequential tool calls:
 When a test fails, identify the failure type and respond appropriately:
 
 ### Environment Failures (Fix environment, re-run test)
+
 - `ModuleNotFoundError: No module named 'my_module'` → Create the missing module
-- `ImportError: cannot import 'MyClass'` → Create the missing class/function  
+- `ImportError: cannot import 'MyClass'` → Create the missing class/function
 - `AttributeError: 'MyClass' object has no attribute 'validate'` → Add the missing method
 
 **Action**: Write a minimal stub (empty function/class), re-run test.
 
 ### Logic Failures (Fix implementation, re-run test)
+
 - `AssertionError: assert 80 == 90` → Your calculation is wrong
 - `TypeError: unsupported operand type(s)` → Return type is wrong
 - `ValueError: Invalid input` → Your validation logic is wrong
@@ -187,6 +196,7 @@ When a test fails, identify the failure type and respond appropriately:
 **Action**: Check the assertion message, fix implementation logic, re-run test.
 
 ### Unexpected Failures (Debug, then proceed)
+
 - Any exception not listed above → Inspect traceback carefully
 - May indicate flawed test or flawed setup
 - Don't proceed until you understand the root cause
@@ -212,11 +222,13 @@ The principle: implement exactly what the test requires, nothing more.
 Only refactor when ALL current tests are GREEN. Use the refactor skill for detailed execution, but here's the TDD-specific checklist:
 
 **Before refactoring:**
+
 - [ ] All tests passing (confirmed by test run)
 - [ ] Feature is complete (no pending tests)
 - [ ] Refactoring won't change behavior
 
 **What to refactor:**
+
 - [ ] Duplicated code (DRY) - only if 2+ real occurrences
 - [ ] Unclear variable/function names - rename to self-document
 - [ ] Long functions (>10 lines) - extract helper with clear purpose
@@ -224,23 +236,25 @@ Only refactor when ALL current tests are GREEN. Use the refactor skill for detai
 - [ ] Deep nesting - flatten with guard clauses
 
 **What NOT to refactor:**
+
 - Don't add new behavior or fix bugs - do in separate step
 - Don't apply complex patterns without test coverage
 - Don't rename just for consistency - only if name misleads
 
 **After each refactor change:**
+
 - Run all tests (must still pass)
 - Confirm no new failures introduced
 
 **Quick HOW guide for the most common refactors:**
 
-| Smell | Fix |
-|-------|-----|
-| Same expression copy-pasted 2+ times | Extract a helper function |
-| Function body > 10 lines | Extract sub-step with a descriptive name |
-| Magic literal (`0.1`, `"admin"`) | Replace with a named constant |
-| Nested `if` inside `if` | Flatten with a guard clause (`if not x: return`) |
-| Unclear variable name | Rename — don't rename just for consistency, only when the name misleads |
+| Smell                                | Fix                                                                     |
+| ------------------------------------ | ----------------------------------------------------------------------- |
+| Same expression copy-pasted 2+ times | Extract a helper function                                               |
+| Function body > 10 lines             | Extract sub-step with a descriptive name                                |
+| Magic literal (`0.1`, `"admin"`)     | Replace with a named constant                                           |
+| Nested `if` inside `if`              | Flatten with a guard clause (`if not x: return`)                        |
+| Unclear variable name                | Rename — don't rename just for consistency, only when the name misleads |
 
 **For deep structural patterns** (Strategy, Observer, extract classes, etc.): consult the separate `refactor` skill. This TDD skill covers WHEN to refactor in the cycle; the refactor skill covers HOW for complex cases.
 
@@ -251,11 +265,13 @@ Only refactor when ALL current tests are GREEN. Use the refactor skill for detai
 If you fail the same test 3+ times, your approach is fundamentally flawed:
 
 **Procedure:**
+
 1. Revert implementation to the last GREEN state
 2. Delete the current failing test
 3. Write a SMALLER, SIMPLER test that makes fractional progress
 
 **Example:**
+
 ```python
 # You're stuck on this (failing 3+ times):
 def test_csv_parser():

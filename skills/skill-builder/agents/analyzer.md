@@ -2,7 +2,7 @@
 name: skill-analyzer
 description: |
   Skill analysis subagent — two modes: post-hoc and benchmark. Analyze comparison results or benchmark data and produce structured JSON insight output.
-color: "#FFC107"
+color: '#FFC107'
 model: claude-sonnet-4-6
 tools:
   - Read

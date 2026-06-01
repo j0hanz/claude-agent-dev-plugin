@@ -351,7 +351,7 @@ Ingest, validate, and store high-volume user activity events for real-time analy
 
 #### Notes & Risks
 
-- `RISK-001`: Data loss during broker partition rebalancing if offsets are committed before database writes complete. MUST commit offsets only *after* successful DB insert or DLQ publish.
+- `RISK-001`: Data loss during broker partition rebalancing if offsets are committed before database writes complete. MUST commit offsets only _after_ successful DB insert or DLQ publish.
 - `ROLLBACK`: If the error rate (DLQ publish rate) exceeds 1% within 5 minutes of deployment, revert the deployment and replay failed events from the DLQ.
 - `MIGRATION`:
   1. Deploy new consumer group alongside old (if applicable).

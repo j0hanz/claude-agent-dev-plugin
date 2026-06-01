@@ -67,6 +67,7 @@ Expected result: Observable success signal.
 [DECISION-002](#8-design-decisions--trade-offs): [Decision] — Why: [Reasoning]
 
 **Examples**:
+
 - DECISION-001: Atomic tasks vs phases? — Why: Enables agent execution and parallel workflows
 - DECISION-002: Multi-repo per-service plans? — Why: Reduces cross-repo discovery complexity
 - DECISION-003: Refactor vs rewrite? — Why: [Your context-specific reasoning]

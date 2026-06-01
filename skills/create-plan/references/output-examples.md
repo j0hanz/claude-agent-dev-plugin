@@ -36,16 +36,19 @@ Perfect for stakeholder approval. Produces **6-8 phases** with timeline:
 # JWT Authentication Implementation Plan
 
 ## Phase 1: Setup & Dependencies (1-2 hours)
+
 - [ ] Install jsonwebtoken library
 - [ ] Configure environment variables
 - [ ] Design token payload structure
 
 ## Phase 2: Core Implementation (2-3 hours)
+
 - [ ] Create JWT utilities (generation, verification)
 - [ ] Build authentication middleware
 - [ ] Integrate with user endpoints
 
 ## Phase 3: Testing & Validation (2-3 hours)
+
 - [ ] Write unit tests
 - [ ] Write integration tests
 - [ ] Verify security best practices
@@ -70,22 +73,27 @@ Perfect for DevOps handoff. Includes runbooks and procedures:
 ## For: Platform Engineers & DevOps
 
 ### Pre-Flight Checklist
+
 - [ ] Verify Node.js version: `node -v` (16+)
 - [ ] Check available disk space: `df -h`
 - [ ] Confirm JWT_SECRET is set: `echo $JWT_SECRET`
 
 ### Step 1: Install Dependencies
+
 npm install jsonwebtoken @types/jsonwebtoken
 
 Expected output: "added X packages"
 
 ### Step 2: Verify Installation
+
 npm test -- src/tests/jwt.test.ts
 
 Expected result: 8 passed tests
 
 ### Troubleshooting
+
 If tests fail with "Cannot find module jsonwebtoken":
+
 - [ ] Run: `npm cache clean --force`
 - [ ] Run: `npm install` again
 - [ ] Verify: `npm ls jsonwebtoken`

@@ -22,38 +22,38 @@ Authoritative per-event reference: input fields, output/decision schema, matcher
 
 ## Quick reference — all events
 
-| Event | When | Matcher field | Can block | Async |
-| --- | --- | --- | --- | --- |
-| `SessionStart` | Session begins or resumes | `source` | No | No |
-| `Setup` | `--init-only`, or `--init`/`--maintenance` in `-p` | CLI flag (`init`·`maintenance`) | No | No |
-| `InstructionsLoaded` | CLAUDE.md / rules file loaded | `load_reason` | No | Yes |
-| `UserPromptSubmit` | Prompt submitted, before Claude processes | — | Yes | No |
-| `UserPromptExpansion` | Typed command expands into a prompt | command name | Yes | No |
-| `PreToolUse` | Before tool call executes | `tool_name` | Yes | No |
-| `PermissionRequest` | Permission dialog shown to user | `tool_name` | Yes | No |
-| `PermissionDenied` | Auto-mode classifier denies tool call | `tool_name` | No | No |
-| `PostToolUse` | After tool call succeeds | `tool_name` | No* | No |
-| `PostToolUseFailure` | After tool call fails | `tool_name` | No | No |
-| `PostToolBatch` | After a batch of parallel tool calls resolves | — | No | No |
-| `Notification` | Claude Code sends a notification | `notification_type` | No | Yes |
-| `MessageDisplay` | While assistant message text is displayed | — | No | No |
-| `SubagentStart` | Subagent spawned via Agent tool | `agent_type` | No | No |
-| `SubagentStop` | Subagent finishes | `agent_type` | Yes | No |
-| `TaskCreated` | Task created via TaskCreate | — | Yes | No |
-| `TaskCompleted` | Task marked as completed | — | Yes | No |
-| `Stop` | Claude finishes responding | — | Yes | No |
-| `StopFailure` | Turn ends due to API error | `error` | No | No |
-| `TeammateIdle` | Agent team teammate going idle | — | Yes | No |
-| `ConfigChange` | Config file changes during session | `source` | Yes | No |
-| `CwdChanged` | Working directory changes | — | No | No |
-| `FileChanged` | Watched file changes on disk | `filename` (basename) | No | No |
-| `WorktreeCreate` | Worktree being created | — | Yes | No |
-| `WorktreeRemove` | Worktree being removed | — | No | No |
-| `PreCompact` | Before context compaction | `trigger` | No | No |
-| `PostCompact` | After context compaction | `trigger` | No | No |
-| `Elicitation` | MCP server requests user input | MCP server name | Yes | No |
-| `ElicitationResult` | User responds to MCP elicitation | MCP server name | Yes | No |
-| `SessionEnd` | Session terminates | `reason` | No | No |
+| Event                 | When                                               | Matcher field                   | Can block | Async |
+| --------------------- | -------------------------------------------------- | ------------------------------- | --------- | ----- |
+| `SessionStart`        | Session begins or resumes                          | `source`                        | No        | No    |
+| `Setup`               | `--init-only`, or `--init`/`--maintenance` in `-p` | CLI flag (`init`·`maintenance`) | No        | No    |
+| `InstructionsLoaded`  | CLAUDE.md / rules file loaded                      | `load_reason`                   | No        | Yes   |
+| `UserPromptSubmit`    | Prompt submitted, before Claude processes          | —                               | Yes       | No    |
+| `UserPromptExpansion` | Typed command expands into a prompt                | command name                    | Yes       | No    |
+| `PreToolUse`          | Before tool call executes                          | `tool_name`                     | Yes       | No    |
+| `PermissionRequest`   | Permission dialog shown to user                    | `tool_name`                     | Yes       | No    |
+| `PermissionDenied`    | Auto-mode classifier denies tool call              | `tool_name`                     | No        | No    |
+| `PostToolUse`         | After tool call succeeds                           | `tool_name`                     | No\*      | No    |
+| `PostToolUseFailure`  | After tool call fails                              | `tool_name`                     | No        | No    |
+| `PostToolBatch`       | After a batch of parallel tool calls resolves      | —                               | No        | No    |
+| `Notification`        | Claude Code sends a notification                   | `notification_type`             | No        | Yes   |
+| `MessageDisplay`      | While assistant message text is displayed          | —                               | No        | No    |
+| `SubagentStart`       | Subagent spawned via Agent tool                    | `agent_type`                    | No        | No    |
+| `SubagentStop`        | Subagent finishes                                  | `agent_type`                    | Yes       | No    |
+| `TaskCreated`         | Task created via TaskCreate                        | —                               | Yes       | No    |
+| `TaskCompleted`       | Task marked as completed                           | —                               | Yes       | No    |
+| `Stop`                | Claude finishes responding                         | —                               | Yes       | No    |
+| `StopFailure`         | Turn ends due to API error                         | `error`                         | No        | No    |
+| `TeammateIdle`        | Agent team teammate going idle                     | —                               | Yes       | No    |
+| `ConfigChange`        | Config file changes during session                 | `source`                        | Yes       | No    |
+| `CwdChanged`          | Working directory changes                          | —                               | No        | No    |
+| `FileChanged`         | Watched file changes on disk                       | `filename` (basename)           | No        | No    |
+| `WorktreeCreate`      | Worktree being created                             | —                               | Yes       | No    |
+| `WorktreeRemove`      | Worktree being removed                             | —                               | No        | No    |
+| `PreCompact`          | Before context compaction                          | `trigger`                       | No        | No    |
+| `PostCompact`         | After context compaction                           | `trigger`                       | No        | No    |
+| `Elicitation`         | MCP server requests user input                     | MCP server name                 | Yes       | No    |
+| `ElicitationResult`   | User responds to MCP elicitation                   | MCP server name                 | Yes       | No    |
+| `SessionEnd`          | Session terminates                                 | `reason`                        | No        | No    |
 
 \* `PostToolUse` can feed back `decision: "block"` to Claude, but the tool has already executed.
 
@@ -87,22 +87,22 @@ When multiple hooks match an event, all run in parallel and identical commands a
 
 ## Matcher patterns
 
-| Event(s) | Matches on | Example values |
-| --- | --- | --- |
-| `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `PermissionDenied` | tool name | `Bash` · `Edit\|Write` · `mcp__.*` |
-| `SessionStart` | session source | `startup` · `resume` · `clear` · `compact` |
-| `Setup` | CLI flag | `init` · `maintenance` |
-| `SessionEnd` | exit reason | `clear` · `resume` · `logout` · `prompt_input_exit` · `bypass_permissions_disabled` · `other` |
-| `Notification` | notification type | `permission_prompt` · `idle_prompt` · `auth_success` · `elicitation_dialog` · `elicitation_complete` · `elicitation_response` |
-| `SubagentStart`, `SubagentStop` | agent type | `general-purpose` · `Explore` · `Plan` · custom names |
-| `PreCompact`, `PostCompact` | trigger | `manual` · `auto` |
-| `ConfigChange` | config source | `user_settings` · `project_settings` · `local_settings` · `policy_settings` · `skills` |
-| `FileChanged` | file basename (literal, `\|`-separated) | `.envrc` · `.env` |
-| `StopFailure` | error type | `rate_limit` · `authentication_failed` · `billing_error` · `invalid_request` · `server_error` · `max_output_tokens` · `unknown` |
-| `InstructionsLoaded` | load reason | `session_start` · `nested_traversal` · `path_glob_match` · `include` · `compact` |
-| `UserPromptExpansion` | command name | your skill/command names |
-| `Elicitation`, `ElicitationResult` | MCP server name | your MCP server names |
-| `UserPromptSubmit`, `PostToolBatch`, `Stop`, `TeammateIdle`, `TaskCreated`, `TaskCompleted`, `WorktreeCreate`, `WorktreeRemove`, `CwdChanged`, `MessageDisplay` | no matcher | always fires |
+| Event(s)                                                                                                                                                        | Matches on                              | Example values                                                                                                                  |
+| --------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `PermissionRequest`, `PermissionDenied`                                                                      | tool name                               | `Bash` · `Edit\|Write` · `mcp__.*`                                                                                              |
+| `SessionStart`                                                                                                                                                  | session source                          | `startup` · `resume` · `clear` · `compact`                                                                                      |
+| `Setup`                                                                                                                                                         | CLI flag                                | `init` · `maintenance`                                                                                                          |
+| `SessionEnd`                                                                                                                                                    | exit reason                             | `clear` · `resume` · `logout` · `prompt_input_exit` · `bypass_permissions_disabled` · `other`                                   |
+| `Notification`                                                                                                                                                  | notification type                       | `permission_prompt` · `idle_prompt` · `auth_success` · `elicitation_dialog` · `elicitation_complete` · `elicitation_response`   |
+| `SubagentStart`, `SubagentStop`                                                                                                                                 | agent type                              | `general-purpose` · `Explore` · `Plan` · custom names                                                                           |
+| `PreCompact`, `PostCompact`                                                                                                                                     | trigger                                 | `manual` · `auto`                                                                                                               |
+| `ConfigChange`                                                                                                                                                  | config source                           | `user_settings` · `project_settings` · `local_settings` · `policy_settings` · `skills`                                          |
+| `FileChanged`                                                                                                                                                   | file basename (literal, `\|`-separated) | `.envrc` · `.env`                                                                                                               |
+| `StopFailure`                                                                                                                                                   | error type                              | `rate_limit` · `authentication_failed` · `billing_error` · `invalid_request` · `server_error` · `max_output_tokens` · `unknown` |
+| `InstructionsLoaded`                                                                                                                                            | load reason                             | `session_start` · `nested_traversal` · `path_glob_match` · `include` · `compact`                                                |
+| `UserPromptExpansion`                                                                                                                                           | command name                            | your skill/command names                                                                                                        |
+| `Elicitation`, `ElicitationResult`                                                                                                                              | MCP server name                         | your MCP server names                                                                                                           |
+| `UserPromptSubmit`, `PostToolBatch`, `Stop`, `TeammateIdle`, `TaskCreated`, `TaskCompleted`, `WorktreeCreate`, `WorktreeRemove`, `CwdChanged`, `MessageDisplay` | no matcher                              | always fires                                                                                                                    |
 
 MCP tools follow `mcp__<server>__<tool>`. Use `mcp__memory__.*` to match all tools from a server. Matchers are case-sensitive.
 
@@ -116,39 +116,39 @@ Filters by tool name AND arguments using permission-rule syntax; the hook proces
 
 ### Common fields (all types)
 
-| Field | Required | Description |
-| --- | --- | --- |
-| `type` | Yes | `"command"` · `"http"` · `"prompt"` · `"agent"` · `"mcp_tool"` |
-| `if` | No | Permission-rule filter, e.g. `"Bash(git *)"`. Tool events only. |
-| `timeout` | No | Seconds before cancel. Defaults: command/http=600, prompt=30, agent=60. `UserPromptSubmit` caps command at 30. |
-| `statusMessage` | No | Custom spinner text while hook runs. |
-| `once` | No | Skills only. If `true`, runs once per session then removes itself. |
+| Field           | Required | Description                                                                                                    |
+| --------------- | -------- | -------------------------------------------------------------------------------------------------------------- |
+| `type`          | Yes      | `"command"` · `"http"` · `"prompt"` · `"agent"` · `"mcp_tool"`                                                 |
+| `if`            | No       | Permission-rule filter, e.g. `"Bash(git *)"`. Tool events only.                                                |
+| `timeout`       | No       | Seconds before cancel. Defaults: command/http=600, prompt=30, agent=60. `UserPromptSubmit` caps command at 30. |
+| `statusMessage` | No       | Custom spinner text while hook runs.                                                                           |
+| `once`          | No       | Skills only. If `true`, runs once per session then removes itself.                                             |
 
 ### Command hook fields
 
-| Field | Required | Description |
-| --- | --- | --- |
-| `command` | Yes | Shell command to execute. |
-| `async` | No | If `true`, runs in background (non-blocking). |
-| `shell` | No | `"bash"` (default) or `"powershell"`. |
-| `args` | No | Switches to exec form (spawns script directly, no shell — avoids quoting/profile issues). |
+| Field     | Required | Description                                                                               |
+| --------- | -------- | ----------------------------------------------------------------------------------------- |
+| `command` | Yes      | Shell command to execute.                                                                 |
+| `async`   | No       | If `true`, runs in background (non-blocking).                                             |
+| `shell`   | No       | `"bash"` (default) or `"powershell"`.                                                     |
+| `args`    | No       | Switches to exec form (spawns script directly, no shell — avoids quoting/profile issues). |
 
 ### HTTP hook fields
 
-| Field | Required | Description |
-| --- | --- | --- |
-| `url` | Yes | POST destination. Body = hook JSON input. |
-| `headers` | No | Key-value headers. Supports `$VAR`/`${VAR}` interpolation. |
-| `allowedEnvVars` | No | Env var names permitted for interpolation in headers. |
+| Field            | Required | Description                                                |
+| ---------------- | -------- | ---------------------------------------------------------- |
+| `url`            | Yes      | POST destination. Body = hook JSON input.                  |
+| `headers`        | No       | Key-value headers. Supports `$VAR`/`${VAR}` interpolation. |
+| `allowedEnvVars` | No       | Env var names permitted for interpolation in headers.      |
 
 HTTP errors (non-2xx, timeouts) are non-blocking. To block, return 2xx with JSON decision fields. Status codes alone cannot block.
 
 ### Prompt / agent hook fields
 
-| Field | Required | Description |
-| --- | --- | --- |
-| `prompt` | Yes | Text sent to model. Use `$ARGUMENTS` to inject hook JSON input. |
-| `model` | No | Model override. Defaults to a fast model (Haiku). |
+| Field    | Required | Description                                                     |
+| -------- | -------- | --------------------------------------------------------------- |
+| `prompt` | Yes      | Text sent to model. Use `$ARGUMENTS` to inject hook JSON input. |
+| `model`  | No       | Model override. Defaults to a fast model (Haiku).               |
 
 ---
 
@@ -156,48 +156,48 @@ HTTP errors (non-2xx, timeouts) are non-blocking. To block, return 2xx with JSON
 
 Delivered on stdin (command) or as POST body (http) for every event.
 
-| Field | Description |
-| --- | --- |
-| `session_id` | Current session identifier. |
-| `transcript_path` | Path to conversation JSONL. |
-| `cwd` | Working directory when hook fires. |
-| `hook_event_name` | Name of the event. |
+| Field             | Description                                                                              |
+| ----------------- | ---------------------------------------------------------------------------------------- |
+| `session_id`      | Current session identifier.                                                              |
+| `transcript_path` | Path to conversation JSONL.                                                              |
+| `cwd`             | Working directory when hook fires.                                                       |
+| `hook_event_name` | Name of the event.                                                                       |
 | `permission_mode` | `default`·`plan`·`acceptEdits`·`auto`·`dontAsk`·`bypassPermissions` — not on all events. |
-| `agent_id` | Subagent identifier (subagent calls only). |
-| `agent_type` | Agent name (subagent or `--agent` mode). |
+| `agent_id`        | Subagent identifier (subagent calls only).                                               |
+| `agent_type`      | Agent name (subagent or `--agent` mode).                                                 |
 
 ---
 
 ## Exit codes
 
-| Code | Effect |
-| --- | --- |
-| `0` | Success. stdout parsed for JSON. Non-JSON stdout shown in verbose mode (except `UserPromptSubmit`/`SessionStart` where it becomes context). |
-| `2` | Blocking error. stdout ignored. stderr fed to Claude or shown to user (event-dependent). |
-| other | Non-blocking error. stderr shown in verbose. Execution continues. |
+| Code  | Effect                                                                                                                                      |
+| ----- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `0`   | Success. stdout parsed for JSON. Non-JSON stdout shown in verbose mode (except `UserPromptSubmit`/`SessionStart` where it becomes context). |
+| `2`   | Blocking error. stdout ignored. stderr fed to Claude or shown to user (event-dependent).                                                    |
+| other | Non-blocking error. stderr shown in verbose. Execution continues.                                                                           |
 
 ### Exit code 2 behavior per event
 
-| Event | On exit 2 |
-| --- | --- |
-| `PreToolUse` | Blocks the tool call. |
-| `PermissionRequest` | Denies the permission. |
-| `UserPromptSubmit` | Blocks prompt; erases it from context. |
-| `UserPromptExpansion` | Blocks the expansion. |
-| `Stop` | Prevents Claude from stopping. |
-| `SubagentStop` | Prevents subagent from stopping. |
-| `TeammateIdle` | Teammate receives stderr and continues working. |
-| `TaskCreated` | Rolls back task creation; stderr fed to model. |
-| `TaskCompleted` | Prevents task from being marked complete. |
-| `ConfigChange` | Blocks config change (except `policy_settings`). |
-| `Elicitation` | Denies the elicitation. |
-| `ElicitationResult` | Response becomes decline. |
-| `WorktreeCreate` | Any non-zero exit fails creation. |
-| `PostToolUse` | Shows stderr to Claude (tool already ran). |
-| `PostToolUseFailure` | Shows stderr to Claude. |
-| `StopFailure` | Output/exit code ignored. |
-| `PermissionDenied` | Ignored. Use JSON `retry: true` instead. |
-| `Notification`, `Setup`, `SubagentStart`, `SessionStart`, `SessionEnd`, `CwdChanged`, `FileChanged`, `PreCompact`, `PostCompact`, `WorktreeRemove`, `InstructionsLoaded`, `MessageDisplay` | Non-blocking; stderr shown to user only. |
+| Event                                                                                                                                                                                      | On exit 2                                        |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------ |
+| `PreToolUse`                                                                                                                                                                               | Blocks the tool call.                            |
+| `PermissionRequest`                                                                                                                                                                        | Denies the permission.                           |
+| `UserPromptSubmit`                                                                                                                                                                         | Blocks prompt; erases it from context.           |
+| `UserPromptExpansion`                                                                                                                                                                      | Blocks the expansion.                            |
+| `Stop`                                                                                                                                                                                     | Prevents Claude from stopping.                   |
+| `SubagentStop`                                                                                                                                                                             | Prevents subagent from stopping.                 |
+| `TeammateIdle`                                                                                                                                                                             | Teammate receives stderr and continues working.  |
+| `TaskCreated`                                                                                                                                                                              | Rolls back task creation; stderr fed to model.   |
+| `TaskCompleted`                                                                                                                                                                            | Prevents task from being marked complete.        |
+| `ConfigChange`                                                                                                                                                                             | Blocks config change (except `policy_settings`). |
+| `Elicitation`                                                                                                                                                                              | Denies the elicitation.                          |
+| `ElicitationResult`                                                                                                                                                                        | Response becomes decline.                        |
+| `WorktreeCreate`                                                                                                                                                                           | Any non-zero exit fails creation.                |
+| `PostToolUse`                                                                                                                                                                              | Shows stderr to Claude (tool already ran).       |
+| `PostToolUseFailure`                                                                                                                                                                       | Shows stderr to Claude.                          |
+| `StopFailure`                                                                                                                                                                              | Output/exit code ignored.                        |
+| `PermissionDenied`                                                                                                                                                                         | Ignored. Use JSON `retry: true` instead.         |
+| `Notification`, `Setup`, `SubagentStart`, `SessionStart`, `SessionEnd`, `CwdChanged`, `FileChanged`, `PreCompact`, `PostCompact`, `WorktreeRemove`, `InstructionsLoaded`, `MessageDisplay` | Non-blocking; stderr shown to user only.         |
 
 ---
 
@@ -205,12 +205,12 @@ Delivered on stdin (command) or as POST body (http) for every event.
 
 Print a JSON object to stdout on exit 0. Processed alongside event-specific fields.
 
-| Field | Default | Description |
-| --- | --- | --- |
-| `continue` | `true` | If `false`, Claude stops entirely after this hook. Overrides all event-specific decisions. |
-| `stopReason` | — | Message shown to user when `continue` is `false`. Not shown to Claude. |
-| `suppressOutput` | `false` | If `true`, hides stdout from verbose mode. |
-| `systemMessage` | — | Warning shown to user. |
+| Field            | Default | Description                                                                                |
+| ---------------- | ------- | ------------------------------------------------------------------------------------------ |
+| `continue`       | `true`  | If `false`, Claude stops entirely after this hook. Overrides all event-specific decisions. |
+| `stopReason`     | —       | Message shown to user when `continue` is `false`. Not shown to Claude.                     |
+| `suppressOutput` | `false` | If `true`, hides stdout from verbose mode.                                                 |
+| `systemMessage`  | —       | Warning shown to user.                                                                     |
 
 Context injected via `additionalContext`, `systemMessage`, or plain stdout is capped at 10,000 characters.
 
@@ -218,17 +218,17 @@ Context injected via `additionalContext`, `systemMessage`, or plain stdout is ca
 
 ## Decision control — quick reference
 
-| Events | Pattern | Key fields |
-| --- | --- | --- |
-| `UserPromptSubmit`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `SubagentStop`, `ConfigChange` | Top-level `decision` | `decision: "block"`, `reason` |
-| `TeammateIdle`, `TaskCreated`, `TaskCompleted` | Exit code or `continue: false` | Exit 2 = feedback to model. `{"continue":false}` = stop entirely. |
-| `PreToolUse` | `hookSpecificOutput` | `permissionDecision` (allow/deny/ask/defer), `permissionDecisionReason`, `updatedInput`, `additionalContext` |
-| `PermissionRequest` | `hookSpecificOutput` | `decision.behavior` (allow/deny), `updatedInput`, `updatedPermissions`, `message`, `interrupt` |
-| `PermissionDenied` | `hookSpecificOutput` | `retry: true` |
-| `WorktreeCreate` | Path return | stdout (command) or `hookSpecificOutput.worktreePath` (http) |
-| `Elicitation` | `hookSpecificOutput` | `action` (accept/decline/cancel), `content` |
-| `ElicitationResult` | `hookSpecificOutput` | `action`, `content` (override) |
-| All others | None | Side effects only (logging, cleanup). |
+| Events                                                                                          | Pattern                        | Key fields                                                                                                   |
+| ----------------------------------------------------------------------------------------------- | ------------------------------ | ------------------------------------------------------------------------------------------------------------ |
+| `UserPromptSubmit`, `PostToolUse`, `PostToolUseFailure`, `Stop`, `SubagentStop`, `ConfigChange` | Top-level `decision`           | `decision: "block"`, `reason`                                                                                |
+| `TeammateIdle`, `TaskCreated`, `TaskCompleted`                                                  | Exit code or `continue: false` | Exit 2 = feedback to model. `{"continue":false}` = stop entirely.                                            |
+| `PreToolUse`                                                                                    | `hookSpecificOutput`           | `permissionDecision` (allow/deny/ask/defer), `permissionDecisionReason`, `updatedInput`, `additionalContext` |
+| `PermissionRequest`                                                                             | `hookSpecificOutput`           | `decision.behavior` (allow/deny), `updatedInput`, `updatedPermissions`, `message`, `interrupt`               |
+| `PermissionDenied`                                                                              | `hookSpecificOutput`           | `retry: true`                                                                                                |
+| `WorktreeCreate`                                                                                | Path return                    | stdout (command) or `hookSpecificOutput.worktreePath` (http)                                                 |
+| `Elicitation`                                                                                   | `hookSpecificOutput`           | `action` (accept/decline/cancel), `content`                                                                  |
+| `ElicitationResult`                                                                             | `hookSpecificOutput`           | `action`, `content` (override)                                                                               |
+| All others                                                                                      | None                           | Side effects only (logging, cleanup).                                                                        |
 
 ---
 
@@ -265,18 +265,18 @@ Before a tool executes. Matches `tool_name`. **Can block.**
 Input: `tool_name`, `tool_input` (tool-specific), `tool_use_id`.
 `tool_input` by tool:
 
-| Tool | Fields |
-| --- | --- |
-| `Bash` | `command`·`description?`·`timeout?`·`run_in_background?` |
-| `Write` | `file_path`·`content` |
-| `Edit` | `file_path`·`old_string`·`new_string`·`replace_all?` |
-| `Read` | `file_path`·`offset?`·`limit?` |
-| `Glob` | `pattern`·`path?` |
-| `Grep` | `pattern`·`path?`·`glob?`·`output_mode?`·`-i?`·`multiline?` |
-| `WebFetch` | `url`·`prompt` |
-| `WebSearch` | `query`·`allowed_domains?`·`blocked_domains?` |
-| `Agent` | `prompt`·`description?`·`subagent_type?`·`model?` |
-| `AskUserQuestion` | `questions[]`·`answers?` |
+| Tool              | Fields                                                      |
+| ----------------- | ----------------------------------------------------------- |
+| `Bash`            | `command`·`description?`·`timeout?`·`run_in_background?`    |
+| `Write`           | `file_path`·`content`                                       |
+| `Edit`            | `file_path`·`old_string`·`new_string`·`replace_all?`        |
+| `Read`            | `file_path`·`offset?`·`limit?`                              |
+| `Glob`            | `pattern`·`path?`                                           |
+| `Grep`            | `pattern`·`path?`·`glob?`·`output_mode?`·`-i?`·`multiline?` |
+| `WebFetch`        | `url`·`prompt`                                              |
+| `WebSearch`       | `query`·`allowed_domains?`·`blocked_domains?`               |
+| `Agent`           | `prompt`·`description?`·`subagent_type?`·`model?`           |
+| `AskUserQuestion` | `questions[]`·`answers?`                                    |
 
 Output (`hookSpecificOutput`): `hookEventName: "PreToolUse"` (required), `permissionDecision` (`allow`/`deny`/`ask`/`defer`), `permissionDecisionReason` (allow/ask → user; deny → Claude), `updatedInput` (replaces tool input), `additionalContext`. Conflict resolution: `deny` > `defer` > `ask` > `allow`. `allow` skips the prompt but never overrides a settings deny rule. A hook `deny` blocks even in `bypassPermissions`.
 
@@ -434,13 +434,13 @@ Supported events for both: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `P
 
 ## Environment variables
 
-| Variable | Available in | Description |
-| --- | --- | --- |
-| `$CLAUDE_PROJECT_DIR` | All hooks | Project root directory. |
-| `${CLAUDE_PLUGIN_ROOT}` | Plugin hooks | Plugin installation directory. |
-| `${CLAUDE_PLUGIN_DATA}` | Plugin hooks | Plugin persistent data directory. |
-| `$CLAUDE_ENV_FILE` | `SessionStart`·`CwdChanged`·`FileChanged` | Write `export KEY=val` lines to persist env vars into subsequent Bash commands. |
-| `$CLAUDE_CODE_REMOTE` | All hooks | `"true"` in remote web environments. |
+| Variable                | Available in                              | Description                                                                     |
+| ----------------------- | ----------------------------------------- | ------------------------------------------------------------------------------- |
+| `$CLAUDE_PROJECT_DIR`   | All hooks                                 | Project root directory.                                                         |
+| `${CLAUDE_PLUGIN_ROOT}` | Plugin hooks                              | Plugin installation directory.                                                  |
+| `${CLAUDE_PLUGIN_DATA}` | Plugin hooks                              | Plugin persistent data directory.                                               |
+| `$CLAUDE_ENV_FILE`      | `SessionStart`·`CwdChanged`·`FileChanged` | Write `export KEY=val` lines to persist env vars into subsequent Bash commands. |
+| `$CLAUDE_CODE_REMOTE`   | All hooks                                 | `"true"` in remote web environments.                                            |
 
 ---
 
@@ -448,14 +448,14 @@ Supported events for both: `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `P
 
 Used in `PermissionRequest` output `updatedPermissions` and mirrored in input `permission_suggestions`.
 
-| `type` | Additional fields | Effect |
-| --- | --- | --- |
-| `addRules` | `rules[]`·`behavior`·`destination` | Adds allow/deny/ask rules. |
-| `replaceRules` | `rules[]`·`behavior`·`destination` | Replaces all rules of a behavior. |
-| `removeRules` | `rules[]`·`behavior`·`destination` | Removes matching rules. |
-| `setMode` | `mode`·`destination` | Sets permission mode. |
-| `addDirectories` | `directories[]`·`destination` | Adds working directories. |
-| `removeDirectories` | `directories[]`·`destination` | Removes working directories. |
+| `type`              | Additional fields                  | Effect                            |
+| ------------------- | ---------------------------------- | --------------------------------- |
+| `addRules`          | `rules[]`·`behavior`·`destination` | Adds allow/deny/ask rules.        |
+| `replaceRules`      | `rules[]`·`behavior`·`destination` | Replaces all rules of a behavior. |
+| `removeRules`       | `rules[]`·`behavior`·`destination` | Removes matching rules.           |
+| `setMode`           | `mode`·`destination`               | Sets permission mode.             |
+| `addDirectories`    | `directories[]`·`destination`      | Adds working directories.         |
+| `removeDirectories` | `directories[]`·`destination`      | Removes working directories.      |
 
 `destination`: `session` (in-memory) · `localSettings` (`.claude/settings.local.json`) · `projectSettings` (`.claude/settings.json`) · `userSettings` (`~/.claude/settings.json`).
 

@@ -21,7 +21,7 @@ classDiagram
             +place(): void
             +cancel(): void
         }
-        
+
         class OrderLine {
             <<entity>>
             -lineId: UUID
@@ -30,28 +30,28 @@ classDiagram
             -quantity: int
             -price: Money
         }
-        
+
         class OrderStatus {
             <<value object>>
             -status: string
             -timestamp: DateTime
         }
-        
+
         class Money {
             <<value object>>
             -amount: decimal
             -currency: string
         }
-        
+
         Order *-- OrderLine
         Order *-- OrderStatus
         OrderLine *-- Money
-        
+
         Order : Invariant: status always valid
         Order : Invariant: items always non-empty
         Order : Boundary: Only OrderRoot accessed externally
     }
-    
+
     namespace PaymentContext {
         class Payment {
             <<entity>>
@@ -63,16 +63,16 @@ classDiagram
             +charge(): void
             +refund(): void
         }
-        
+
         class PaymentStatus {
             <<value object>>
             -status: string
         }
-        
+
         Payment *-- PaymentStatus
         Payment *-- Money
     }
-    
+
     namespace InventoryContext {
         class Inventory {
             <<entity>>
@@ -84,12 +84,12 @@ classDiagram
             +release(qty): void
         }
     }
-    
+
     %% Cross-Context References (by ID only, never direct object ref)
     Order --> Payment : references by orderId
     Order --> Inventory : references by productId
     Payment -.publish.-> OrderEventPublished : domain event
-    
+
     class OrderEventPublished {
         <<domain event>>
         -orderId: UUID

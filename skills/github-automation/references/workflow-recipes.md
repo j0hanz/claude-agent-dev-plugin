@@ -38,8 +38,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4 # swap for setup-python, setup-go, etc.
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
       - run: npm ci
       - run: npm test
 ```
@@ -56,8 +56,8 @@ jobs:
 on:
   pull_request:
     paths:
-      - "packages/api/**"
-      - ".github/workflows/api-ci.yml"
+      - 'packages/api/**'
+      - '.github/workflows/api-ci.yml'
 ```
 
 ### Skip-CI for docs-only changes
@@ -76,7 +76,7 @@ name: Release
 on:
   push:
     tags:
-      - "v*.*.*"
+      - 'v*.*.*'
 
 permissions:
   contents: write # to create the release
@@ -89,8 +89,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
-          cache: "npm"
+          node-version: '20'
+          cache: 'npm'
 
       - run: npm ci
       - run: npm run build
@@ -98,11 +98,11 @@ jobs:
 
       - uses: actions/attest-build-provenance@v1
         with:
-          subject-path: "*.tgz"
+          subject-path: '*.tgz'
 
       - uses: softprops/action-gh-release@v2 # pin to SHA in real use
         with:
-          files: "*.tgz"
+          files: '*.tgz'
           generate_release_notes: true
 ```
 
@@ -160,14 +160,14 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node: ["20", "22"]
+        node: ['20', '22']
         include:
           - os: ubuntu-latest
-            node: "20"
+            node: '20'
             coverage: true # extra flag on one cell
         exclude:
           - os: macos-latest
-            node: "20" # don't bother running this combo
+            node: '20' # don't bother running this combo
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -224,7 +224,7 @@ jobs:
   call-build:
     uses: my-org/shared-workflows/.github/workflows/node-build.yml@v1 # pin to SHA in real use
     with:
-      node-version: "20"
+      node-version: '20'
     secrets:
       NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
 ```
@@ -276,7 +276,7 @@ inputs:
   node-version:
     description: Node version
     required: false
-    default: "20"
+    default: '20'
 runs:
   using: composite
   steps:
@@ -285,7 +285,7 @@ runs:
     - uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
-        cache: "npm"
+        cache: 'npm'
 
     - shell: bash
       run: npm ci
@@ -297,7 +297,7 @@ Caller:
 steps:
   - uses: ./.github/actions/setup-project
     with:
-      node-version: "22"
+      node-version: '22'
 ```
 
 **Notes:**
@@ -313,7 +313,7 @@ steps:
 ```yaml
 on:
   schedule:
-    - cron: "0 6 * * *" # 06:00 UTC daily
+    - cron: '0 6 * * *' # 06:00 UTC daily
   workflow_dispatch: # always include this so humans can trigger manually
 ```
 

@@ -12,11 +12,11 @@ disable-model-invocation: false
 
 Some skills are **non-negotiable**. Follow these exactly; do not adapt away from the discipline:
 
-| Skill | Rule | Why |
-|-------|------|-----|
-| `diagnose` | Document root cause BEFORE fixing | Prevents symptom-chasing and recurrence |
-| `test-driven-development` | One test, run it, one impl, run it; no batching | Batching defeats the red-green-refactor discipline |
-| `spec-driven-development` | Spec → plan → code order is mandatory | Skipping spec leads to rework and misaligned delivery |
+| Skill                     | Rule                                            | Why                                                   |
+| ------------------------- | ----------------------------------------------- | ----------------------------------------------------- |
+| `diagnose`                | Document root cause BEFORE fixing               | Prevents symptom-chasing and recurrence               |
+| `test-driven-development` | One test, run it, one impl, run it; no batching | Batching defeats the red-green-refactor discipline    |
+| `spec-driven-development` | Spec → plan → code order is mandatory           | Skipping spec leads to rework and misaligned delivery |
 
 All other skills are **flexible** — adapt principles to your context unless their body says otherwise.
 
@@ -28,15 +28,15 @@ All other skills are **flexible** — adapt principles to your context unless th
 
 These determine your workflow discipline. **Use BEFORE domain skills.**
 
-| Skill | Trigger | Quick Reference |
-|-------|---------|-----------------|
-| `brainstorming` | Features, design questions, ambiguous terminology, requirements unclear | Clarifies intent, explores options, aligns terminology before committing |
-| `diagnose` | Crashes, test failures, unexpected behavior, "why did this break?" | Documents root cause before fixes; required by rigid discipline |
-| `test-driven-development` | Implementing features or bugfixes with focus on test-first cadence | One test → run → one impl → run; red-green-refactor cycle |
-| `spec-driven-development` | Full feature lifecycle: spec → plan → code → validate; requirements-first approach | Complete workflow including create-specs and create-plan steps |
-| `verification-before-completion` | Before marking any task or feature done; final checklist before declaring success | Confirms correctness, tests pass, edge cases handled |
-| `code-review` | Before reporting implementation complete or creating a PR | Catches quality issues, security gaps, maintainability concerns (required gate for delivery) |
-| `delivery-manager` | Transitioning code to PR, merge, or production; finalizing handoff | Workflow for merge strategy, CI status, release coordination |
+| Skill                            | Trigger                                                                            | Quick Reference                                                                              |
+| -------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| `brainstorming`                  | Features, design questions, ambiguous terminology, requirements unclear            | Clarifies intent, explores options, aligns terminology before committing                     |
+| `diagnose`                       | Crashes, test failures, unexpected behavior, "why did this break?"                 | Documents root cause before fixes; required by rigid discipline                              |
+| `test-driven-development`        | Implementing features or bugfixes with focus on test-first cadence                 | One test → run → one impl → run; red-green-refactor cycle                                    |
+| `spec-driven-development`        | Full feature lifecycle: spec → plan → code → validate; requirements-first approach | Complete workflow including create-specs and create-plan steps                               |
+| `verification-before-completion` | Before marking any task or feature done; final checklist before declaring success  | Confirms correctness, tests pass, edge cases handled                                         |
+| `code-review`                    | Before reporting implementation complete or creating a PR                          | Catches quality issues, security gaps, maintainability concerns (required gate for delivery) |
+| `delivery-manager`               | Transitioning code to PR, merge, or production; finalizing handoff                 | Workflow for merge strategy, CI status, release coordination                                 |
 
 **Note:** `create-specs` and `create-plan` are Steps 2–3 of `spec-driven-development`; you invoke them within that workflow, not as standalone entry points.
 
@@ -46,17 +46,17 @@ These determine your workflow discipline. **Use BEFORE domain skills.**
 
 These provide domain expertise. **Use AFTER choosing your process skill.**
 
-| Skill | Trigger | Quick Reference |
-|-------|---------|-----------------|
-| `research` | Unfamiliar APIs, libraries, frameworks, or documentation gaps | Fetches current docs, finds examples, clarifies best practices |
-| `architecture` | Structure itself is unclear or wrong; designing new systems; rethinking the blueprint | System-level design, module dependencies, scalability decisions |
-| `refactor` | Code quality is poor but structure is sound; duplication, readability, maintainability | Improves existing code without changing structure or behavior |
-| `diagrams` | Creating architectural visualizations, system diagrams, flow charts | Renders visual representations of designs or systems |
-| `github-automation` | GitHub Actions workflows, gh CLI scripts, automation/CI tasks | Workflow automation, CI/CD pipeline design, scripting |
-| `create-hook` | Designing or implementing Claude Code hooks (session, pre-tool, format events) | Hook architecture, event handling, hook testing |
-| `create-agent` | Designing/writing agents — subagents, agent teams, workflows, Managed Agents; agent prompts, tool/permission scoping, model routing | Agent primitive selection, system-prompt craft, least-privilege tooling, eval-first testing |
-| `skill-builder` | Creating new skills, updating existing skills, testing skills, benchmarking | Skill authoring, iteration, quality assurance |
-| `agents-maintainer` | Updating AGENTS.md, CLAUDE.md, instruction files, plugin metadata | Documentation updates, instruction clarity, plugin configuration |
+| Skill               | Trigger                                                                                                                             | Quick Reference                                                                             |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| `research`          | Unfamiliar APIs, libraries, frameworks, or documentation gaps                                                                       | Fetches current docs, finds examples, clarifies best practices                              |
+| `architecture`      | Structure itself is unclear or wrong; designing new systems; rethinking the blueprint                                               | System-level design, module dependencies, scalability decisions                             |
+| `refactor`          | Code quality is poor but structure is sound; duplication, readability, maintainability                                              | Improves existing code without changing structure or behavior                               |
+| `diagrams`          | Creating architectural visualizations, system diagrams, flow charts                                                                 | Renders visual representations of designs or systems                                        |
+| `github-automation` | GitHub Actions workflows, gh CLI scripts, automation/CI tasks                                                                       | Workflow automation, CI/CD pipeline design, scripting                                       |
+| `create-hook`       | Designing or implementing Claude Code hooks (session, pre-tool, format events)                                                      | Hook architecture, event handling, hook testing                                             |
+| `create-agent`      | Designing/writing agents — subagents, agent teams, workflows, Managed Agents; agent prompts, tool/permission scoping, model routing | Agent primitive selection, system-prompt craft, least-privilege tooling, eval-first testing |
+| `skill-builder`     | Creating new skills, updating existing skills, testing skills, benchmarking                                                         | Skill authoring, iteration, quality assurance                                               |
+| `agents-maintainer` | Updating AGENTS.md, CLAUDE.md, instruction files, plugin metadata                                                                   | Documentation updates, instruction clarity, plugin configuration                            |
 
 ---
 
@@ -65,6 +65,7 @@ These provide domain expertise. **Use AFTER choosing your process skill.**
 **When you see overlapping triggers, use this decision tree:**
 
 ### Refactor vs. Architecture
+
 ```
 Is the fundamental structure/design wrong or problematic?
 ├─ YES → architecture (redesign the blueprint)
@@ -78,6 +79,7 @@ Examples:
 ```
 
 ### Diagnose vs. Test-Driven-Development
+
 ```
 Did something unexpected happen (crash, failure, wrong output)?
 ├─ YES → diagnose (find root cause first)
@@ -91,6 +93,7 @@ Examples:
 ```
 
 ### Spec-Driven-Development vs. Brainstorming
+
 ```
 Are requirements already clear and agreed?
 ├─ YES → spec-driven-development (formalize and execute)
@@ -110,6 +113,7 @@ Examples:
 Use these complete paths for common scenarios:
 
 ### **Feature Implementation**
+
 ```
 1. brainstorming (clarify intent, explore design, align terminology)
 2. spec-driven-development (formalize spec → plan → code)
@@ -122,6 +126,7 @@ Use these complete paths for common scenarios:
 ```
 
 ### **Bug Fix (Production Issue)**
+
 ```
 1. diagnose (find root cause; required rigid discipline)
 2. test-driven-development (implement fix with test-first cadence; optional but recommended)
@@ -132,6 +137,7 @@ Use these complete paths for common scenarios:
 ```
 
 ### **Code Quality Improvement**
+
 ```
 1. brainstorming (clarify scope: refactor vs. architecture?)
 2. architecture (if structure is wrong) OR refactor (if structure is sound)
@@ -142,6 +148,7 @@ Use these complete paths for common scenarios:
 ```
 
 ### **Infrastructure/Hook/Skill Development**
+
 ```
 1. brainstorming (clarify requirements, design options)
 2. research (if unfamiliar with APIs/patterns)
@@ -172,13 +179,13 @@ Ask yourself:
 
 **When choosing between domain skills, use this framework:**
 
-|  | New Code/System | Existing Code/System |
-|---|---|---|
-| **Unclear structure** | `create-agent` (if agents), `skill-builder` (if skills), `architecture` (if system redesign) | `architecture` (redesign needed) |
-| **Structure clear, quality poor** | `test-driven-development` (TDD as you build) | `refactor` (improve without changing structure) |
-| **Need automation/scripting** | `github-automation` (CI/CD) or `create-hook` (Claude hooks) | Same |
-| **Uncertain how to implement** | `research` (learn APIs/patterns) | Same |
-| **Need visual documentation** | `diagrams` (draw it out) | Same |
+|                                   | New Code/System                                                                              | Existing Code/System                            |
+| --------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| **Unclear structure**             | `create-agent` (if agents), `skill-builder` (if skills), `architecture` (if system redesign) | `architecture` (redesign needed)                |
+| **Structure clear, quality poor** | `test-driven-development` (TDD as you build)                                                 | `refactor` (improve without changing structure) |
+| **Need automation/scripting**     | `github-automation` (CI/CD) or `create-hook` (Claude hooks)                                  | Same                                            |
+| **Uncertain how to implement**    | `research` (learn APIs/patterns)                                                             | Same                                            |
+| **Need visual documentation**     | `diagrams` (draw it out)                                                                     | Same                                            |
 
 ---
 
@@ -197,7 +204,7 @@ Some skills work together:
 ## 🚫 Unmapped Tasks
 
 If a task doesn't fit any skill above, use `skill-builder` to:
+
 - Create a new skill to capture that knowledge
 - Improve an existing skill that's incomplete
 - Extend the skill ecosystem
-

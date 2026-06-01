@@ -27,12 +27,12 @@ export function findCycles(adjacencyList) {
         nodes[w].onStack = false;
         component.push(w);
       } while (w !== v);
-      
+
       if (component.length > 1) {
-          cycles.push(component);
+        cycles.push(component);
       } else if (component.length === 1 && adjacencyList[component[0]]?.includes(component[0])) {
-          // Self-loop: single node that imports itself
-          cycles.push(component);
+        // Self-loop: single node that imports itself
+        cycles.push(component);
       }
     }
   }

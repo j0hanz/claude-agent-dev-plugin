@@ -24,13 +24,13 @@ python scripts/validate_plan.py path/to/plan.md
 
 ## Common Validation Errors
 
-| Error | Cause | Fix |
-|-------|-------|-----|
-| `Task TASK-001 missing "Depends on"` | Task block incomplete | Add "Depends on: none" or "Depends on: [TASK-001](#...)" |
-| `Path src/auth.ts is bare path, not markdown` | Used `src/auth.ts` instead of `[src/auth.ts](src/auth.ts)` | Wrap all paths in markdown links |
-| `Line 42: Link [foo](#L42) but section is #task-001` | Broken cross-reference | Check heading format; use `#task-001-title` |
-| `Symbol validateToken not found in discovery` | Fabricated path or symbol | Re-run discovery; remove if not real |
-| `UNVERIFIED marker without resolution plan` | Missing context | Add "Expected to exist after [TASK-002]" or manual note |
+| Error                                                | Cause                                                      | Fix                                                      |
+| ---------------------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------------- |
+| `Task TASK-001 missing "Depends on"`                 | Task block incomplete                                      | Add "Depends on: none" or "Depends on: [TASK-001](#...)" |
+| `Path src/auth.ts is bare path, not markdown`        | Used `src/auth.ts` instead of `[src/auth.ts](src/auth.ts)` | Wrap all paths in markdown links                         |
+| `Line 42: Link [foo](#L42) but section is #task-001` | Broken cross-reference                                     | Check heading format; use `#task-001-title`              |
+| `Symbol validateToken not found in discovery`        | Fabricated path or symbol                                  | Re-run discovery; remove if not real                     |
+| `UNVERIFIED marker without resolution plan`          | Missing context                                            | Add "Expected to exist after [TASK-002]" or manual note  |
 
 ## Resolving UNVERIFIED Markers
 
@@ -43,11 +43,13 @@ If your plan has UNVERIFIED paths (e.g., for new files or cross-repo):
 ## Markdown Link Rules (Required)
 
 **Valid**:
+
 - `[path/to/file.ts](path/to/file.ts)`
 - `[functionName](path/to/file.ts#L42)`
 - `[functionName](path/to/file.ts#L42-L58)`
 
 **Invalid**:
+
 - Bare path: `src/auth.ts` ❌
 - Backtick: `` `src/auth.ts` `` ❌
 - Fabricated line: `[name](path#L999)` when L999 doesn't exist ❌

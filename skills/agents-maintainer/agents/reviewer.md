@@ -2,7 +2,7 @@
 name: reviewer
 description: |
   Read an AGENTS.md file, score five quality dimensions, and return ranked improvement suggestions with direct quotes
-color: "#FFC107"
+color: '#FFC107'
 model: claude-sonnet-4-6
 tools:
   - Read
@@ -15,8 +15,8 @@ role: Semantic review only
 task: Read an AGENTS.md file, score five quality dimensions, and return ranked improvement suggestions with direct quotes
 
 input:
-  agents_md_path: path to AGENTS.md — required
-  project_root: root dir to resolve referenced file paths — optional
+agents_md_path: path to AGENTS.md — required
+project_root: root dir to resolve referenced file paths — optional
 
 process:
 
@@ -27,14 +27,14 @@ process:
 5. Rank improvement suggestions by expected impact on agent decision quality
 
 scoring:
-  signal_density: 10 = every line tells agent something not derivable from code; 1 = restates linter/README
-  convention_specificity: 10 = each bullet answers WHAT/WHERE/WHY with concrete pattern; 1 = "keep code clean"
-  command_completeness: 10 = typecheck/lint/test commands exist and are runnable verbatim; 1 = paraphrases or missing
-  progressive_disclosure: 10 = long rules linked out, root file under 100 lines; 1 = everything inline, bloated
-  anti_pattern_freedom: 10 = no auto-discovery refs, no filler, no linter-restating; 1 = "Welcome to", MCP counts, etc.
-  9–10: agent acts differently and better because of this line
-  6–8: adequate, minor gaps
-  1–5: removable without harming agent behavior
+signal_density: 10 = every line tells agent something not derivable from code; 1 = restates linter/README
+convention_specificity: 10 = each bullet answers WHAT/WHERE/WHY with concrete pattern; 1 = "keep code clean"
+command_completeness: 10 = typecheck/lint/test commands exist and are runnable verbatim; 1 = paraphrases or missing
+progressive_disclosure: 10 = long rules linked out, root file under 100 lines; 1 = everything inline, bloated
+anti_pattern_freedom: 10 = no auto-discovery refs, no filler, no linter-restating; 1 = "Welcome to", MCP counts, etc.
+9–10: agent acts differently and better because of this line
+6–8: adequate, minor gaps
+1–5: removable without harming agent behavior
 
 rules:
 
@@ -53,11 +53,11 @@ schema:
   "agents_md_path": "string",
   "overall_score": 0.0,
   "dimensions": {
-    "signal_density":          { "score": 0, "evidence": "string" },
-    "convention_specificity":  { "score": 0, "evidence": "string" },
-    "command_completeness":    { "score": 0, "evidence": "string" },
-    "progressive_disclosure":  { "score": 0, "evidence": "string" },
-    "anti_pattern_freedom":    { "score": 0, "evidence": "string" }
+    "signal_density": { "score": 0, "evidence": "string" },
+    "convention_specificity": { "score": 0, "evidence": "string" },
+    "command_completeness": { "score": 0, "evidence": "string" },
+    "progressive_disclosure": { "score": 0, "evidence": "string" },
+    "anti_pattern_freedom": { "score": 0, "evidence": "string" }
   },
   "weaknesses": [
     {

@@ -15,9 +15,9 @@ An agent's failures are **behavioral**, not syntactic. The config can be valid a
 
 ## Two layers of checks
 
-**Layer A — Deterministic.** Things with one right answer: did it call only the granted tools? did it write outside its boundary? did the final message match the contract shape? did it terminate? Check these with assertions or a `SubagentStop`/`PostToolUse` hook observing tool calls — *never* with an LLM judge.
+**Layer A — Deterministic.** Things with one right answer: did it call only the granted tools? did it write outside its boundary? did the final message match the contract shape? did it terminate? Check these with assertions or a `SubagentStop`/`PostToolUse` hook observing tool calls — _never_ with an LLM judge.
 
-**Layer B — Qualitative.** Things needing judgment: is the review insightful? is the summary clear? is the reasoning sound? Use an LLM-as-judge (or your own read) here — and *only* here. Never use a judge for deterministic checks; never use a deterministic assertion for quality.
+**Layer B — Qualitative.** Things needing judgment: is the review insightful? is the summary clear? is the reasoning sound? Use an LLM-as-judge (or your own read) here — and _only_ here. Never use a judge for deterministic checks; never use a deterministic assertion for quality.
 
 Default: run both. Write the deterministic checks first, before the prompt is final — they pin the boundaries the prompt must respect.
 
@@ -60,4 +60,4 @@ If the agent has write, `Bash`, deploy, or external-call capability, **test in a
 
 ## When to reach for skill-builder
 
-For a rigorous, repeatable benchmark — formal eval sets, baseline-vs-candidate scoring, variance analysis, description-trigger optimization — hand off to the **`skill-builder`** skill. It provides the harness (workspace scaffolding, graders, aggregation, a review viewer) for measuring an agent or skill across many cases. Use it once an agent's behavior is roughly right and you want to *prove* it before shipping.
+For a rigorous, repeatable benchmark — formal eval sets, baseline-vs-candidate scoring, variance analysis, description-trigger optimization — hand off to the **`skill-builder`** skill. It provides the harness (workspace scaffolding, graders, aggregation, a review viewer) for measuring an agent or skill across many cases. Use it once an agent's behavior is roughly right and you want to _prove_ it before shipping.

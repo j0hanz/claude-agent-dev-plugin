@@ -51,18 +51,18 @@ If the user pointed at a specific file, read it first. If they're scaffolding fr
 
 Pick one. The classification drives which reference to load:
 
-| Intent                               | Load this reference                                                                                                      |
-| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------ |
-| Build/test on push or PR             | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § CI                                                  |
-| Release on tag / version bump        | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Release                                             |
-| Deploy to cloud (AWS)                | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Deploy + `references/oidc-cloud.md` § AWS           |
-| Deploy to cloud (GCP)                | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Deploy + `references/oidc-cloud.md` § GCP           |
-| Deploy to cloud (Azure)              | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Deploy + `references/oidc-cloud.md` § Azure         |
-| Matrix / cross-version testing       | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Matrix                                              |
-| Reusable workflow / composite action | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Reuse                                               |
-| Harden existing workflow             | Apply the hardening checklist below, then **READ ENTIRE FILE**: `references/security-hardening.md`                        |
-| Diagnose a misbehaving workflow      | **MANDATORY — READ ENTIRE FILE**: `references/troubleshooting.md`                                                        |
-| Pure docs / conceptual question      | **MANDATORY — READ ENTIRE FILE**: `references/topic-map.md` → live `docs.github.com`                                     |
+| Intent                               | Load this reference                                                                                              |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------- |
+| Build/test on push or PR             | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § CI                                          |
+| Release on tag / version bump        | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Release                                     |
+| Deploy to cloud (AWS)                | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Deploy + `references/oidc-cloud.md` § AWS   |
+| Deploy to cloud (GCP)                | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Deploy + `references/oidc-cloud.md` § GCP   |
+| Deploy to cloud (Azure)              | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Deploy + `references/oidc-cloud.md` § Azure |
+| Matrix / cross-version testing       | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Matrix                                      |
+| Reusable workflow / composite action | **MANDATORY — READ ENTIRE FILE**: `references/workflow-recipes.md` § Reuse                                       |
+| Harden existing workflow             | Apply the hardening checklist below, then **READ ENTIRE FILE**: `references/security-hardening.md`               |
+| Diagnose a misbehaving workflow      | **MANDATORY — READ ENTIRE FILE**: `references/troubleshooting.md`                                                |
+| Pure docs / conceptual question      | **MANDATORY — READ ENTIRE FILE**: `references/topic-map.md` → live `docs.github.com`                             |
 
 You don't have to read the whole reference — jump to the section. **Do NOT load** references for intents you didn't select.
 
@@ -123,6 +123,7 @@ Agent(
 ```
 
 The agent evaluates 7 semantic dimensions: OIDC trust scope, `pull_request_target` safety, secret scope tightness, token scope minimality, runner trust level, artifact/cache poisoning surface, and dispatch input trust. Check the output:
+
 - `summary.critical > 0` or `summary.high > 0` → **resolve before reporting complete**
 - `summary.medium` or `summary.low` → disclose findings to the user; they do not block completion
 - `clean: true` → workflow is semantically secure; proceed
@@ -291,6 +292,7 @@ fi
 ### Auth token selection for cross-repo automation
 
 When the automation touches more than one repo or org-level resources:
+
 - Use `GH_ORG_TOKEN` (a fine-grained PAT with the required scopes across all targets), not `GITHUB_TOKEN`
 - Export it as `GH_TOKEN` so the CLI picks it up: `export GH_TOKEN="$GH_ORG_TOKEN"`
 - Store it in GitHub Secrets as a named secret (e.g., `GH_ORG_TOKEN`), not as `GITHUB_TOKEN` which gets the automatic repo-scoped token

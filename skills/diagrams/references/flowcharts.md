@@ -56,21 +56,21 @@ flowchart TD
         B["Add to Cart"]
         C["Checkout"]
     end
-    
+
     subgraph OrderSvc["📦 Order Service"]
         D["Create Order"]
         E{Check Inventory}
     end
-    
+
     subgraph PaymentSvc["💳 Payment Service"]
         F["Charge Card"]
         G{Payment Success?}
     end
-    
+
     subgraph Inventory["📊 Inventory"]
         H["Decrement Stock"]
     end
-    
+
     A --> B --> C
     C --> D
     D --> E
@@ -80,7 +80,7 @@ flowchart TD
     G -->|Success| H
     G -->|Failed| J["Notify Customer:<br/>Payment Declined"]
     H --> K["Confirm Order"]
-    
+
     style Customer fill:#e1f5ff
     style OrderSvc fill:#f3e5f5
     style PaymentSvc fill:#fce4ec
@@ -103,20 +103,20 @@ When transitions depend on conditions, explicitly label them with guards:
 ```mermaid
 stateDiagram-v2
     [*] --> PENDING: Order created
-    
+
     PENDING --> PROCESSING: [amount > 0]
     PENDING --> CANCELLED: [cancelled by customer]
-    
+
     PROCESSING --> APPROVED: [payment success]
     PROCESSING --> DECLINED: [payment failed]
     PROCESSING --> TIMEOUT: [30s timeout]
-    
+
     APPROVED --> SHIPPED: [inventory available]
     APPROVED --> WAITLIST: [backorder]
-    
+
     DECLINED --> PENDING: [customer retries]
     TIMEOUT --> PENDING: [customer resumes]
-    
+
     SHIPPED --> [*]
     CANCELLED --> [*]
     WAITLIST --> SHIPPED: [stock received]

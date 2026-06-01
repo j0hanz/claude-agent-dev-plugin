@@ -49,6 +49,7 @@ UNSURE?
 ### Maturity Definitions
 
 **Sketch Maturity**:
+
 - One-page spec (Goal + Acceptance Criteria only)
 - 15–30 minute write time
 - Does NOT require create-specs or create-plan sub-skills
@@ -57,6 +58,7 @@ UNSURE?
 - Proceed directly to Implementation Governance after writing
 
 **Contract Maturity**:
+
 - Full spec with REQ, AC, VAL, interfaces
 - 1–2 hour write time (via create-specs skill)
 - Plan via create-plan skill
@@ -64,6 +66,7 @@ UNSURE?
 - **Default choice when uncertain**
 
 **Blueprint Maturity**:
+
 - Contract + architecture, deployment, monitoring, rollback plans
 - 2+ hour write time
 - Requires architecture documentation

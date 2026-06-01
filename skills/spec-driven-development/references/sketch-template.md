@@ -20,6 +20,7 @@ Example: _"Add rate limiting to /api/login to prevent brute force attacks"_
 - [ ] AC-3: [Observable outcome 3]
 
 Example:
+
 - AC-1: Requests >5 per IP per 60s return HTTP 429
 - AC-2: Response includes Retry-After header with seconds remaining
 - AC-3: Counter resets after 60s of no requests
@@ -34,6 +35,7 @@ How will we test that this is done?
 - [ ] Command or test: [VAL-2]
 
 Example:
+
 - `pytest tests/test_rate_limit.py -k "test_429_on_sixth_attempt"`
 - `pytest tests/test_rate_limit.py -k "test_retry_after_header"`
 

@@ -2,7 +2,7 @@
 name: diagnose
 description: "Disciplined debugging for any bug or unexpected behavior. Trigger on 'debug', 'fix crash', 'not working', 'why is this failing', 'unexpected output', 'production error', 'diagnose'. Mandatory root-cause workflow before any fix."
 disable-model-invocation: false
-argument-hint: "[symptom or file path]"
+argument-hint: '[symptom or file path]'
 ---
 
 # Skill: diagnose
@@ -11,14 +11,14 @@ argument-hint: "[symptom or file path]"
 
 The value of this methodology is that it forces you to know — not guess — before you act. Every shortcut below hides the real issue.
 
-| Thought | Reality |
-|---------|---------|
-| "I can see the issue" | You haven't traced it. Complete Phases 1–2 first. |
-| "This quick fix will work" | No fix without a documented root cause. |
-| "It's probably X" | "Probably" is not root cause. Falsify it. |
-| "Let me try a few things" | Scatter-shot changes hide the real issue. One hypothesis at a time. |
-| "The fix is obvious" | Document it anyway. You may be wrong. |
-| "I'll write the regression test after" | Write it before the fix. That is Phase 5. |
+| Thought                                | Reality                                                             |
+| -------------------------------------- | ------------------------------------------------------------------- |
+| "I can see the issue"                  | You haven't traced it. Complete Phases 1–2 first.                   |
+| "This quick fix will work"             | No fix without a documented root cause.                             |
+| "It's probably X"                      | "Probably" is not root cause. Falsify it.                           |
+| "Let me try a few things"              | Scatter-shot changes hide the real issue. One hypothesis at a time. |
+| "The fix is obvious"                   | Document it anyway. You may be wrong.                               |
+| "I'll write the regression test after" | Write it before the fix. That is Phase 5.                           |
 
 **Purpose:** Systematic bug finding and fixing. A fast, deterministic feedback loop is a prerequisite to finding the root cause — do not guess. Applies to code, infrastructure, flakiness, and performance.
 
@@ -65,9 +65,10 @@ The value of this methodology is that it forces you to know — not guess — be
 - **Action:** Rank hypotheses and present to user before testing any of them.
 
 **Example hypotheses for a KeyError crash:**
-- H1: The key is genuinely absent in some inputs (most likely — recent data model change). *Falsify:* add a log before the access; check whether the key appears in the failing case.
-- H2: The key is present but under a different name due to a serialization mismatch. *Falsify:* log `dict.keys()` at the crash site.
-- H3: A race condition clears the dict between check and access. *Falsify:* run a single-threaded replay; if it reproduces, concurrency is not the cause.
+
+- H1: The key is genuinely absent in some inputs (most likely — recent data model change). _Falsify:_ add a log before the access; check whether the key appears in the failing case.
+- H2: The key is present but under a different name due to a serialization mismatch. _Falsify:_ log `dict.keys()` at the crash site.
+- H3: A race condition clears the dict between check and access. _Falsify:_ run a single-threaded replay; if it reproduces, concurrency is not the cause.
 
 ### Phase 4: Instrument
 

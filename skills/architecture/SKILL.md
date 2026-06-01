@@ -84,6 +84,7 @@ Agent(
 The agent reads every flagged file, applies the Deletion/Seam/Locality tests, and returns a `candidates` JSON array ranked by impact. **Use that array as your Phase 2 input** — each element maps directly to the candidate format in Phase 2. Skip manual file reading in the main context when the agent is available.
 
 **If no directory is available** (user pasted inline code without a path):
+
 - Skip the scripts.
 - Tell the user: "Running manual analysis on the provided code — if you have a project directory, share the path for automated scanning."
 - Proceed with manual friction-signal identification below.

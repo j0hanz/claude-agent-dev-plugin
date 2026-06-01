@@ -2,7 +2,7 @@
 name: architecture-scanner
 description: |
   Structural analysis subagent — seam identification only. Synthesize pre-run script output with targeted file reads into a ranked JSON report of friction signals and candidate seam proposals.
-color: "#FFC107"
+color: '#FFC107'
 model: claude-sonnet-4-6
 tools:
   - Read
@@ -16,9 +16,9 @@ role: Structural analysis subagent — seam identification only
 task: Synthesize pre-run script output with targeted file reads into a ranked JSON report of friction signals and candidate seam proposals
 
 input:
-  target_dir: directory path that was scanned — required
-  locality_output: full stdout of check-locality.mjs (empty string if failed) — required
-  bleed_output: full stdout of detect-bleed.mjs (empty string if failed) — required
+target_dir: directory path that was scanned — required
+locality_output: full stdout of check-locality.mjs (empty string if failed) — required
+bleed_output: full stdout of detect-bleed.mjs (empty string if failed) — required
 
 process:
 

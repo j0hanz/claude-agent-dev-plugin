@@ -1,6 +1,6 @@
 # Recovering from Spec Misalignment
 
-When implementation reveals the spec was incomplete or wrong, 
+When implementation reveals the spec was incomplete or wrong,
 this guide explains how to fix it without losing work.
 
 ## Impact Assessment
@@ -8,12 +8,14 @@ this guide explains how to fix it without losing work.
 When you discover the spec is missing requirements:
 
 **Question 1: Does this change the architecture?**
+
 - Interfaces change (new endpoints, new tables)
 - Dependencies shift (now need a new service)
 - Data model is wrong
-→ This is a "major" change
+  → This is a "major" change
 
 **Question 2: How many AC items does this affect?**
+
 - 1–2: "minor" change
 - 3+: "major" change (impacts plan)
 
@@ -24,6 +26,7 @@ When you discover the spec is missing requirements:
 **Time impact**: 1–2 hours
 
 **Process**:
+
 1. Update the spec with the missing REQ/AC/VAL
 2. Run `validate_spec.py` again (should still pass)
 3. Update the plan (incremental change, edit affected tasks)
@@ -41,6 +44,7 @@ When you discover the spec is missing requirements:
 **Process**:
 
 1. **Commit current work** (checkpoint)
+
    ```bash
    git commit -m "WIP: partial implementation of [spec-name]"
    ```
@@ -51,11 +55,13 @@ When you discover the spec is missing requirements:
    - Update interfaces if they changed
 
 3. **Re-validate the spec**
+
    ```bash
    python validate_spec.py spec-*.md
    ```
 
 4. **Re-run create-plan** (full plan regeneration)
+
    ```bash
    python generate_plan.py spec-*.md > plan-*.md
    python validate_plan.py plan-*.md
@@ -70,7 +76,7 @@ When you discover the spec is missing requirements:
 
 6. **Resume implementation** from the new plan
 
-**Example**: Discover you need multi-tenant isolation (not in original spec) → 
+**Example**: Discover you need multi-tenant isolation (not in original spec) →
 update spec, regenerate plan (likely 2–3 new tasks), evaluate if tasks 1–3 still apply.
 
 ---

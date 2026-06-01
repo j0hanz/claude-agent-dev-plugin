@@ -69,6 +69,7 @@ Each package may have its own `AGENTS.md` with overrides.
 If a package uses different tooling, create a package-level AGENTS.md. Example:
 
 **File: `apps/api/AGENTS.md`**
+
 ```markdown
 # @acme/api Agent Instructions
 
@@ -86,6 +87,7 @@ All other conventions apply from root AGENTS.md.
 ```
 
 **When to Create Package-Level AGENTS.md:**
+
 - ✓ Package uses different test runner, linter, or build tool than root
 - ✓ Package has unique setup requirements
 - ✗ Don't duplicate root sections; reference root instead
@@ -128,24 +130,28 @@ AI commits MUST include a `Co-Authored-By:` trailer.
 # Agent Instructions
 
 ## Package Manager
+
 Use **Go Modules** — `go mod tidy`, `go build`, `go test`.
 
 ## Dependency Locations
+
 - Vendored dependencies: `vendor/` (if used)
 - Module cache: `$GOPATH/pkg/mod`
 
 ## File-Scoped Commands
 
-| Task | Command |
-| ---- | ------- |
-| Lint | `golangci-lint run path/to/file.go` |
+| Task | Command                                 |
+| ---- | --------------------------------------- |
+| Lint | `golangci-lint run path/to/file.go`     |
 | Test | `go test -run TestName path/to/package` |
 
 ## Key Conventions
+
 - Place binaries in `cmd/`
 - Follow idiomatic Go error handling: `if err != nil { return err }`
 
 ## Commit Attribution
+
 AI commits MUST include a `Co-Authored-By:` trailer.
 ```
 
@@ -155,23 +161,27 @@ AI commits MUST include a `Co-Authored-By:` trailer.
 # Agent Instructions
 
 ## Package Manager
+
 Use **Cargo** — `cargo build`, `cargo test`, `cargo clippy`.
 
 ## Dependency Locations
+
 - Build artifacts: `target/`
 
 ## File-Scoped Commands
 
-| Task | Command |
-| ---- | ------- |
+| Task | Command                                            |
+| ---- | -------------------------------------------------- |
 | Lint | `cargo clippy --package <pkg_name> -- -D warnings` |
-| Test | `cargo test --package <pkg_name> test_name` |
+| Test | `cargo test --package <pkg_name> test_name`        |
 
 ## Key Conventions
+
 - Use `Result<T, E>` for error handling.
 - Documentation comments should use `///`.
 
 ## Commit Attribution
+
 AI commits MUST include a `Co-Authored-By:` trailer.
 ```
 
@@ -191,10 +201,10 @@ Use **Maven** — `mvn clean install`, `mvn test`. Or **Gradle** — `gradle bui
 
 ## File-Scoped Commands
 
-| Task | Command |
-| ---- | ------- |
+| Task    | Command                                                         |
+| ------- | --------------------------------------------------------------- |
 | Compile | `mvn compile -pl :<module_name>` or `gradle -p :<module> build` |
-| Test | `mvn test -Dtest=TestClass#testMethod -pl :<module>` |
+| Test    | `mvn test -Dtest=TestClass#testMethod -pl :<module>`            |
 
 ## Key Conventions
 
@@ -224,10 +234,10 @@ Use **dotnet** — `dotnet restore`, `dotnet build`, `dotnet test`.
 
 ## File-Scoped Commands
 
-| Task | Command |
-| ---- | ------- |
-| Build | `dotnet build -p :<ProjectName>` |
-| Test | `dotnet test --filter FullyQualifiedName~TestClassName` |
+| Task  | Command                                                 |
+| ----- | ------------------------------------------------------- |
+| Build | `dotnet build -p :<ProjectName>`                        |
+| Test  | `dotnet test --filter FullyQualifiedName~TestClassName` |
 
 ## Key Conventions
 
@@ -256,10 +266,10 @@ Use **bun** — `bun install`, `bun run`, `bun test`. Fast JavaScript runtime.
 
 ## File-Scoped Commands
 
-| Task | Command |
-| ---- | ------- |
+| Task | Command                         |
+| ---- | ------------------------------- |
 | Test | `bun test path/to/file.test.ts` |
-| Run | `bun path/to/file.ts` |
+| Run  | `bun path/to/file.ts`           |
 
 ## Key Conventions
 
@@ -286,24 +296,29 @@ For projects combining multiple languages, create **language-specific sections**
 This project spans Python (API) and TypeScript (Frontend).
 
 ## Shared Conventions
+
 - Error handling: All errors include unique error code + user-facing message
 - Testing: Both suites use same coverage thresholds (80% minimum)
 
 ## Backend (Python + FastAPI)
 
 ### Package Manager
+
 Use **uv**: `uv sync`, `uv run pytest`
 
 ### File-Scoped Commands
+
 | Task | Command |
 | Test | `uv run pytest src/api/test_*.py::test_name` |
 
 ## Frontend (TypeScript + React)
 
 ### Package Manager
+
 Use **pnpm**: `pnpm install`, `pnpm test`
 
 ### File-Scoped Commands
+
 | Task | Command |
 | Test | `pnpm jest src/components/__tests__/Button.test.tsx` |
 ```
@@ -356,6 +371,7 @@ The "Key conventions" section should capture patterns the linter can't enforce. 
 ```
 
 **Why these fail:**
+
 - "Descriptive names" — Can't verify. Descriptive for what? `login_handler` vs. `auth` vs. `handleLogin`?
 - "Best practices" — Vague. Which practices? A list of 100?
 - "Be careful" — Subjective. No way to test compliance.
@@ -374,6 +390,7 @@ The "Key conventions" section should capture patterns the linter can't enforce. 
 ```
 
 **Why these work:**
+
 - Specific file patterns (`*.handler.ts`, `*.util.ts`)
 - Clear class/interface inheritance (`extends AppError`)
 - Measurable coverage rules ("every async function")
@@ -384,17 +401,20 @@ The "Key conventions" section should capture patterns the linter can't enforce. 
 ### The 3-7 Bullet Rule
 
 Aim for **5-7 conventions**:
+
 - **Too few (<3):** Not enough guidance; agents have to guess
 - **Sweet spot (5-7):** Comprehensive but scannable; agents can remember them
 - **Too many (>7):** Overwhelming; move to detailed docs and link
 
 If you have 10+ conventions, that's a signal that:
+
 1. Your codebase has too many unwritten rules, OR
 2. You should document them in `docs/CONVENTIONS.md` and link from AGENTS.md
 
 ### Writing Checklist
 
 For each convention, verify:
+
 - [ ] **Specific:** Can someone verify compliance by reading code?
 - [ ] **Location aware:** Include file/folder if applicable (e.g., `src/errors.ts`)
 - [ ] **Actionable:** An agent could follow this rule without asking for clarification

@@ -46,6 +46,7 @@ Agent(
 ```
 
 The agent returns a structured JSON. Wire it into Phase 2 as follows:
+
 - `narrative.why` → "The Why" section body
 - `narrative.architectural_decisions` → "The How" bullet items
 - `narrative.verification_steps` → Verification checklist items

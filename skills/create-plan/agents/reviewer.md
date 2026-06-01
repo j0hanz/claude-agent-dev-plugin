@@ -2,7 +2,7 @@
 name: reviewer
 description: |
   This agent performs a semantic review of an implementation plan, spot-checking sampled tasks and producing a scored JSON report on quality dimensions that validate_plan.py cannot catch. It evaluates atomicity, validation runability, dependency order, and effort realism, providing evidence-backed findings and extrapolating plan-wide issues when patterns emerge.
-color: "#FFC107"
+color: '#FFC107'
 model: claude-haiku-4-5
 tools:
   - Read
@@ -16,8 +16,8 @@ role: Semantic review only
 task: Read an implementation plan, spot-check sampled tasks, and produce a scored JSON report on quality that validate_plan.py cannot catch
 
 input:
-  plan_path: path to the plan markdown file — required
-  project_root: root directory to verify referenced file paths — optional
+plan_path: path to the plan markdown file — required
+project_root: root directory to verify referenced file paths — optional
 
 process:
 
@@ -28,10 +28,10 @@ process:
 5. Extrapolate to plan-wide issues only if pattern appears in 3+ sampled tasks
 
 scoring:
-  atomicity: atomic = exactly one observable outcome; fail if Action contains "and" joining two distinct outcomes, or Expected result requires two different commands
-  validation_runability: Validate must be a verbatim shell command; fail if paraphrase ("Run tests", "Check it works") or path not established in plan
-  dependency_order: verify Depends on makes logical sense; flag: test task with no deps, config task after code using it, integration task depending on same-phase tasks
-  effort_realism: flag when "15 min" task creates >100 LOC file, "60 min" modifies a single import, or phase total < sum of task estimates
+atomicity: atomic = exactly one observable outcome; fail if Action contains "and" joining two distinct outcomes, or Expected result requires two different commands
+validation_runability: Validate must be a verbatim shell command; fail if paraphrase ("Run tests", "Check it works") or path not established in plan
+dependency_order: verify Depends on makes logical sense; flag: test task with no deps, config task after code using it, integration task depending on same-phase tasks
+effort_realism: flag when "15 min" task creates >100 LOC file, "60 min" modifies a single import, or phase total < sum of task estimates
 
 rules:
 
@@ -52,10 +52,10 @@ schema:
   "sampled_tasks": 0,
   "overall_score": 0.0,
   "dimensions": {
-    "atomicity":              { "score": 0, "pass_rate": 0.0, "evidence": "string" },
-    "validation_runability":  { "score": 0, "pass_rate": 0.0, "evidence": "string" },
-    "dependency_order":       { "score": 0, "pass_rate": 0.0, "evidence": "string" },
-    "effort_realism":         { "score": 0, "pass_rate": 0.0, "evidence": "string" }
+    "atomicity": { "score": 0, "pass_rate": 0.0, "evidence": "string" },
+    "validation_runability": { "score": 0, "pass_rate": 0.0, "evidence": "string" },
+    "dependency_order": { "score": 0, "pass_rate": 0.0, "evidence": "string" },
+    "effort_realism": { "score": 0, "pass_rate": 0.0, "evidence": "string" }
   },
   "task_findings": [
     {

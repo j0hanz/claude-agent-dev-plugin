@@ -18,6 +18,7 @@ Depends on:
 **Step 2**: Find the owner's spec.
 
 For each dependency, ask:
+
 - Does the owning team have a spec for this?
 - If yes, get a copy
 - If no, ask them to create one before you finalize yours
@@ -35,6 +36,7 @@ Your spec (Dashboard):
 ```
 
 If your requirements don't match their interface:
+
 - Option A: Adjust your requirements
 - Option B: Ask them to extend their spec
 - Option C: Add a translation layer (adapter)
@@ -72,6 +74,7 @@ PHASE-002: Core Dashboard
 If your spec requires a breaking change to an existing interface:
 
 1. **Document as REQ**:
+
    ```
    REQ-X: Requires v2 of spec-analytics-api (breaking change from v1)
    ```
@@ -92,14 +95,17 @@ If your spec requires a breaking change to an existing interface:
 
 Keep specs in sync across teams:
 
-**Weekly**: 
+**Weekly**:
+
 - Link to dependency specs in your spec (comments or cross-references)
 - Alert if dependencies have changed
 
-**Before implementation**: 
+**Before implementation**:
+
 - Confirm dependency specs are validated and stable
 - Document interface versions
 
-**After changes**: 
+**After changes**:
+
 - Update dependent specs to reflect new interfaces
 - Notify teams who depend on you

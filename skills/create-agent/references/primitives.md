@@ -18,17 +18,17 @@ The five ways to run agent work in Claude, compared on the axes that actually dr
 
 ## At a glance
 
-| | Subagent | Agent team | Agent view | Workflow | Managed Agent |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| **Invoked by** | Claude, via `Agent` tool | A parent agent | You, from a dashboard | A JS script | External code (API) |
-| **Plan lives in** | Claude's context, turn-by-turn | Parent + teammates | Each session | The script | The caller |
-| **Context** | Fresh, isolated | Per-teammate | Per-session, persistent | Per-agent, script-held | One run per call |
-| **Scale** | A few per turn | A few concurrent | Many sessions | Up to 1,000 agents/run | One run per invocation |
-| **Resumable** | No (restarts the turn) | Within session | Yes (background persists) | Yes (within session) | No (single-shot) |
-| **Cost model** | Parent token budget | Parent budget, amortized | Per session (quota) | Per run, fans out fast | Per run, platform-billed |
-| **Observability** | Transcript in parent | Teammate transcripts | Dashboard + logs | Workflow progress view | Platform run logs |
-| **Use when** | Side task floods main context | Parallel independent tasks | Many steered background jobs | Large cross-checked orchestration | API-callable outside a session |
-| **Avoid for** | Work needing parallelism at scale | Sequential dependent tasks | One quick delegated task | Anything small | Anything inside a session |
+|                   | Subagent                          | Agent team                 | Agent view                   | Workflow                          | Managed Agent                  |
+| :---------------- | :-------------------------------- | :------------------------- | :--------------------------- | :-------------------------------- | :----------------------------- |
+| **Invoked by**    | Claude, via `Agent` tool          | A parent agent             | You, from a dashboard        | A JS script                       | External code (API)            |
+| **Plan lives in** | Claude's context, turn-by-turn    | Parent + teammates         | Each session                 | The script                        | The caller                     |
+| **Context**       | Fresh, isolated                   | Per-teammate               | Per-session, persistent      | Per-agent, script-held            | One run per call               |
+| **Scale**         | A few per turn                    | A few concurrent           | Many sessions                | Up to 1,000 agents/run            | One run per invocation         |
+| **Resumable**     | No (restarts the turn)            | Within session             | Yes (background persists)    | Yes (within session)              | No (single-shot)               |
+| **Cost model**    | Parent token budget               | Parent budget, amortized   | Per session (quota)          | Per run, fans out fast            | Per run, platform-billed       |
+| **Observability** | Transcript in parent              | Teammate transcripts       | Dashboard + logs             | Workflow progress view            | Platform run logs              |
+| **Use when**      | Side task floods main context     | Parallel independent tasks | Many steered background jobs | Large cross-checked orchestration | API-callable outside a session |
+| **Avoid for**     | Work needing parallelism at scale | Sequential dependent tasks | One quick delegated task     | Anything small                    | Anything inside a session      |
 
 ---
 
@@ -54,7 +54,7 @@ The five ways to run agent work in Claude, compared on the axes that actually dr
 
 **Lifetime:** tied to the parent run; the parent closes the team when work is done.
 
-**Why use it:** a handful of *independent* tasks that should run concurrently — e.g. test three hypotheses at once, review four modules in parallel.
+**Why use it:** a handful of _independent_ tasks that should run concurrently — e.g. test three hypotheses at once, review four modules in parallel.
 
 **Observability:** each teammate has its own transcript; the parent can read them via `SubagentStop`/`TeammateIdle` lifecycle hooks.
 
@@ -78,7 +78,7 @@ The five ways to run agent work in Claude, compared on the axes that actually dr
 
 ## Dynamic workflow
 
-**What:** a JavaScript script that orchestrates subagents at scale. Claude writes the script; a runtime executes it in the background. Decisions about what runs next live in the *script*, not in Claude's turn-by-turn judgment.
+**What:** a JavaScript script that orchestrates subagents at scale. Claude writes the script; a runtime executes it in the background. Decisions about what runs next live in the _script_, not in Claude's turn-by-turn judgment.
 
 **Scale:** up to 16 concurrent agents, up to 1,000 per run.
 
@@ -147,14 +147,17 @@ A subagent + a preloaded skill + a `SubagentStop` quality gate is usually better
 ## Migration paths
 
 **Subagent → Managed Agent** (in-session role becomes an external service):
+
 - Lift the system prompt and tool list into the API `tools[]`/`skills[]` arrays.
 - Translate permission intent into the agent's permission policy (`always_ask` by default).
 - Re-run your test inputs against the deployed agent before pointing callers at it.
 
 **Skill → Subagent** (inline instructions need their own context):
+
 - When the behavior needs isolation, multi-step reasoning, or a distinct tool surface.
 - Move the skill body into the agent's system prompt (or preload the skill).
 
 **Subagent → Agent team / workflow** (one role needs to run many times concurrently):
+
 - Team for a few independent runs; workflow for dozens-plus or for cross-checked quality patterns.
 - Define per-unit tool surface once; the orchestration layer handles fan-out.

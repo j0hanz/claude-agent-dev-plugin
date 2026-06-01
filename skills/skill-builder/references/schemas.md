@@ -23,12 +23,12 @@ Canonical JSON formats for skill-builder.
 }
 ```
 
-| Field | Notes |
-| :--- | :--- |
-| `skill_name` | Matches skill frontmatter |
-| `evals[].id` | Unique identifier |
-| `evals[].prompt` | Execution task |
-| `evals[].expectations` | Verifiable statements |
+| Field                  | Notes                     |
+| :--------------------- | :------------------------ |
+| `skill_name`           | Matches skill frontmatter |
+| `evals[].id`           | Unique identifier         |
+| `evals[].prompt`       | Execution task            |
+| `evals[].expectations` | Verifiable statements     |
 
 ---
 

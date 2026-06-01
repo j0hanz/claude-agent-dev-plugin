@@ -20,7 +20,7 @@ description: |
 
   *Note: This agent requires the `managed-agents-2026-04-01` beta header.*
 proactive: true
-color: "#5C7CFA"
+color: '#5C7CFA'
 model: claude-sonnet-4-6
 effort: high
 maxTurns: 30
@@ -150,13 +150,13 @@ When reviewing a component:
 
 Prefer these over native tools when the advantage is meaningful:
 
-| When | Use instead of |
-| --- | --- |
-| Reading multiple files at once | Multiple `Read` calls |
-| Searching with context lines (before/after) or fuzzy match | `Grep` |
-| Directory tree with metadata | `Glob` |
-| Bulk search-and-replace across many files | Sequential `Edit` calls |
-| File metadata without reading content | `Read` + manual check |
+| When                                                       | Use instead of          |
+| ---------------------------------------------------------- | ----------------------- |
+| Reading multiple files at once                             | Multiple `Read` calls   |
+| Searching with context lines (before/after) or fuzzy match | `Grep`                  |
+| Directory tree with metadata                               | `Glob`                  |
+| Bulk search-and-replace across many files                  | Sequential `Edit` calls |
+| File metadata without reading content                      | `Read` + manual check   |
 
 Key tools: `mcp__filesystem__read` (batch + hash), `mcp__filesystem__search_text` (fuzzy, context, pagination), `mcp__filesystem__find_files` (sorted, depth-limited), `mcp__filesystem__list` (tree), `mcp__filesystem__replace_text` (atomic bulk edits).
 
