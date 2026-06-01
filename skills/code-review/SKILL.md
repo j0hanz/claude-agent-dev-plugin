@@ -1,141 +1,218 @@
 ---
 name: code-review
-description: "Code quality review for correctness bugs, security issues, and reuse opportunities. Trigger on 'code review', 'review this', 'any issues with', 'check for bugs', 'quality review'. Mandatory gate between verification and delivery."
+description: Mandatory quality gate before delivery. Trigger on 'code review', 'review this diff', 'any issues with this', 'check for bugs', 'quality review', 'ready to merge'. ALSO trigger automatically: (1) after verification-before-completion confirms tests pass, (2) before invoking delivery-manager, (3) on any non-trivial change that will be committed. Do not skip — correctness bugs and security issues discovered here are cheaper to fix than after merge.
 disable-model-invocation: false
+argument-hint: '[target: branch, commit, file, or "current diff"]'
+allowed-tools: Bash(git *)
 ---
 
 # Code Review
 
-A code review is distinct from verification (does it work?) and architecture (is it well-designed?). Reviews hunt for correctness bugs, security risks, and missed reuse opportunities that slipped past testing.
+Code review is not verification (does it work?) and not architecture (is it well-designed?). It is a focused scan for **correctness bugs, security risks, missed reuse, and API hygiene** that survived testing. Catching these in the diff is 10× cheaper than after merge.
 
 ---
 
-## Scope: What This Skill Covers
+## NEVER
 
-Code review is narrowly focused on finding **discoverable issues in the diff**:
-
-- **Correctness bugs** — off-by-one errors, type mismatches, unhandled edge cases, logic inversions
-- **Security issues** — command injection, XSS, SQL injection, hardcoded secrets, unsafe deserialization
-- **Performance regressions** — N+1 queries, unbounded loops, unnecessary copies
-- **Missed reuse** — patterns already in the codebase; duplication; reinventing utilities
-- **API hygiene** — breaking changes, undocumented parameters, confusing names
+- **NEVER accept "I don't see any issues"** as a conclusion — state what you checked and why it passed
+- **NEVER review code in isolation** — always get a git diff; you need the before/after to spot regressions
+- **NEVER report PASS after only skimming** — work through the Phase 2 risk tiers in order
+- **NEVER conflate advisory and blocking issues** — mixing them buries the things that actually stop a merge
+- **NEVER review without knowing what the code is supposed to do** — read the PR description or ask before scanning
 
 ---
 
-## Scope: What This Skill Does NOT Cover
+## Scope
 
-Don't use this skill for:
+**In scope — hunt for these:**
 
-- **Architecture design** — use `architecture` skill for structural problems
-- **Testing adequacy** — that's covered by `verification-before-completion`
-- **Performance optimization** — only flag regressions, not "could be faster"
-- **Style/naming nitpicks** — unless they block understanding
-- **Refactoring** — use `refactor` skill when code is "hard to read" (diff is not in scope for that skill yet)
+- Correctness bugs: off-by-one, type mismatches, unhandled edge cases, logic inversions, null dereferences
+- Security: command injection, XSS, SQL injection, hardcoded secrets, unsafe deserialization, insecure defaults
+- Performance regressions: N+1 queries, unbounded loops, unnecessary copies in hot paths
+- Missed reuse: utilities that already exist in the codebase, duplication across 3+ call sites
+- API hygiene: breaking changes, undocumented parameters, confusing names on public interfaces
+
+**Out of scope — route elsewhere:**
+
+- **Architecture problems** → `architecture` skill
+- **Test adequacy** → `verification-before-completion`
+- **Improving readability/structure** → `refactor` skill
+- **Performance optimization** (not regression) → not a review concern
 
 ---
 
-## Workflow
+## Phase 1: Get the Diff
 
-### Step 1: Get the Diff
-
-The review target is always a **git diff**. Don't review code in isolation; review changes.
+Get the exact diff that is being reviewed. Use the argument if provided; otherwise default to comparing against the main branch.
 
 ```bash
-git diff origin/main..HEAD            # typical: compare to main
-git diff <commit>                     # or: compare to a specific commit
-git show <commit>                     # or: single commit
+git diff origin/main..HEAD            # full branch diff (most common)
+git diff HEAD~1                       # last commit only
+git diff <commit-sha>                 # specific commit
+git show <commit-sha>                 # show single commit with context
+git diff --stat origin/main..HEAD     # summary of what changed (run first)
 ```
 
-If git history is unavailable, ask the user to explain what changed, but know you're at a disadvantage — without the before/after picture, you cannot spot regressions.
+Run `--stat` first to understand the shape of the change before reading the full diff.
 
-### Step 2: Skim for Red Flags
+**If no git history is available:** ask the user to paste the diff, or describe what changed. Note explicitly that you are reviewing without the before/after context and your confidence is lower.
 
-Scan the diff in order of risk:
+**Plugin-specific:** For agent-dev plugin files, validate frontmatter in addition to logic — see Phase 2 section.
 
-1. **External-facing changes** — APIs, CLI arguments, config file formats
-2. **Security-sensitive** — auth, crypto, secrets, SQL, shell escaping, deserialization
-3. **Cross-module changes** — changes that touch multiple files or public interfaces
-4. **Dense logic** — tight loops, deeply nested conditions, complex state machines
-5. **Error handling** — try-catch blocks, error returns, validation
+---
 
-For each red flag, ask:
+## Phase 2: Risk-Ordered Scan
 
-- Is this safe? (security, invariants, contracts)
-- Is this correct? (edge cases, off-by-one, null checks)
-- Is this already done better elsewhere? (missed reuse)
+Scan in this order. Higher tiers surface issues earlier. Do not skip to lower tiers until you have cleared the ones above.
 
-### Step 3: Report Findings
+### Tier 1 — Security (Stop Everything If Found)
 
-Categorize findings as **blocking** (must fix before shipping) or **advisory** (nice-to-have, doesn't block):
+| Pattern                                         | Check                                                              |
+| ----------------------------------------------- | ------------------------------------------------------------------ |
+| Shell / exec call                               | Are arguments shell-escaped? Is shell interpolation needed at all? |
+| New SQL / query construction                    | Are all values parameterized — no string concatenation?            |
+| Auth / permission check                         | Is the check before the action, not after?                         |
+| Secrets / credentials                           | Are any tokens, keys, or passwords hardcoded or logged?            |
+| Deserialization (JSON.parse, pickle, yaml.load) | Is input validated before deserializing?                           |
+| File path construction                          | Is user input sanitized against path traversal?                    |
 
-#### Blocking Issues (Stop Shipping)
+Any Tier 1 finding is a **blocking issue** — stop and flag immediately.
 
-- Security vulnerabilities
-- Correctness bugs (crashes, data loss, wrong output)
-- Breaking API changes without migration
-- Unhandled exceptions in hot paths
+### Tier 2 — Correctness
 
-#### Advisory Issues (Can Ship, Fix Later)
+| Pattern                             | Check                                                                |
+| ----------------------------------- | -------------------------------------------------------------------- |
+| Empty catch / swallowed error       | Is the error logged or re-raised with context?                       |
+| Off-by-one in loops / slices        | Check boundary conditions: `< n` vs `<= n`, `[i:]` vs `[i+1:]`       |
+| Null / undefined access             | Is the value checked before use?                                     |
+| State mutation in unexpected places | Does the function mutate its input? Is that documented?              |
+| Async / await gaps                  | Are all async calls awaited? Is error handling on the awaited value? |
+| Boolean logic                       | De Morgan's law: `!(A && B)` ≠ `!A && !B`; verify complex conditions |
 
-- Missed reuse (similar code elsewhere)
-- Suboptimal performance (not a regression)
-- Confusing names
-- Missing edge-case tests (if tests exist at all)
+### Tier 3 — Performance Regressions
 
-### Step 4: Communicate Results
+Check only for **regressions** (new problems introduced by this diff), not pre-existing inefficiency.
 
-State findings clearly:
+- Database call or I/O inside a loop that wasn't there before
+- Copying a large collection where a reference or generator would work
+- Unbounded retry / recursion with no depth limit
+- Missing index on a newly-queried column
 
+### Tier 4 — Missed Reuse & API Hygiene
+
+**Missed reuse:** Grep the codebase for the function's purpose before declaring it new.
+
+```bash
+# Example: looking for existing date formatting utilities
+git grep -n "formatDate\|format_date\|dateToString" --
 ```
+
+**API hygiene (public interface changes only):**
+
+- Does the function name describe what it returns, not how it works?
+- Are new optional parameters truly optional (backward-compatible defaults)?
+- Is any previously-private function now public without documentation?
+
+### Plugin-Aware Checks (agent-dev specific)
+
+When the diff touches agent-dev plugin files, run these additional checks:
+
+**Skills (`skills/*/SKILL.md`):**
+
+- `name`: kebab-case, max 64 chars, no spaces
+- `description`: no angle brackets, max 1024 chars, ends with a triggering phrase
+- Body: imperative form throughout — no "you should", "you might"
+- `disable-model-invocation: true` skills must not be in another skill's `skills:` preload list
+
+**Agents (`agents/*.md`):**
+
+- `color`: must be a named color — `red blue green yellow purple orange pink cyan`
+- `type: agent` present
+- `name` matches filename (minus `.md`)
+- No undocumented frontmatter fields
+
+**Hooks (`hooks/hooks.json`):**
+
+- Event names are valid: `SessionStart`, `PreToolUse`, `PostToolUse`, `PostToolUseFailure`, `UserPromptSubmit`, `Stop`
+- Commands use `${CLAUDE_PLUGIN_ROOT}` not hardcoded paths
+- Matcherless groups have a `_comment` key documenting intent
+
+**Commands (`commands/*.md`):**
+
+- Frontmatter only contains documented fields: `description`, `argument-hint`, `allowed-tools`
+- No `name:` field (name is derived from filename)
+
+---
+
+## Phase 3: Required Output
+
+Always conclude with this exact structure. Do not omit it even when there are no findings.
+
+```markdown
 ## Code Review Result
 
-Status: PASS ✓  (or: FAIL — [N] blocking issues)
+**Status**: PASS ✓ | FAIL ✗ ([N] blocking)
 
-Blocking issues:
-- [Issue 1]
-- [Issue 2]
+### Blocking Issues
 
-Advisory issues:
-- [Advisory 1]
+<!-- One per bullet. Empty if none. -->
+
+- [file:line] [Issue type] — [what the problem is] → [what to fix]
+
+### Advisory Issues
+
+<!-- One per bullet. Empty if none. -->
+
+- [file:line] [Issue type] — [observation] → [suggested improvement]
+
+### What Was Checked
+
+<!-- Prove you looked. List the tiers you ran and what the diff covered. -->
+
+- Tier 1 (Security): [summary of what was checked, e.g. "no exec calls, no SQL construction, no hardcoded secrets"]
+- Tier 2 (Correctness): [summary]
+- Tier 3 (Performance): [summary, or "not applicable — no loops or I/O in diff"]
+- Tier 4 (Reuse/API): [summary]
+- Plugin checks: [if applicable — list which component types were reviewed]
 ```
 
-If PASS with zero findings, say so explicitly. Empty reviews are valid.
+**Status definitions:**
+
+- `PASS` — zero blocking issues; advisory issues may exist but do not stop delivery
+- `FAIL` — one or more blocking issues; delivery must not proceed until all are resolved
 
 ---
 
-## Common Patterns to Spot
+## Blocking vs. Advisory
 
-| Pattern                    | Red Flag                | Check                                                   |
-| -------------------------- | ----------------------- | ------------------------------------------------------- |
-| `try { ... } catch(e) { }` | Silent failure          | Is the catch block doing anything? Is this intentional? |
-| New SQL query              | SQL injection           | Are values bound (parameterized)?                       |
-| Shell/exec call            | Command injection       | Are arguments escaped? Is shell syntax needed?          |
-| Loop over collection       | N+1 query / performance | Is there a database call inside? Can it be batched?     |
-| Error handling             | Lost context            | Is the error message descriptive enough to debug?       |
-| New public function        | Breaking change         | Was this private before? Is there a migration?          |
-| Copied code                | Missed reuse            | Does this utility exist elsewhere in the codebase?      |
+| Category                                | Blocking | Advisory           |
+| --------------------------------------- | -------- | ------------------ |
+| Security vulnerabilities                | Always   | —                  |
+| Data loss / corruption bug              | Always   | —                  |
+| Crash in a code path reachable by input | Always   | —                  |
+| Breaking API change without migration   | Always   | —                  |
+| Swallowed error hiding a real failure   | Usually  | If debug-only path |
+| Missed reuse of an existing utility     | Rarely   | Normally           |
+| Confusing name on internal helper       | Never    | Yes                |
+| Performance concern (non-regression)    | Never    | Yes                |
 
----
-
-## What NOT to Say
-
-❌ "This looks correct" — Show the check you ran, not confidence.
-❌ "I don't see any issues" — Either you didn't look or everything is fine; say which.
-❌ "Consider adding tests" — Testing is verification's job.
-❌ "This could be faster" — Only flag if it's a regression or obviously pathological.
-
-✅ "All values are parameterized; no injection risk found."
-✅ "File created, no prior version; breaking change risk: low."
-✅ "Pattern `selectAll()` → map() exists in 3 places; no duplication here."
+When in doubt, lean advisory — the goal is to unblock delivery, not to gatekeep.
 
 ---
 
-## Pre-Delivery Gate
+## Transition
 
-This skill is typically invoked between `verification-before-completion` and `delivery-manager`:
+After Phase 3:
 
-1. **Verification** — Does it work? (tests pass, manual testing done)
-2. **Code Review** — Is it safe and well-integrated? ← **You are here**
-3. **Delivery** — Commit, PR, changelog (only if review passes)
+- **PASS** → hand off to `delivery-manager` (zero blocking issues required)
+- **FAIL** → route back to implementation; re-run this skill after fixes
 
-If review fails with blocking issues, stop and route back to implementation.
+Do not invoke `delivery-manager` until code review returns PASS.
+
+---
+
+## Reference Files (Conditional Loading)
+
+Do NOT load these by default. Load only when needed:
+
+- **Extended pattern catalog with code examples:** MANDATORY — READ ENTIRE FILE: [`references/patterns.md`](references/patterns.md) when a finding needs a precise name, canonical anti-pattern description, or example fix.
