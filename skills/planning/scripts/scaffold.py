@@ -225,12 +225,15 @@ Spec: [{name}.specs.md]({name}.specs.md)
 # Helpers
 # ---------------------------------------------------------------------------
 
+
 def _inject_domain(template: str, domain: str) -> str:
     snippets = _DOMAIN_SNIPPETS.get(domain, {})
     req_snip = snippets.get("requirements", "")
     iface_snip = snippets.get("interfaces", "")
     if req_snip and "## 2. Requirements" in template:
-        template = template.replace("## 2. Requirements", f"## 2. Requirements{req_snip}", 1)
+        template = template.replace(
+            "## 2. Requirements", f"## 2. Requirements{req_snip}", 1
+        )
     if iface_snip and "## 4. Interfaces" in template:
         template = template.replace(
             "The system exposes the following interfaces:",
@@ -243,6 +246,7 @@ def _inject_domain(template: str, domain: str) -> str:
 # ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
+
 
 def scaffold(
     name: str,

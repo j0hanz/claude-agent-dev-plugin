@@ -46,9 +46,7 @@ PREREQUISITES = {
         "fix": "Verify planning skill is installed (contains scripts/scaffold.py)",
     },
     "sync.py": {
-        "check": lambda: check_file(
-            _SKILLS_DIR / "planning" / "scripts" / "sync.py"
-        ),
+        "check": lambda: check_file(_SKILLS_DIR / "planning" / "scripts" / "sync.py"),
         "fix": "Verify planning skill is installed (contains scripts/sync.py)",
     },
     "validate.py": {

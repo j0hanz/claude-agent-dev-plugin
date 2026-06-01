@@ -150,7 +150,11 @@ def main() -> None:
         print(f"sync.py: spec file not found: {spec_path}", file=sys.stderr)
         sys.exit(1)
 
-    plan_path = Path(args.plan) if args.plan else spec_path.parent / (spec_path.stem.replace(".specs", "") + ".plan.md")
+    plan_path = (
+        Path(args.plan)
+        if args.plan
+        else spec_path.parent / (spec_path.stem.replace(".specs", "") + ".plan.md")
+    )
 
     sync(spec_path, plan_path)
 

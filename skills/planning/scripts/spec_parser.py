@@ -15,6 +15,7 @@ from pathlib import Path
 # Spec document
 # ---------------------------------------------------------------------------
 
+
 @dataclass(slots=True)
 class SpecDocument:
     """Parsed representation of a <name>.specs.md file."""
@@ -31,13 +32,14 @@ class SpecDocument:
 # Plan document
 # ---------------------------------------------------------------------------
 
+
 @dataclass(slots=True)
 class PlanTask:
     """One ### TASK-NNN block from a plan file."""
 
-    id: str                          # e.g. "TASK-003"
-    title: str                       # text after the colon on the header line
-    satisfies: set[str] = field(default_factory=set)   # IDs from Satisfies: line
+    id: str  # e.g. "TASK-003"
+    title: str  # text after the colon on the header line
+    satisfies: set[str] = field(default_factory=set)  # IDs from Satisfies: line
     fields: dict[str, str] = field(default_factory=dict)  # other field→value pairs
 
 
@@ -59,13 +61,16 @@ _HEADING_RE = re.compile(r"^(#+)\s+(?:\d+\.\s+)?(.+)$")
 _IDS_RE = re.compile(r"\b((?:REQ|SEC|PERF|COMP|AC|VAL|CON)-\d+)\b")
 _TASK_HEADER_RE = re.compile(r"^###\s+(TASK-\d+)(?::\s*(.*))?$")
 _PHASE_HEADER_RE = re.compile(r"^##\s+(PHASE-\S+)")
-_FIELD_RE = re.compile(r"^(Depends on|Files|Symbols|Action|Validate|Expected result|Satisfies)\s*:\s*(.*)")
+_FIELD_RE = re.compile(
+    r"^(Depends on|Files|Symbols|Action|Validate|Expected result|Satisfies)\s*:\s*(.*)"
+)
 _SATISFIES_ID_RE = re.compile(r"\b((?:REQ|SEC|PERF|COMP|AC|VAL|CON)-\d+)\b")
 
 
 # ---------------------------------------------------------------------------
 # Spec parser
 # ---------------------------------------------------------------------------
+
 
 def parse_spec(path: str | Path) -> SpecDocument:
     """Parse a <name>.specs.md file.
@@ -117,7 +122,12 @@ def parse_spec(path: str | Path) -> SpecDocument:
 # ---------------------------------------------------------------------------
 
 _PLAN_MANDATORY_FIELDS = {
-    "Depends on", "Files", "Symbols", "Action", "Validate", "Expected result",
+    "Depends on",
+    "Files",
+    "Symbols",
+    "Action",
+    "Validate",
+    "Expected result",
 }
 
 
