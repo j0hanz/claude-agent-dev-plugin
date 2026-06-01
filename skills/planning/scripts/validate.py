@@ -26,9 +26,11 @@ import argparse
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
-sys.path.insert(0, str(Path(__file__).parent))
-from spec_parser import parse_spec, parse_plan
+# Bundled parser — no external deps; append to avoid shadowing stdlib modules
+sys.path.append(str(Path(__file__).parent))
+from spec_parser import parse_spec, parse_plan  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -93,6 +95,7 @@ def _contains_code(line: str) -> bool:
 def validate_spec(
     spec_path: Path, level: str = "contract"
 ) -> tuple[list[str], list[str]]:
+    """Validate structural integrity and traceability of a <name>.specs.md file."""
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -149,6 +152,7 @@ def validate_spec(
 
 
 def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
+    """Validate structural integrity of a <name>.plan.md file."""
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -162,16 +166,8 @@ def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
         return errors, warnings
 
     for task in plan.tasks:
-        missing = (
-            PLAN_MANDATORY_FIELDS
-            - set(task.fields.keys())
-            - (
-                {"Satisfies"}
-                if True
-                else set()  # Satisfies is new, not yet mandatory for compat
-            )
-        )
-        # Satisfies is strongly recommended but warn rather than error until fully adopted
+        # Satisfies is recommended but not yet a hard error — warn until widely adopted
+        missing = PLAN_MANDATORY_FIELDS - set(task.fields.keys())
         if not task.satisfies:
             warnings.append(
                 f"[PLAN] {task.id}: missing Satisfies: field — traceability spine not set."
@@ -209,7 +205,8 @@ def validate_plan(plan_path: Path) -> tuple[list[str], list[str]]:
 
 def validate_cross(
     spec_path: Path, plan_path: Path, level: str = "contract"
-) -> tuple[list[str], list[str], dict]:
+) -> tuple[list[str], list[str], dict[str, Any]]:
+    """Check spec↔plan traceability: every requirement covered, no orphan tasks."""
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -309,8 +306,7 @@ def _print_results(
 
 def _resolve_paths(name_or_path: str) -> tuple[Path, Path]:
     """Resolve stem to (spec_path, plan_path) regardless of input form."""
-    p = Path(name_or_path)
-    # Strip known suffixes
+    p = Path(name_or_path).resolve()
     stem = p.name
     for suf in (".specs.md", ".plan.md", ".md"):
         if stem.endswith(suf):
@@ -343,10 +339,10 @@ def main() -> None:
 
     spec_path, plan_path = _resolve_paths(args.name)
 
-    # Default: run all three
-    run_spec = args.spec or (not args.spec and not args.plan and not args.cross)
-    run_plan = args.plan or (not args.spec and not args.plan and not args.cross)
-    run_cross = args.cross or (not args.spec and not args.plan and not args.cross)
+    run_all = not (args.spec or args.plan or args.cross)
+    run_spec = args.spec or run_all
+    run_plan = args.plan or run_all
+    run_cross = args.cross or run_all
 
     all_errors: list[str] = []
 

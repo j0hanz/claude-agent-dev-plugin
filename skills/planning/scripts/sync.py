@@ -19,9 +19,9 @@ import re
 import sys
 from pathlib import Path
 
-# Bundled parser — no external deps
-sys.path.insert(0, str(Path(__file__).parent))
-from spec_parser import parse_spec, parse_plan, PlanTask
+# Bundled parser — no external deps; append to avoid shadowing stdlib modules
+sys.path.append(str(Path(__file__).parent))
+from spec_parser import parse_spec, parse_plan, PlanTask  # noqa: E402
 
 
 # IDs we generate tasks for (not CON/AC/VAL — those don't need impl tasks)
@@ -36,7 +36,7 @@ def _task_stub(task_id: str, spec_id: str, depends_on: str) -> str:
     return (
         f"### {task_id}: Implement {spec_id}\n\n"
         f"Depends on: {depends_on}\n"
-        f"Files: [UNVERIFIED](UNVERIFIED)\n"
+        f"Files: UNVERIFIED\n"
         f"Symbols: none\n"
         f"Satisfies: {spec_id}\n"
         f"Action: [Implement the logic required by {spec_id} as specified in the spec]\n"
@@ -54,7 +54,7 @@ def _acceptance_stub(task_id: str, ac_ids: list[str], depends_on: str) -> str:
         f"Symbols: none\n"
         f"Satisfies: {ac_list}\n"
         f"Action: Verify all Acceptance Criteria from spec are observable in the running system.\n"
-        f"Validate: `[run VAL commands from spec]\n`"
+        f"Validate: `[run VAL commands from spec]`\n"
         f"Expected result: All AC items confirmed observable.\n"
     )
 
@@ -94,7 +94,7 @@ def sync(spec_path: Path, plan_path: Path) -> int:
     next_num = _next_task_number(plan.tasks) if plan else 1
 
     new_blocks: list[str] = []
-    prev_depends = "TASK-000" if plan and plan.tasks else "none"
+    prev_depends = plan.tasks[-1].id if plan and plan.tasks else "none"
 
     for spec_id in missing_impl:
         tid = f"TASK-{next_num:03}"

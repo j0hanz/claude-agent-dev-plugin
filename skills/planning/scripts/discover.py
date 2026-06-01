@@ -16,7 +16,10 @@ import re
 import sys
 from collections.abc import Iterator
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
 
 VERSION = "1.0.0"
 MAX_FILE_BYTES = 2_000_000
@@ -151,7 +154,11 @@ def split_list(s: str | None) -> list[str]:
 
 
 def compile_name_pattern(token: str) -> re.Pattern[str]:
-    """Compile a name token to a regex. Accepts /pattern/flags or plain word."""
+    """Compile a name token to a regex. Accepts /pattern/flags or plain word.
+
+    Supported flags: i (IGNORECASE), m (MULTILINE), s (DOTALL).
+    Flags g, u, y are accepted but silently ignored (not supported by Python re).
+    """
     m = re.match(r"^/(.+)/([gimsuy]*)$", token)
     if m:
         flags = 0
@@ -160,6 +167,8 @@ def compile_name_pattern(token: str) -> re.Pattern[str]:
             flags |= re.IGNORECASE
         if "m" in flag_str:
             flags |= re.MULTILINE
+        if "s" in flag_str:
+            flags |= re.DOTALL
         return re.compile(m.group(1), flags)
     return re.compile(rf"\b{re.escape(token)}\b")
 
@@ -182,7 +191,10 @@ def parse_cli_args(raw: list[str]) -> argparse.Namespace:
 
 
 def expand_braces(pattern: str) -> list[str]:
-    """Expand {a,b} brace groups into separate glob patterns."""
+    """Expand {a,b} brace groups into separate glob patterns.
+
+    Note: nested braces are not supported — only the outermost {} pair is expanded.
+    """
     start = pattern.find("{")
     if start == -1:
         return [pattern]
@@ -280,11 +292,11 @@ def find_symbols(
         decl_names = find_decl_names_on_line(line)
         if not decl_names:
             continue
-        for pat in matching:
-            if any(pat.search(n) for n in decl_names):
-                hits.append(
-                    {"file": file_path, "line": i + 1, "match": line.strip()[:200]}
-                )
+        # Emit at most one hit per (file, line) regardless of how many patterns match
+        if any(any(pat.search(n) for n in decl_names) for pat in matching):
+            hits.append(
+                {"file": file_path, "line": i + 1, "match": line.strip()[:200]}
+            )
     return hits
 
 
@@ -305,7 +317,7 @@ def collect_matched_files(
     if not file_patterns:
         return []
     out: list[str] = []
-    for rel, _ in walk_glob_files(root, file_patterns, ext_filter):
+    for rel, _ in walk_glob_files(root, file_patterns, ext_filter, MAX_FILE_BYTES):
         out.append(rel)
         if len(out) >= max_results:
             break

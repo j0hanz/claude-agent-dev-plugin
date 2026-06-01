@@ -256,6 +256,11 @@ def scaffold(
     goal: str = "One sentence: what capability or outcome?",
 ) -> tuple[Path, Path]:
     """Write paired spec + plan files. Returns (spec_path, plan_path)."""
+    if "/" in name or "\\" in name or name.startswith("."):
+        raise ValueError(f"Invalid name {name!r}: must be a plain filename stem with no path separators")
+    if depth not in _SPEC_TEMPLATES:
+        raise ValueError(f"Unknown depth {depth!r}; choose from {list(_SPEC_TEMPLATES)}")
+
     out = Path(out_dir)
     out.mkdir(parents=True, exist_ok=True)
 

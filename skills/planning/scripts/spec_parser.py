@@ -10,6 +10,8 @@ import re
 from dataclasses import dataclass, field
 from pathlib import Path
 
+__all__ = ["SpecDocument", "PlanDocument", "PlanTask", "parse_spec", "parse_plan"]
+
 
 # ---------------------------------------------------------------------------
 # Spec document
@@ -64,7 +66,6 @@ _PHASE_HEADER_RE = re.compile(r"^##\s+(PHASE-\S+)")
 _FIELD_RE = re.compile(
     r"^(Depends on|Files|Symbols|Action|Validate|Expected result|Satisfies)\s*:\s*(.*)"
 )
-_SATISFIES_ID_RE = re.compile(r"\b((?:REQ|SEC|PERF|COMP|AC|VAL|CON)-\d+)\b")
 
 
 # ---------------------------------------------------------------------------
@@ -172,7 +173,7 @@ def parse_plan(path: str | Path) -> PlanDocument:
             field_name = fm.group(1)
             field_value = fm.group(2).strip()
             if field_name == "Satisfies":
-                ids = {m.group(1) for m in _SATISFIES_ID_RE.finditer(field_value)}
+                ids = {m.group(1) for m in _IDS_RE.finditer(field_value)}
                 current_task.satisfies = ids
                 doc.satisfied_ids |= ids
             else:
