@@ -19,7 +19,7 @@ This is not negotiable. Not optional. Invoking a skill that turns out not to app
 
 Agent-Dev is a Claude Code plugin for **authoring, testing, validating, and shipping agents, skills, and hooks**. It provides:
 
-- **18 skills** — process and domain methodologies loaded on demand
+- **19 skills** — process and domain methodologies loaded on demand
 - **4 managed agents** — scoped subagents for delegated autonomous work
 - **8 slash commands** — entry points for common workflows
 - **15 lifecycle hooks** — automatic context injection, formatting, and nudges

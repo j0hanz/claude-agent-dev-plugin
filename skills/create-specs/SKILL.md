@@ -1,8 +1,8 @@
 ---
 name: create-specs
-description: AI-ready technical specification. Trigger on 'specs', 'requirements', 'contracts', 'interfaces', 'what should build'. Features, APIs, integrations, migrations, infrastructure.
+description: "AI-ready technical specification. Trigger on 'specs', 'requirements', 'contracts', 'interfaces', 'what to build', 'write a spec', 'define requirements'. Features, APIs, integrations, migrations, infrastructure."
 disable-model-invocation: false
-user-invocable: false
+user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *)
 ---
 
