@@ -19,3 +19,7 @@ skills/*/eval-workspace/
 # IDE
 .vscode/
 package-lock.json
+
+# Worktrees and simulation
+.simulate/
+.claude/worktrees/

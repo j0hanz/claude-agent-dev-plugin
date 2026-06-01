@@ -16,6 +16,34 @@ uv sync
 - Node modules: `node_modules/`
 - Python virtual environment: `.venv/` (managed by uv)
 
+## Validation & Testing
+
+### Plugin Validation
+
+Before committing, validate the entire plugin:
+
+```bash
+npm validate
+```
+
+This checks:
+
+- YAML frontmatter on all components (skills, agents, commands)
+- Description fields present and non-empty
+- Agent trigger enumerations (`PROACTIVELY activate for:`)
+- Skill structure and progressive disclosure
+- Hook configuration (`hooks/runner.mjs` pattern)
+- Plugin manifest (`plugin.json`) schema
+
+### Running Tests
+
+```bash
+npm test                    # All tests (unit + integration + validation)
+npm run test:node           # Node.js unit tests
+npm run test:python         # Python tests
+npm run test:integration    # Hook firing and skill loading
+```
+
 ## File-scoped commands
 
 | Task        | Command                               |
