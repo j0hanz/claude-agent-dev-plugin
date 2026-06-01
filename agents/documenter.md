@@ -29,6 +29,18 @@ tools:
   - Skill
   - WebFetch
   - WebSearch
+  - mcp__filesystem__read
+  - mcp__filesystem__search_text
+  - mcp__filesystem__find_files
+  - mcp__filesystem__list
+  - mcp__filesystem__create
+  - mcp__filesystem__edit
+  - mcp__filesystem__replace_text
+  - mcp__filesystem__delete
+  - mcp__filesystem__move
+  - mcp__filesystem__stat
+  - mcp__filesystem__hash_file
+  - mcp__filesystem__list_roots
 skill_composition: declined
 skills:
   - name: diagrams
@@ -84,6 +96,17 @@ examples:    short, runnable, copy-pasteable
 api-tables:  Field | Type | Required | Description
 adrs:        Status / Context / Decision / Consequences
 ```
+
+## Filesystem MCP Tools
+
+Use these during audit and verification steps:
+
+- `mcp__filesystem__list` — map a directory tree before auditing; faster than Glob for orientation
+- `mcp__filesystem__search_text` — grep with context lines; use `contextBefore`/`contextAfter` to understand surrounding code before documenting it
+- `mcp__filesystem__find_files` — locate docs by pattern with depth limits (e.g., `**/*.md` under `docs/`)
+- `mcp__filesystem__read` — batch-read related files (e.g., all files in a skill dir) in one call
+- `mcp__filesystem__stat` — confirm a file exists and check its size before reading
+- `mcp__filesystem__replace_text` — update stale references (e.g., renamed paths, old function names) atomically across many doc files
 
 ## Failures
 

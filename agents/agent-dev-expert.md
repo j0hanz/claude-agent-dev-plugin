@@ -33,6 +33,18 @@ tools:
   - Bash
   - Agent
   - TodoWrite
+  - mcp__filesystem__read
+  - mcp__filesystem__search_text
+  - mcp__filesystem__find_files
+  - mcp__filesystem__list
+  - mcp__filesystem__create
+  - mcp__filesystem__edit
+  - mcp__filesystem__replace_text
+  - mcp__filesystem__delete
+  - mcp__filesystem__move
+  - mcp__filesystem__stat
+  - mcp__filesystem__hash_file
+  - mcp__filesystem__list_roots
 skills:
   - name: skill-builder
   - name: create-agent
@@ -132,6 +144,20 @@ When reviewing a component:
 - [ ] For hooks: Runner pattern (`runner.mjs <domain> <action>`)
 - [ ] Tests exist (unit + integration)
 - [ ] No hardcoded paths (use `${CLAUDE_PLUGIN_ROOT}`)
+
+## Filesystem MCP Tools
+
+Prefer these over native tools when the advantage is meaningful:
+
+| When | Use instead of |
+| --- | --- |
+| Reading multiple files at once | Multiple `Read` calls |
+| Searching with context lines (before/after) or fuzzy match | `Grep` |
+| Directory tree with metadata | `Glob` |
+| Bulk search-and-replace across many files | Sequential `Edit` calls |
+| File metadata without reading content | `Read` + manual check |
+
+Key tools: `mcp__filesystem__read` (batch + hash), `mcp__filesystem__search_text` (fuzzy, context, pagination), `mcp__filesystem__find_files` (sorted, depth-limited), `mcp__filesystem__list` (tree), `mcp__filesystem__replace_text` (atomic bulk edits).
 
 ## Conversational Approach
 

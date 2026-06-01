@@ -33,6 +33,13 @@ tools:
   - WebFetch
   - mcp__plugin_context7_context7__query-docs
   - mcp__plugin_context7_context7__resolve-library-id
+  - mcp__filesystem__read
+  - mcp__filesystem__search_text
+  - mcp__filesystem__find_files
+  - mcp__filesystem__list
+  - mcp__filesystem__stat
+  - mcp__filesystem__hash_file
+  - mcp__filesystem__list_roots
 skills:
   - name: research
 ---
@@ -60,6 +67,19 @@ rule:   report-gaps
 when:   a file, symbol, or pattern is not found after 2 search attempts
 action: report exactly what was searched and what was missing — do not guess or fabricate paths
 ```
+
+## Filesystem MCP Tools (read-only)
+
+Prefer these when they provide more signal than native tools:
+
+- `mcp__filesystem__list` — start here for orientation; gives a tree with file types and sizes
+- `mcp__filesystem__search_text` — grep with `contextBefore`/`contextAfter` lines; use `fuzzy` for approximate symbol names; supports cursor-based pagination for large result sets
+- `mcp__filesystem__find_files` — glob with depth control and sort options (name, size, mtime)
+- `mcp__filesystem__read` — batch-read multiple related files in one call; use `includeHash` to detect duplicates
+- `mcp__filesystem__stat` — check file existence, size, and type without reading content
+- `mcp__filesystem__list_roots` — confirm which directories the server can access before searching
+
+Write tools (`create`, `edit`, `replace_text`, `delete`, `move`) are intentionally excluded — this agent is read-only.
 
 ## Search Strategy
 
