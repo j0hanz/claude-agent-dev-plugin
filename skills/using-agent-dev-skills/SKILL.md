@@ -9,35 +9,18 @@ If you were dispatched as a subagent to execute a specific task, skip this skill
 
 # Using Agent Dev Skills
 
-## How to Use This Skill
+## Rules
 
-- Read this skill at the start of every session in this repo.
-- Check the routing table before beginning any task.
-- When a row matches — even partially — invoke that skill.
-- When in doubt, invoke. Do not skip.
-- Before invoking a routed skill, output one line: `Routing to \`<skill-name>\`: <one-sentence reason>.`
-
-## Priority Order
-
-1. **User's explicit instruction** — overrides everything
-2. **Agent-dev skill** — overrides default model behavior
-3. **Default model response** — only when no skill applies
+1. Check the routing table **before any action** — including the first one.
+2. When a row matches — even partially — invoke that skill. When in doubt, invoke.
+3. Before invoking, output one line: `Routing to \`<skill-name>\`: <reason>.`
+4. Priority: explicit user instruction → skill → default model behavior.
 
 <EXTREMELY-IMPORTANT>
 
-## Do Not Rationalize Skipping
+## Never Rationalize Skipping
 
-These thoughts mean you are about to make a mistake. Check the routing table first — without exception.
-
-| Rationalization                         | Reality                                                                   |
-| :-------------------------------------- | :------------------------------------------------------------------------ |
-| "This is simple, skills are overkill."  | Simple things become complex. The skill takes 2 seconds to check.         |
-| "I'll check skills once I get started." | Skill check comes before any action, including the first one.             |
-| "I already know how to do this."        | Knowing the concept is not the same as invoking the skill.                |
-| "The skill is for more complex cases."  | If a skill exists for this task, use it. Complexity is not the threshold. |
-| "This is just a quick question."        | Questions are tasks. Check for skills before answering.                   |
-| "I need more context first."            | Skills tell you how to gather context. Check first.                       |
-| "I remember this skill from training."  | Skills evolve. Read the current version every time.                       |
+Any thought like "this is simple", "I already know this", "just a quick question", or "I need context first" means you are about to skip incorrectly. Skills apply regardless of perceived complexity. Skills tell you how to gather context — check first, always.
 
 </EXTREMELY-IMPORTANT>
 
@@ -45,24 +28,24 @@ These thoughts mean you are about to make a mistake. Check the routing table fir
 
 ## Routing Table
 
-| Task signal                                                                                  | Skill to invoke                  |
-| :------------------------------------------------------------------------------------------- | :------------------------------- |
-| "let's build X", "add a feature", "we need a new Y", ambiguous design, unclear terminology   | `brainstorming`                  |
-| "write a spec", "create a plan", "define requirements", "implementation plan"                | `planning`                       |
-| Implementing code, writing functions, any non-trivial implementation                         | `test-driven-development` ⚠️     |
-| "something is broken", "debug this", "why is X failing", unexpected output, production error | `diagnose`                       |
-| "review this", "any issues?", "check for bugs", before opening a PR (PR not yet open)        | `code-review`                    |
-| "clean up", "refactor", "simplify", "improve this code", "hard to read"                      | `refactor`                       |
-| "architecture review", "too coupled", "where should this code live", "God class"             | `architecture`                   |
-| "add hook", "block a tool", "auto-format", "run tests on save", lifecycle guarantees         | `create-hook`                    |
-| "build an agent", "create subagent", "agent prompt", "agent not working"                     | `create-agent`                   |
-| "make a skill", "build skill", "skill not working", "turn this workflow into a skill"        | `skill-builder`                  |
-| "add CI", "set up release", GitHub Actions workflows, `gh` CLI scripting                     | `github-automation`              |
-| PR already open and "ready for review" — route to `code-review`, not verification            | `code-review`                    |
-| "done", "ready to merge", "looks good" — PR not yet reviewed                                 | `verification-before-completion` |
-| "update AGENTS.md", "improve agent instructions", "onboard me", trimming CLAUDE.md           | `agents-maintainer`              |
+| Task signal                                                                        | Skill                            |
+| :--------------------------------------------------------------------------------- | :------------------------------- |
+| "let's build X", "add feature", ambiguous design, unclear terminology              | `brainstorming`                  |
+| "write a spec", "create a plan", "define requirements"                             | `planning`                       |
+| Implementing code, writing functions, any non-trivial implementation               | `test-driven-development` ⚠️     |
+| "broken", "debug", "why is X failing", unexpected output, production error         | `diagnose`                       |
+| "review this", "check for bugs", before opening a PR (not yet open)                | `code-review`                    |
+| "clean up", "refactor", "simplify", "hard to read"                                 | `refactor`                       |
+| "architecture review", "too coupled", "where should this live", "God class"        | `architecture`                   |
+| "add hook", "block a tool", "auto-format", lifecycle guarantees                    | `create-hook`                    |
+| "build an agent", "create subagent", "agent prompt", "agent not working"           | `create-agent`                   |
+| "make a skill", "build skill", "skill not working", "turn workflow into skill"     | `skill-builder`                  |
+| "add CI", "set up release", GitHub Actions, `gh` CLI scripting                     | `github-automation`              |
+| PR already open and "ready for review"                                             | `code-review`                    |
+| "done", "ready to merge", "looks good" — PR not yet reviewed                       | `verification-before-completion` |
+| "update AGENTS.md", "improve agent instructions", "onboard me", trimming CLAUDE.md | `agents-maintainer`              |
 
-> ⚠️ **Agentic skills** (`test-driven-development`, `code-review` in execution mode) run autonomously for multiple minutes and many tool calls. Before invoking them, output one line: `This will start an autonomous session (~N tool calls). Proceed?` and wait for confirmation in interactive sessions. In subagent context skip confirmation.
+> ⚠️ **Agentic skills** (`test-driven-development`, `code-review` execution mode) run autonomously for many tool calls. Before invoking, output: `This will start an autonomous session (~N tool calls). Proceed?` and wait for confirmation. Skip confirmation in subagent context.
 
 ---
 
@@ -104,27 +87,26 @@ Side paths — invoke at any stage when the signal matches:
 
 ## Skill Types
 
-| Type                                           | Skills                                                                              | How to follow                                                   |
-| :--------------------------------------------- | :---------------------------------------------------------------------------------- | :-------------------------------------------------------------- |
-| **Rigid** — mandatory phase gates, no skipping | `test-driven-development`, `diagnose`, `planning`, `verification-before-completion` | Follow every phase in order. Gates are blocking. Never skip.    |
-| **Flexible** — adapt to context                | `brainstorming`, `refactor`, `code-review`, `architecture`                          | Apply judgment within the defined phases. Complete all of them. |
+| Type                                 | Skills                                                                              | Rule                                               |
+| :----------------------------------- | :---------------------------------------------------------------------------------- | :------------------------------------------------- |
+| **Rigid** — phase gates, no skipping | `test-driven-development`, `diagnose`, `planning`, `verification-before-completion` | Every phase in order. Gates block. Never skip.     |
+| **Flexible** — adapt to context      | `brainstorming`, `refactor`, `code-review`, `architecture`                          | Apply judgment within phases. Complete all phases. |
 
 ---
 
 ## If a Routed Skill Is Missing
 
-If the skill named in the routing table is not installed, tell the user:
-`The \`<skill-name>\` skill is not installed. I'll proceed without it, but results may be less structured.`
-Then apply the skill's intent manually using best judgment.
+Tell the user: `The \`<skill-name>\` skill is not installed. Proceeding without it.`
+Then apply the skill's intent manually.
 
 ---
 
 ## Quick-Start Decision
 
-Answer in order — stop at the first match:
+Stop at the first match:
 
-1. No spec or approved design exists → invoke `brainstorming`, then `planning`
-2. Failing test, crash, or unexpected behavior → invoke `diagnose`
-3. Implementation complete, needs verification → invoke `verification-before-completion`, then `code-review`
-4. Building a skill, agent, or hook → invoke `skill-builder` / `create-agent` / `create-hook`
-5. Code is written but hard to understand or change → invoke `architecture` or `refactor`
+1. No spec or design → `brainstorming` → `planning`
+2. Failing test, crash, unexpected behavior → `diagnose`
+3. Implementation done → `verification-before-completion` → `code-review`
+4. Building a skill, agent, or hook → `skill-builder` / `create-agent` / `create-hook`
+5. Code hard to understand or change → `architecture` or `refactor`
