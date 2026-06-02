@@ -6,8 +6,6 @@ disable-model-invocation: false
 
 # Skill Builder
 
-Progress the user through the skill development lifecycle:
-
 | Intent                             | Starting Point                                                    |
 | :--------------------------------- | :---------------------------------------------------------------- |
 | "I want to make a skill for X"     | [Interview and Draft](#interview-and-draft)                       |
@@ -16,7 +14,7 @@ Progress the user through the skill development lifecycle:
 | "My skill is inconsistent"         | Ask for bad-output example, then [Diagnose](#improving-the-skill) |
 | "Build quickly, skip formal evals" | Draft directly, skip formal eval loop                             |
 
-**Quick draft mode (no formal evals):** Draft immediately. Skip `evals/evals.json`, formal workspace, and baseline runs. Still enforce all NEVER list items and frontmatter constraints. Propose 2-3 test prompts verbally at the end.
+**Quick draft mode:** Draft immediately. Skip `evals/evals.json`, formal workspace, and baseline runs. Still enforce all NEVER items and frontmatter constraints. Propose 2-3 test prompts verbally at the end.
 
 ---
 
@@ -32,11 +30,11 @@ Progress the user through the skill development lifecycle:
 
 ---
 
-## Communicating with the User
+## Communication
 
 - Use technical terms (eval, JSON, assertion) only if the user is familiar.
 - Explain technical rationale (e.g., why baseline runs or assertions matter).
-- Err toward concise explanation.
+- Be concise.
 
 ---
 
@@ -50,22 +48,23 @@ Progress the user through the skill development lifecycle:
 2. **Research:** Check available MCPs for data/tools. Use subagents in parallel.
 3. **Draft immediately:** Write `SKILL.md`. Mark uncertainties with `[USER TO CONFIRM: X]`.
 
-**When to ask vs. draft:** If the user's message provides all three of the following, draft immediately and annotate any assumptions inline. If any is missing, ask targeted questions first.
+**draft-immediately:** all 3 criteria met — annotate assumptions inline
+**ask-first:** any criterion missing — ask targeted questions first
 
 - [ ] Domain/purpose is clear
 - [ ] At least one example trigger phrase is known
 - [ ] Expected output format is known (even roughly)
 
-For users who identify as new to skill-building, add one orienting sentence before the draft.
+For users new to skill-building, add one orienting sentence before the draft.
 
 ### Write the SKILL.md
 
 **Before producing any SKILL.md, validate all fields:**
 
-1. `name` — must be kebab-case (lowercase, digits, hyphens only), max 64 chars. If the user supplied an invalid name (spaces, uppercase), convert it immediately and note the change inline (e.g., `name adjusted to kebab-case: my-skill-name`). Do not ask for confirmation.
+1. `name` — must be kebab-case (lowercase, digits, hyphens only), max 64 chars. If invalid (spaces, uppercase), convert immediately and note inline. Do not ask for confirmation.
 2. `description` — must have no angle brackets (`<` or `>`), max 1024 chars.
-3. **MANDATORY**: Run the `@agent-prompt-auditor` on your drafted `SKILL.md` to ensure it adheres to design principles, clarity, and safety constraints. Note the auditor's findings and remediations in your final output.
-4. Skill body — must use imperative form throughout. No "you should", "you might", "maybe".
+3. **MANDATORY**: Run `@agent-prompt-auditor` on the draft. Note findings and remediations.
+4. Skill body — imperative form throughout. No "you should", "you might", "maybe".
 
 Fill in these components based on the interview:
 
@@ -95,16 +94,14 @@ skill-name/
 2. **SKILL.md body** — Loaded on trigger (target: < 500 lines).
 3. **Bundled resources** — Loaded as needed.
 
-**Guidelines:**
-
-- If `SKILL.md` exceeds 500 lines, move details to `references/`.
+- Move details to `references/` if `SKILL.md` exceeds 500 lines.
 - Use clear pointers to bundled files.
 - Large reference files (>300 lines) require a Table of Contents.
 - Organize multi-variant domains (e.g., AWS vs. GCP) into separate files in `references/`.
 
 #### Writing Patterns
 
-- **Imperative Form**: Use "Do X", not "You should do X".
+- **Imperative Form**: "Do X", not "You should do X".
 - **Output Formats**: Define explicit structures (e.g., `# [Title]`, `## Summary`).
 - **Examples**: Use clear Input/Output pairs.
 - **File Editing**: Sequential edits only. One edit per turn per file.
@@ -135,11 +132,9 @@ skill-name/
 
 Follow this sequence. Do NOT use `/skill-test`.
 
-**Workspace:** `<skill-name>-workspace/iteration-<N>/eval-<ID>/` (relative to CWD, e.g., `./skill-builder-workspace/iteration-1/eval-0/`). Output files must go under `run-N/outputs/` — not directly under the config directory.
+**Workspace:** `<skill-name>-workspace/iteration-<N>/eval-<ID>/` (relative to CWD, e.g., `./skill-builder-workspace/iteration-1/eval-0/`). Output files go under `run-N/outputs/` — not directly under the config directory.
 
 ### 0. Setup Workspace (Recommended)
-
-Run the initialization script to scaffold the directory structure and metadata:
 
 ```bash
 python scripts/init_eval.py --skill-name <name> --eval-id <ID> --prompt "<prompt>"
@@ -176,7 +171,7 @@ While runs execute:
 
 ### 3. Capture Timing Data
 
-Upon task completion, save `total_tokens` and `duration_ms` from the notification to `timing.json` in the run directory.
+Save `total_tokens` and `duration_ms` from the completion notification to `timing.json` in the run directory.
 
 ```json
 { "total_tokens": 123, "duration_ms": 456, "total_duration_seconds": 0.456 }
@@ -184,7 +179,7 @@ Upon task completion, save `total_tokens` and `duration_ms` from the notificatio
 
 ### 4. Grade, Aggregate, and Review
 
-1. **Grade**: **MANDATORY: Read `agents/grader.md`**. evaluate assertions against outputs. Save to `grading.json`.
+1. **Grade**: **MANDATORY: Read `agents/grader.md`**. Evaluate assertions against outputs. Save to `grading.json`.
 2. **Aggregate**:
    ```bash
    python -m scripts.aggregate_benchmark <workspace>/iteration-N --skill-name <name>

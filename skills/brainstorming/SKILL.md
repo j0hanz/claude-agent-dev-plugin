@@ -19,23 +19,22 @@ description: "Structured requirements discovery before implementation. Trigger o
 
 ## Conversation Rhythm
 
-Ask **one question at a time** throughout all phases — wait for each answer before asking the next. This prevents the user from feeling interrogated and gives you better signal per question.
+**rhythm:** one question at a time — wait for each answer before asking the next.
 
-**Fast Track (For resistant users):**
-If the user explicitly declines brainstorming or insists on "just coding" after your first attempt to start Phase 1:
+**Fast Track (resistant users):**
+If the user declines brainstorming or insists on "just coding" after your first Phase 1 attempt:
 
 1. Acknowledge the request for speed.
-2. Immediately spawn `codebase-scanner` to gather context.
+2. Spawn `codebase-scanner`.
 3. Present a **single, grounded proposal** based on the scanner's report.
 4. If approved, skip to Phase 5.
-   This honors the design-first mandate without stalling a high-velocity user.
 
 ## Do Not
 
-- **Ask leading questions** (e.g., "So this is a caching layer, right?") — LLMs tend to confirm user bias. Let the user define the domain.
+- **Ask leading questions** — let the user define the domain.
 - **Assume two terms mean the same thing** — inventory ALL contexts before drilling into any one.
-- **Capture implementation details** (e.g., "Stored in Redis") during discovery — capture WHAT a concept IS, not HOW it is built. Implementation locked in prematurely becomes expensive to unwind.
-- **Write code or scaffolding before design is approved** — assumptions embedded in code are 10x more expensive to fix than those in a spec. Keep all decisions in plain language until the user commits to an approach.
+- **Capture implementation details** during discovery — capture WHAT a concept IS, not HOW it is built.
+- **Write code or scaffolding before design is approved.**
 
 ## Red Flags
 
@@ -53,7 +52,7 @@ If the user explicitly declines brainstorming or insists on "just coding" after 
 
 ## Dispatch Agents
 
-Two subagents handle the computation-heavy phases. Use the Agent tool to spawn them at the points indicated. Do not re-do their work manually.
+Spawn via Agent tool. Do not redo their work manually.
 
 | Agent              | File                         | When to spawn                                  |
 | ------------------ | ---------------------------- | ---------------------------------------------- |
@@ -62,20 +61,13 @@ Two subagents handle the computation-heavy phases. Use the Agent tool to spawn t
 
 ## Phase 1: Discovery (Read Before Asking)
 
-**Spawn `codebase-scanner` before asking questions:**
+Spawn `codebase-scanner` — pass the feature description exactly as stated. Wait for the Codebase Context Report.
 
-Use the Agent tool to launch the `codebase-scanner` subagent (see `agents/codebase-scanner.md`).
+Summarize your understanding in one paragraph, drawing from the report: what was found, what constraints exist, what Key Unknowns were flagged, and what you don't know yet. Ask the user to confirm.
 
-- **Pass:** the feature description exactly as the user stated it
-- **Wait for:** the Codebase Context Report
-- **Use:** the report as your discovery findings in all subsequent phases — do not re-scan independently
+**scope-check:** If discovery reveals the feature is >4x larger than expected, suggest splitting into phases.
 
-**Then, state your understanding:**
-Summarize your understanding of the task in one paragraph and ask the user to confirm. Draw from the Codebase Context Report: cite what was found, what constraints exist, and what the Key Unknowns section flagged. Include what you DON'T know yet.
-
-**Scope reality check:** If discovery reveals the feature is >4x larger than initially expected, suggest splitting into phases. Example: "This dashboard includes 5 major areas. Should we start with user management and add reporting later?"
-
-**Domain trigger:** If steps 1–5 reveal ambiguous or conflicting terminology, run Phase 2 before continuing.
+**domain-trigger:** If steps 1–5 reveal ambiguous or conflicting terminology, run Phase 2 before continuing.
 
 ### Phase 1 Example
 
@@ -84,35 +76,31 @@ Summarize your understanding of the task in one paragraph and ask the user to co
 **Your understanding statement:**
 "I understand you need full-text search for your product so users can find data faster. Currently, I don't know: if you want real-time indexing, if search needs to be fuzzy, or if there are performance constraints. Do I have this right?"
 
-✓ This invites confirmation
-✓ This surfaces unknowns without asking leading questions
-✓ This summarizes in one paragraph
-
 ## Phase 2: Domain Clarity (When Terminology is Ambiguous)
 
-**Skip this phase** if domain terminology is clear and consistent throughout code, docs, and user language.
+**Skip** if domain terminology is clear and consistent throughout code, docs, and user language.
 
 **Definition is clear when:**
 
-- ✓ User can explain WHAT the concept IS (not just what it does)
-- ✓ User can explain how it differs from similar terms (Account vs Organization vs Customer)
-- ✓ User can point to where it appears in code/docs/conversations
+- User can explain WHAT the concept IS (not just what it does)
+- User can explain how it differs from similar terms (Account vs Organization vs Customer)
+- User can point to where it appears in code/docs/conversations
 
 **Not clear if:** Definition relies on "everyone knows what this means" or varies by team.
 
 **Invoke when:** same term has multiple meanings, team and code use different names for the same concept, user asks "what do we call X?", or docs are inconsistent.
 
-**Fundamental disagreement:** If discovery reveals domain experts disagree on WHAT we're building (not just terminology), document both positions and escalate to the user before proceeding to Phase 4. Example: "The API team wants caching, the product team wants fresh data always. Which takes priority?"
+**Fundamental disagreement:** If domain experts disagree on WHAT we're building, document both positions and escalate before proceeding to Phase 4.
 
 For each ambiguous term:
 
 1. Ask the user to define it in their own words — never lead with a definition.
 2. Ask where it appears: code, docs, team discussions?
-3. If two teams have valid reasons for different terms (e.g., "Account" vs "Tenant"): document both with a boundary — where each is appropriate and how they map — don't force one side to abandon their mental model.
+3. If two teams have valid reasons for different terms: document both with a boundary — don't force one side to abandon their mental model.
 
 **3-turn rule:** If 3 questions fail to define a term clearly, mark it TBD with an owner and move on.
 
-**Output format for captured terms (document inline as you go):**
+**Output format for captured terms:**
 
 ```
 [Canonical Term]: [Definition]. Aliases: [alias1, alias2]
@@ -124,7 +112,7 @@ Offer to write findings to `glossary.md` or `CONTEXT.md` at Phase 5 transition.
 
 ## Phase 3: Expert Clarification (Surface the Unsaid)
 
-**Technique selection** — use 1-2 based on what the conversation reveals:
+Pick 1–2 techniques based on conversation signals. Do not run all five as a script.
 
 | Situation                                              | Use This            | Reason                                      |
 | ------------------------------------------------------ | ------------------- | ------------------------------------------- |
@@ -134,24 +122,22 @@ Offer to write findings to `glossary.md` or `CONTEXT.md` at Phase 5 transition.
 | Feature creep risk or unclear boundaries               | **Anti-Scope**      | Defines what we're explicitly NOT building  |
 | Feature handles sensitive data or user permissions     | **Trust Breach**    | Identifies security/privacy vulnerabilities |
 
-Avoid the "checklist trap" — don't run all five techniques as a script. Pick 1-2 based on signals from discovery.
+**Depth check:** After 1–2 techniques, ask: "Are there other risks or unknowns that could derail this?"
 
-**Depth check:** After 1-2 techniques, ask: "Are there other risks or unknowns that could derail this?"
-
-- Yes → apply one more technique, then move on regardless
+- Yes → apply one more technique, then proceed regardless
 - No → document TBD items and proceed to Phase 4
 
-**Hard limit: 4 questions total within Phase 3** across all techniques. Unresolved questions become TBD items with an owner — don't loop indefinitely.
+**Hard limit: 4 questions total within Phase 3.** Unresolved questions become TBD items with an owner.
 
-1. **The "Why" (Five Whys):** Drill down to the root problem. "Why is this needed _now_? What fails if we don't do this?"
-2. **The Premortem:** "Imagine we've implemented this and it's a disaster. What's the most likely thing that went wrong?" (Surfaces hidden technical or organizational risks.)
-3. **Success Logic:** "How will we know this is a success without using the word 'functional'? What behavior change should we see in users or the system?"
-4. **The "Anti-Scope":** Instead of asking "what's out of scope," ask: "What's a related feature that we are _strictly_ choosing NOT to build today?"
-5. **The Trust Breach:** "If a malicious actor wanted to abuse this new feature to access unauthorized data or disrupt the system, what would be their easiest path?" (Surfaces security/privacy gaps.)
+1. **The "Why" (Five Whys):** "Why is this needed _now_? What fails if we don't do this?"
+2. **The Premortem:** "Imagine we've implemented this and it's a disaster. What's the most likely thing that went wrong?"
+3. **Success Logic:** "How will we know this is a success without using the word 'functional'? What behavior change should we see?"
+4. **The "Anti-Scope":** "What's a related feature that we are _strictly_ choosing NOT to build today?"
+5. **The Trust Breach:** "If a malicious actor wanted to abuse this feature to access unauthorized data, what would be their easiest path?"
 
 ## Phase 4: Design Proposal
 
-**Compress the Codebase Context Report before spawning the design-proposer:**
+Compress the Codebase Context Report before spawning:
 
 ```bash
 python <skill-dir>/scripts/compress_report.py <path-to-report.json>
@@ -159,47 +145,34 @@ python <skill-dir>/scripts/compress_report.py <path-to-report.json>
 echo '<report-json>' | python <skill-dir>/scripts/compress_report.py
 ```
 
-Use the compressed JSON output as the codebase context in the packet below — not the raw report.
 If the script fails, pass the raw report as-is.
 
-**Spawn `design-proposer` to generate approaches:**
+Spawn `design-proposer` with a context packet containing:
 
-Use the Agent tool to launch the `design-proposer` subagent (see `agents/design-proposer.md`).
+- Feature description (confirmed in Phase 1)
+- Codebase Context Report (compressed)
+- Domain terms (from Phase 2, or "Phase 2 skipped")
+- Risks and success criteria (from Phase 3, or "Phase 3 skipped")
+- Any constraints the user stated explicitly
 
-Pass a context packet containing:
+Present the design proposals in sections. Validate each section before continuing.
 
-- Feature description (confirmed by the user in Phase 1)
-- Codebase Context Report (compressed output from script above)
-- Domain terms (from Phase 2, if run; otherwise note "Phase 2 skipped")
-- Risks and success criteria (from Phase 3, if run; otherwise note "Phase 3 skipped")
-- Any constraints the user stated explicitly during the session
+**Design approval gate:** Ask: "Which approach should we move forward with and why?"
 
-Wait for the Design Proposals, then present them to the user as your Phase 4 output.
-
-Present the design in sections. Validate each section before continuing to the next.
-
-**Design approval gate:**
-Before moving to Phase 5, ask explicitly: "Which approach should we move forward with and why?"
-
-Wait for a clear commitment like:
+Wait for explicit commitment:
 
 - "We'll go with Approach B because..."
 - "Let's do Option 1, here's why..."
-- "The second option aligns best with..."
 
-Ambiguous responses ("sounds good") → loop back and clarify which specific approach they're choosing.
+Ambiguous responses ("sounds good") → clarify which specific approach they're choosing.
 
 ## Phase 5: Transition
 
-When the user approves a design:
+1. Summarize the approved approach in one short paragraph: chosen option and key tradeoffs.
+2. If Phase 2 captured terms or Phase 3 captured risks: offer to write to `glossary.md` or `CONTEXT.md`. **If there are Open TBDs, offer to save them to `TODO.md` or a tracker.**
+3. Produce the Design Brief below and stop — do not invoke `/plan` or write code automatically. Conclude: "You can now use `/plan` to generate a detailed implementation plan based on this brief. Would you like me to start that for you?"
 
-1. Summarize the approved approach in one short paragraph including the chosen option and key tradeoffs.
-2. If terminology was captured in Phase 2 or risks in Phase 3: offer to write findings to `glossary.md` or a new `CONTEXT.md` file now. **MANDATORY**: If there are Open TBDs, offer to save them to a `TODO.md` or tracker.
-3. **Design handoff:** Document the approved design as your implementation brief with the required output format below.
-
-   Produce this brief as your final output and stop — do not invoke `/plan` or write any code automatically. **Conclude by inviting the next step:** "You can now use `/plan` to generate a detailed implementation plan based on this brief. Would you like me to start that for you?"
-
-**Required output format for the design brief:**
+**Required output format:**
 
 ```markdown
 ## Design Brief
@@ -211,26 +184,25 @@ When the user approves a design:
 - [Component 1: responsibility]
 - [Component 2: responsibility]
 - [Key data flow between them]
-  **Success criteria:** [Observable signals — what user/system will do differently]
-  **Open TBDs:** [Unresolved items with owner and due date, or "None"]
 
----
+**Success criteria:** [Observable signals — what user/system will do differently]
+**Open TBDs:** [Unresolved items with owner and due date, or "None"]
+```
 
-## Command Usage & Troubleshooting Guidelines
+## Command Usage & Troubleshooting
 
-### Usage Scenarios
+**When to use:**
 
 - Scope or approach is unclear before starting a feature.
 - Domain terminology is ambiguous (e.g., "task", "session", "context").
 - Multiple implementation approaches exist and the right one isn't decided.
 - A stakeholder description needs to become concrete requirements.
 
-Prefer planning (`planning` skill) when requirements are clear. Prefer coding (using the `@coder` agent or implementing directly) when requirements and approach are both decided.
+Prefer `planning` skill when requirements are clear. Prefer direct implementation when requirements and approach are both decided.
 
-### Troubleshooting
+**Troubleshooting:**
 
 - **Skill returns with no questions** — Input is too narrow. Add context about the feature goal and rerun.
-- **Requirements feel incomplete** — Ask the skill to explore edge cases, failure modes, or "what should NOT happen."
+- **Requirements feel incomplete** — Ask to explore edge cases, failure modes, or "what should NOT happen."
 - **Brainstorm diverges from goal** — Add a constraint upfront (e.g., "only changes within the hook layer, no new agents").
-- **Success Criteria** — All ambiguous terms are defined, scope boundaries are clear (in-scope and out-of-scope), key design decisions are documented with rationale, and no open questions remain before planning or implementation.
-```
+- **Success Criteria** — All ambiguous terms defined, scope boundaries clear, key design decisions documented with rationale, no open questions remain.
