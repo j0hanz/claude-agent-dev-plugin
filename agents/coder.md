@@ -9,10 +9,6 @@ description: |
   - Run diagnostic scripts or tests to identify issues.
   - Perform batch updates or automated changes across multiple files.
 
-  <example>
-  "Fix the memory leak in the parser and refactor the main loop for clarity."
-  </example>
-
   *Note: This agent requires the `managed-agents-2026-04-01` beta header.*
 color: green
 model: sonnet

@@ -154,9 +154,9 @@ Avoid the "checklist trap" — don't run all five techniques as a script. Pick 1
 **Compress the Codebase Context Report before spawning the design-proposer:**
 
 ```bash
-python skills/brainstorming/scripts/compress_report.py <path-to-report.json>
+python <skill-dir>/scripts/compress_report.py <path-to-report.json>
 # or pipe directly:
-echo '<report-json>' | python skills/brainstorming/scripts/compress_report.py
+echo '<report-json>' | python <skill-dir>/scripts/compress_report.py
 ```
 
 Use the compressed JSON output as the codebase context in the packet below — not the raw report.

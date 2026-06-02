@@ -79,11 +79,11 @@ Different skills for different situations:
 | **Implementing a single feature or bug fix** (small-to-medium scope)     | spec-driven-development (you are here) | spec-_.md + plan-_.md + validated code                | 1–3 hours |
 | **Planning a large initiative, roadmap, or multi-sprint effort**         | `planning`                             | high-level plan with phases and milestones            | 2–4 hours |
 | **Designing system architecture, component interactions, API contracts** | `architecture`                         | architecture.md, ADRs, diagrams                       | 2–6 hours |
-| **Exploring unknown problem space or evaluating technologies**           | `research-engineer`                    | research findings, recommendations, proof-of-concepts | varies    |
+| **Exploring unknown problem space or evaluating technologies**           | `research`                             | research findings, recommendations, proof-of-concepts | varies    |
 
 **Typical workflow** (large projects):
 
-1. Research → Understand the landscape (research-engineer)
+1. Research → Understand the landscape (research)
 2. Architecture → Design system and interfaces (architecture)
 3. Multiple SDD cycles → Implement features one-by-one (spec-driven-development)
 4. Integration → Test across features
@@ -212,7 +212,7 @@ This phase covers:
 
 Full recovery reference: [Spec Recovery](references/spec-recovery.md)
 
-### 5. Acceptance Validation
+### 4. Acceptance Validation
 
 After all tasks complete, verify the full spec is satisfied:
 

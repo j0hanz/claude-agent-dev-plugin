@@ -4,7 +4,7 @@ description: "Mandatory quality gate before delivery. Trigger on 'code review', 
 disable-model-invocation: false
 argument-hint: '[target: branch, commit, file, or "current diff"]'
 allowed-tools: Bash(git *)
-disallowed-tools: WriteFile, ReplaceFileContent, MultiReplaceFileContent
+disallowed-tools: Write, Edit
 ---
 
 # Code Review

@@ -35,3 +35,7 @@ A Claude Code plugin for authoring and maintaining agents, skills, and hooks.
 ## Commit Attribution
 
 Every AI commit MUST include a `Co-Authored-By:` trailer. Example:
+
+```text
+Co-Authored-By: Claude Sonnet 4.6 <noreply@anthropic.com>
+```
