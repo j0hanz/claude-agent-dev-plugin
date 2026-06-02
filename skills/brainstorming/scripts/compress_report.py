@@ -44,8 +44,8 @@ def _dedupe_stable(items: list[str]) -> list[str]:
 
 
 def _truncate_git_log(log: str, max_lines: int) -> str:
-    if not log or log == "no history":
-        return log
+    if not log or not log.strip() or log == "no history":
+        return "no history"
     lines = [line for line in log.splitlines() if line.strip()]
     truncated = lines[:max_lines]
     suffix = f" … +{len(lines) - max_lines} more" if len(lines) > max_lines else ""
@@ -57,6 +57,11 @@ def _trim_str(value: str, max_chars: int = 200) -> str:
 
 
 def compress(report: dict[str, Any], cfg: CompressConfig) -> dict[str, Any]:
+    """Compress a Codebase Context Report to minimal token form.
+
+    Deduplicates and truncates each field according to cfg limits.
+    Returns a new dict with a ``_compressed`` savings annotation.
+    """
     out: dict[str, Any] = {}
 
     # Always keep — zero token cost to preserve
@@ -121,18 +126,29 @@ def main() -> None:
     parser.add_argument("--max-log-lines", type=int, default=3)
     parser.add_argument("--max-constraints", type=int, default=5)
     parser.add_argument("--max-terminology", type=int, default=10)
+    parser.add_argument("--max-unknowns", type=int, default=4)
+    parser.add_argument("--max-design-docs", type=int, default=3)
     args = parser.parse_args()
 
-    if args.report:
-        raw = json.loads(Path(args.report).read_text(encoding="utf-8"))
-    else:
-        raw = json.loads(sys.stdin.read())
+    try:
+        if args.report:
+            raw = json.loads(Path(args.report).read_text(encoding="utf-8"))
+        else:
+            raw = json.loads(sys.stdin.read())
+    except FileNotFoundError as exc:
+        sys.exit(f"error: report file not found — {exc}")
+    except PermissionError as exc:
+        sys.exit(f"error: cannot read report file — {exc}")
+    except json.JSONDecodeError as exc:
+        sys.exit(f"error: invalid JSON — {exc}")
 
     cfg = CompressConfig(
         max_files=args.max_files,
         max_log_lines=args.max_log_lines,
         max_constraints=args.max_constraints,
         max_terminology=args.max_terminology,
+        max_unknowns=args.max_unknowns,
+        max_design_docs=args.max_design_docs,
     )
     print(json.dumps(compress(raw, cfg), indent=2))
 

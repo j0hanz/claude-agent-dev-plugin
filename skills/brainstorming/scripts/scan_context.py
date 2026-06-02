@@ -15,6 +15,7 @@ Example:
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import subprocess
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -61,30 +62,42 @@ def _is_skippable(path: Path) -> bool:
 
 
 def _git_log(path: str, cwd: Path) -> str:
-    result = subprocess.run(
-        ["git", "log", "--oneline", "-5", "--", path],
-        capture_output=True,
-        text=True,
-        cwd=str(cwd),
-    )
+    try:
+        result = subprocess.run(
+            ["git", "log", "--oneline", "-5", "--", path],
+            capture_output=True,
+            text=True,
+            cwd=str(cwd),
+        )
+    except FileNotFoundError:
+        return "no history"
+    if result.returncode != 0:
+        return "no history"
     return result.stdout.strip() or "no history"
 
 
 def _grep_files(pattern: str, cwd: Path) -> list[str]:
     """Return up to 5 file paths matching pattern (case-insensitive, ignores lock files)."""
-    result = subprocess.run(
-        ["git", "grep", "-ril", "--", pattern],
-        capture_output=True,
-        text=True,
-        cwd=str(cwd),
-    )
-    if result.returncode != 0:
-        # Fallback to rg if available
-        result = subprocess.run(
+    try:
+        git_result = subprocess.run(
+            ["git", "grep", "-ril", "-e", pattern],
+            capture_output=True,
+            text=True,
+            cwd=str(cwd),
+        )
+        if git_result.returncode == 0:
+            return [p for p in git_result.stdout.splitlines() if p][:5]
+    except FileNotFoundError:
+        pass
+
+    # Fallback to rg
+    try:
+        rg_result = subprocess.run(
             [
                 "rg",
                 "--files-with-matches",
                 "-i",
+                "--",
                 pattern,
                 str(cwd),
                 "--glob",
@@ -95,7 +108,17 @@ def _grep_files(pattern: str, cwd: Path) -> list[str]:
             capture_output=True,
             text=True,
         )
-    return [p for p in result.stdout.splitlines() if p][:5]
+    except FileNotFoundError:
+        return []
+
+    paths = [p for p in rg_result.stdout.splitlines() if p]
+    normalized: list[str] = []
+    for p in paths:
+        try:
+            normalized.append(str(Path(p).relative_to(cwd)))
+        except ValueError:
+            normalized.append(p)
+    return normalized[:5]
 
 
 def _find_doc_files(cwd: Path) -> list[str]:
@@ -123,8 +146,6 @@ def _scan_constraints(file_path: Path) -> list[str]:
 def _extract_code_terms(file_path: Path, nouns: set[str]) -> list[str]:
     """Extract class/type names from source files that match domain nouns."""
     try:
-        import ast
-
         tree = ast.parse(file_path.read_text(encoding="utf-8", errors="ignore"))
     except (SyntaxError, OSError):
         return []
@@ -148,11 +169,16 @@ def _estimate_scope(file_count: int, crosses_boundary: bool) -> tuple[str, str]:
     else:
         label = "XL"
     if crosses_boundary:
-        label = {"S": "M", "M": "L", "L": "XL"}.get(label, label)
+        label = {"M": "L", "L": "XL"}.get(label, label)
     return label, f"{file_count} file(s) matched; boundary crossing: {crosses_boundary}"
 
 
 def scan(nouns: list[str], cwd: Path) -> ScanResult:
+    """Scan the codebase for context relevant to the given domain nouns.
+
+    Returns a ScanResult with related files, terminology, constraints, design
+    docs, scope estimate, and unknowns populated from parallel grep/git calls.
+    """
     noun_set = {n.lower() for n in nouns}
     result = ScanResult(feature_area=" | ".join(nouns))
 
@@ -163,6 +189,7 @@ def scan(nouns: list[str], cwd: Path) -> ScanResult:
         grep_futures = {pool.submit(_grep_files, noun, cwd): noun for noun in nouns}
         doc_future = pool.submit(_find_doc_files, cwd)
 
+        # result mutation happens in main thread only — no lock needed
         for fut in as_completed(grep_futures):
             for path_str in fut.result():
                 if path_str not in seen_paths:
@@ -192,19 +219,28 @@ def scan(nouns: list[str], cwd: Path) -> ScanResult:
         }
 
         for fut in as_completed(log_futures):
-            log_futures[fut].last_commit = fut.result()
+            try:
+                log_futures[fut].last_commit = fut.result()
+            except Exception:
+                log_futures[fut].last_commit = "no history"
 
         for fut in as_completed(constraint_futures):
-            result.constraints.extend(fut.result())
+            try:
+                result.constraints.extend(fut.result())
+            except Exception:
+                pass
 
         for fut in as_completed(term_futures):
-            result.terminology.extend(fut.result())
+            try:
+                result.terminology.extend(fut.result())
+            except Exception:
+                pass
 
     # ── Scope signal ─────────────────────────────────────────────────────────
     modules = {
         Path(f.path).parts[0]
         for f in result.related_files
-        if "/" in f.path or "\\" in f.path
+        if len(Path(f.path).parts) > 1
     }
     crosses_boundary = len(modules) > 1
     result.scope, result.scope_reasoning = _estimate_scope(
@@ -237,7 +273,10 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    result = scan(args.nouns, args.cwd.resolve())
+    cwd = args.cwd.resolve()
+    if not cwd.is_dir():
+        parser.error(f"--cwd path does not exist or is not a directory: {cwd}")
+    result = scan(args.nouns, cwd)
     print(json.dumps(asdict(result), indent=2))
 
 
