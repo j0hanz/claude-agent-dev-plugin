@@ -14,7 +14,7 @@ description: |
   </example>
 
   *Note: This agent requires the `managed-agents-2026-04-01` beta header.*
-color: white
+color: yellow
 model: sonnet
 effort: medium
 maxTurns: 5
