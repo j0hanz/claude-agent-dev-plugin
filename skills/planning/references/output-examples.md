@@ -5,22 +5,27 @@
 Light spec (Goal + top REQs), compact phases, no deep discovery.
 
 **Spec excerpt (`auth-sketch.specs.md`):**
+
 ```markdown
 # auth-sketch
 
 ## 1. Goal
+
 - Enable users to authenticate with an email/password form.
 - Completion signal: Users can log in and see their dashboard.
 
 ## 2. Requirements
+
 - `REQ-001`: The form MUST accept email and password fields.
 - `REQ-002`: Invalid credentials MUST display an error message.
 
 ## 4. Interfaces
+
 - POST /auth/login — email + password in, JWT out
 ```
 
 **Plan excerpt (`auth-sketch.plan.md`):**
+
 ```markdown
 ## PHASE-001: Implementation
 
@@ -42,8 +47,10 @@ Expected result: Tests pass.
 Full 8-section spec with interface errors; atomic tasks with verified paths.
 
 **Spec excerpt (`auth-jwt.specs.md`):**
+
 ```markdown
 ## 2. Requirements
+
 - `REQ-001`: The system MUST issue a signed JWT on successful login.
 - `SEC-001`: Tokens MUST expire after 3600 seconds.
 - `PERF-001`: The login endpoint MUST respond within 200ms at p99.
@@ -53,16 +60,19 @@ Full 8-section spec with interface errors; atomic tasks with verified paths.
 The system exposes the following interfaces:
 
 ### POST /auth/login
+
 **Input:** `email` (string, required), `password` (string, required)
 **Output:** `{ token: string, expiresAt: ISO8601 }`
 **Errors:** 400 (missing fields), 401 (invalid credentials), 500 (internal error)
 
 ## 6. Acceptance Criteria & Validation
+
 - `AC-001`: A valid login request returns 200 with a JWT token.
 - `VAL-001`: `npm test -- auth/login.test.ts`
 ```
 
 **Plan excerpt (`auth-jwt.plan.md`):**
+
 ```markdown
 ### TASK-003: Implement token signing
 
@@ -82,8 +92,10 @@ Expected result: All 6 tests pass, 0 skipped.
 All 8 sections + rollback strategy, Mermaid diagram, narrative runbook tasks.
 
 **Extra spec sections:**
-```markdown
+
+````markdown
 ## 8. Notes & Risks
+
 - `RISK-001`: Redis restart may drop queued events — mitigation: enable AOF persistence.
 - `NOTE-001`: PostgreSQL migration must run in a transaction; rollback on failure.
 
@@ -93,7 +105,9 @@ graph TD
     B --> C[Worker Process]
     C --> D[PostgreSQL]
 ```
-```
+````
+
+````
 
 **Extra plan sections:**
 ```markdown
@@ -108,4 +122,4 @@ Satisfies: NOTE-001
 Action: Execute `psql -f migrations/rollback_002.sql` to drop the events table.
 Validate: `psql -c "\\d events" 2>&1 | grep 'did not exist'`
 Expected result: Command confirms table does not exist.
-```
+````

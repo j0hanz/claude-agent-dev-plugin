@@ -1,16 +1,18 @@
 #!/usr/bin/env python3
 """validate.py — Unified validator for planning artifacts.
 
-Modes (default: all three):
+Modes (default: --spec --plan --cross):
   --spec   Validate <name>.specs.md structural integrity and traceability
   --plan   Validate <name>.plan.md task structure and markdown links
   --cross  Validate spec↔plan traceability coverage matrix
+  --review Validate <name>.review.md exists with ready_for_execution: true
 
 Usage:
     python validate.py <name>              # runs --spec --plan --cross
     python validate.py <name> --spec       # spec only
     python validate.py <name> --plan       # plan only
     python validate.py <name> --cross      # cross-check only
+    python validate.py <name> --review     # review gate only
 
 <name> can be:
   - a bare stem: validate.py auth-jwt  (looks for plan/auth-jwt.specs.md etc.)
@@ -268,6 +270,42 @@ def validate_cross(
 
 
 # ---------------------------------------------------------------------------
+# Review validation (gates handoff)
+# ---------------------------------------------------------------------------
+
+
+def validate_review(spec_path: Path) -> tuple[list[str], list[str]]:
+    """Check that review file exists and ready_for_execution is true."""
+    errors: list[str] = []
+    warnings: list[str] = []
+
+    # Infer review path from spec path
+    review_path = spec_path.parent / f"{spec_path.stem.replace('.specs', '')}.review.md"
+
+    if not review_path.exists():
+        errors.append(
+            f"[REVIEW] Review file not found: {review_path}. Spawn agents/reviewer.md before handoff."
+        )
+        return errors, warnings
+
+    try:
+        content = review_path.read_text(encoding="utf-8")
+    except OSError as e:
+        errors.append(f"[REVIEW] Cannot read review file: {e}")
+        return errors, warnings
+
+    if (
+        "ready_for_execution: true" not in content
+        and "ready_for_execution:true" not in content
+    ):
+        errors.append(
+            "[REVIEW] Field 'ready_for_execution: true' not found in review file. Reviewer must approve before handoff."
+        )
+
+    return errors, warnings
+
+
+# ---------------------------------------------------------------------------
 # Reporting
 # ---------------------------------------------------------------------------
 
@@ -318,7 +356,7 @@ def _resolve_paths(name_or_path: str) -> tuple[Path, Path]:
 
 def main() -> None:
     parser = argparse.ArgumentParser(
-        description="Validate planning artifacts (spec, plan, or cross-check)."
+        description="Validate planning artifacts (spec, plan, cross-check, or review gate)."
     )
     parser.add_argument(
         "name",
@@ -330,6 +368,9 @@ def main() -> None:
         "--cross", action="store_true", help="Run cross-coverage check only"
     )
     parser.add_argument(
+        "--review", action="store_true", help="Run review gate check only"
+    )
+    parser.add_argument(
         "--level",
         choices=["sketch", "contract", "blueprint"],
         default="contract",
@@ -339,10 +380,11 @@ def main() -> None:
 
     spec_path, plan_path = _resolve_paths(args.name)
 
-    run_all = not (args.spec or args.plan or args.cross)
+    run_all = not (args.spec or args.plan or args.cross or args.review)
     run_spec = args.spec or run_all
     run_plan = args.plan or run_all
     run_cross = args.cross or run_all
+    run_review = args.review
 
     all_errors: list[str] = []
 
@@ -362,6 +404,12 @@ def main() -> None:
         print(f"\n--- Cross: {spec_path.name} <-> {plan_path.name} ---")
         errs, warns, matrix = validate_cross(spec_path, plan_path, args.level)
         _print_results("Cross", errs, warns, matrix)
+        all_errors.extend(errs)
+
+    if run_review:
+        print(f"\n--- Review: {spec_path.stem.replace('.specs', '')}.review.md ---")
+        errs, warns = validate_review(spec_path)
+        _print_results("Review", errs, warns)
         all_errors.extend(errs)
 
     if all_errors:

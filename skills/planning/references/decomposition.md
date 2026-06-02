@@ -25,8 +25,11 @@ Good phases have one measurable goal and 3–8 tasks:
 
 ```markdown
 ## PHASE-001: Setup & Configuration
+
 ## PHASE-002: Core Implementation
+
 ## PHASE-003: Integration & Testing
+
 ## PHASE-END: Acceptance
 ```
 

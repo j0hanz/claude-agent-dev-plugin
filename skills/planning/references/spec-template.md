@@ -19,15 +19,17 @@
 
 ## ID prefixes
 
-| Prefix     | Meaning                                               |
-| ---------- | ----------------------------------------------------- |
-| `REQ-NNN`  | Functional requirement                                |
-| `SEC-NNN`  | Security / privacy requirement                        |
-| `PERF-NNN` | Performance requirement (must have numeric threshold) |
-| `COMP-NNN` | Compatibility / platform requirement                  |
-| `CON-NNN`  | Constraint (what the solution must NOT do)            |
-| `AC-NNN`   | Acceptance criterion (user-observable)                |
-| `VAL-NNN`  | Validation step (runnable verification command)       |
+| Prefix     | Meaning                                               | Levels    |
+| ---------- | ----------------------------------------------------- | --------- |
+| `REQ-NNN`  | Functional requirement                                | All       |
+| `SEC-NNN`  | Security / privacy requirement                        | All       |
+| `PERF-NNN` | Performance requirement (must have numeric threshold) | All       |
+| `COMP-NNN` | Compatibility / platform requirement                  | All       |
+| `CON-NNN`  | Constraint (what the solution must NOT do)            | All       |
+| `AC-NNN`   | Acceptance criterion (user-observable)                | All       |
+| `VAL-NNN`  | Validation step (runnable verification command)       | All       |
+| `RISK-NNN` | Risk with mitigation or "accepted"                    | Blueprint |
+| `NOTE-NNN` | Rollout, migration, or rollback note                  | Blueprint |
 
 `scaffold.py` places these IDs for you — never type them by hand.
 

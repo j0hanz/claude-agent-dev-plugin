@@ -37,12 +37,12 @@ Use this skill when the user says "build X", "add X", "implement X", "how should
 
 Match response length to the stage and maturity level. Do not over-explain.
 
-| Stage                                    | Guideline                                                                                                              |
-| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| **Trivial fast-path (Sketch)**           | 1 page max. Goal, ACs, validation. Nothing else.                                                                       |
+| Stage                                    | Guideline                                                                                                           |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| **Trivial fast-path (Sketch)**           | 1 page max. Goal, ACs, validation. Nothing else.                                                                    |
 | **Scope interview (Contract/Blueprint)** | Answer the 5 interview questions in < 400 words. Do NOT pre-draft REQ/AC/VAL items here — that is `planning`'s job. |
-| **Spec recovery (mid-impl change)**      | Numbered list of steps. ≤ 15 items. Include the git command and the validation command.                                |
-| **Blueprint / decomposition**            | Full detail appropriate. Focus on open questions and the decomposition table.                                          |
+| **Spec recovery (mid-impl change)**      | Numbered list of steps. ≤ 15 items. Include the git command and the validation command.                             |
+| **Blueprint / decomposition**            | Full detail appropriate. Focus on open questions and the decomposition table.                                       |
 
 **Avoid these patterns in every response:**
 
@@ -98,8 +98,8 @@ If the sub-skill fails to invoke, run `python <skill-dir>/scripts/diagnose_depen
 
 The `planning` sub-skill is **mandatory**. Do not skip it or substitute manual work.
 
-| Sub-Skill  | Invoked at step        | Produces                                                                                         |
-| ---------- | ---------------------- | ------------------------------------------------------------------------------------------------ |
+| Sub-Skill  | Invoked at step        | Produces                                                                                        |
+| ---------- | ---------------------- | ----------------------------------------------------------------------------------------------- |
 | `planning` | Step 2 (Planning Gate) | Paired `<name>.specs.md` + `<name>.plan.md` with REQ/AC/VAL traceability and coverage validated |
 
 Invoke the sub-skill by name when you reach the gate. The sub-skill's own instructions define how to execute it — do not summarize or shortcut them.
