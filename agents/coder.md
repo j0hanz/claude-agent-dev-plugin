@@ -9,6 +9,10 @@ description: |
   - Run diagnostic scripts or tests to identify issues.
   - Perform batch updates or automated changes across multiple files.
 
+  <example>
+  "Implement the retry logic in hooks/handlers/format.mjs and run the tests to confirm it passes."
+  </example>
+
   *Note: This agent requires the `managed-agents-2026-04-01` beta header.*
 color: green
 model: sonnet
