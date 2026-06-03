@@ -68,7 +68,7 @@ Architectural refactoring fails when it adds indirection without adding depth. *
 Walk the codebase using the automated analysis scripts. Scripts gracefully skip inaccessible directories and unreadable files. All scripts support TypeScript, JavaScript, and Python projects — no configuration needed.
 
 - **MANDATORY — RUN SCRIPT**: **Locality Check**: Run `node <skill-dir>/scripts/check-locality.mjs [dir]` to find circular dependencies and "God modules" (high fan-out). Example: `node <skill-dir>/scripts/check-locality.mjs src`
-- **MANDATORY — RUN SCRIPT**: **Bleed Detection**: Run `node <skill-dir>/scripts/detect-bleed.mjs [domain_dir] [infra_packages]` to find infrastructure leaks (e.g., Express or Prisma in domain logic). Example: `node <skill-dir>/scripts/detect-bleed.mjs src/domain express,prisma,typeorm`
+- **MANDATORY — RUN SCRIPT**: **Bleed Detection**: Run `node <skill-dir>/scripts/detect-bleed.mjs [domain_dir] [infra_packages]` to find infrastructure leaks (e.g., Express or Prisma in domain logic). Examples: `node <skill-dir>/scripts/detect-bleed.mjs src/domain express,prisma,typeorm` — for Python/FastAPI: `node <skill-dir>/scripts/detect-bleed.mjs src/domain sqlalchemy,django,flask,fastapi,celery,requests`
 - **RECOMMENDED — RUN SCRIPT**: **Git Coupling**: Run `node <skill-dir>/scripts/git-coupling.mjs [dir]` to find files that always change together in git history — the hidden coupling that import graphs cannot reveal. Example: `node <skill-dir>/scripts/git-coupling.mjs src`. If the output shows pairs with >5 co-changes that have no imports of each other, those are your highest-priority seam candidates.
 - **RECOMMENDED — RUN SCRIPT**: **Hotspot Detection**: Run `node <skill-dir>/scripts/detect-hotspots.mjs [dir] [infra_packages]` for a single ranked table combining fan-out + bleed + churn + size into an Architectural Debt Score. Use this when you need to triage a large codebase quickly. Example: `node <skill-dir>/scripts/detect-hotspots.mjs src express,prisma,sqlalchemy`
 
@@ -81,6 +81,8 @@ Agent(
     target_dir: [the directory you scanned]
     locality_output: [paste full stdout of check-locality.mjs here]
     bleed_output: [paste full stdout of detect-bleed.mjs here]
+    git_coupling_output: [paste full stdout of git-coupling.mjs here, or "skipped — not a git repo"]
+    hotspot_output: [paste full stdout of detect-hotspots.mjs here, or "skipped"]
 )
 ```
 
@@ -104,7 +106,7 @@ Look for these friction signals:
 
 #### Phase 2: Present Candidates
 
-You must constrain yourself. Do NOT write implementation code — no function bodies, class implementations, or working logic. Typed interface signatures are acceptable when they clarify the proposed seam boundary, but keep them minimal. List **3–6 deepening opportunities**, ordered by impact. Use this exact format:
+You must constrain yourself. Do NOT write implementation code, typed interface signatures, or seam proposals in Phase 2 — no function bodies, class implementations, interface definitions, or working logic. These belong exclusively in Phase 3 AFTER the user selects a candidate. List **3–6 deepening opportunities**, ordered by impact. Use this exact format:
 
 ```markdown
 **[Short Name of Opportunity]**
@@ -121,6 +123,7 @@ You must constrain yourself. Do NOT write implementation code — no function bo
 - **HIGH**: >5 callers, OR >2 callers with no tests
 - **MEDIUM**: 2–5 callers, OR no tests with active churn
 - **LOW**: ≤1 caller and has test coverage
+- **No directory available**: Cannot count callers or churn. Use `MEDIUM` for files with multiple infrastructure imports, `LOW` for logic-only files. Label as: `Risk: MEDIUM (estimated — no directory for caller count)`
 
 **Refer to SEAMS_BY_EXAMPLE.md in references/ for 3 real examples of good and bad seams.**
 
@@ -139,6 +142,8 @@ You must constrain yourself. Do NOT write implementation code — no function bo
 End your response exactly with:
 
 > "Which of these candidates interests you most?"
+
+**STOP HERE.** Do not proceed to Phase 3 content (seam interfaces, domain interview, migration strategies) until the user has selected a candidate in their next message. Do not append bonus analysis, interface sketches, or migration notes below the question.
 
 #### Phase 3: Domain Interview & Handoff
 
@@ -174,7 +179,7 @@ Stop proposing candidates when:
 
 Architecture is the set of decisions that are hard to change later. Your goal is to maximize **Reversibility** and **Boundary Integrity**. Do not just "clean the code"; design the system to survive the "Churn of Infrastructure" (frameworks, DBs, APIs).
 
-### Three-Step Procedure
+### Four-Step Procedure
 
 #### Step 1: Diagnose
 
@@ -193,6 +198,18 @@ Before proposing a structure, run this diagnosis:
 #### Step 3: Confirm
 
 6. **Apply the Swap Test**: Ask the user: "If we swapped [the key mechanism — the database, the HTTP framework, the payment provider], what code changes?" If the answer is "only the adapter/infra layer," the boundary is right. If domain logic would change, redraw the seam.
+
+#### Step 4: Scaffold (after user approves the design)
+
+Once the user approves: load **MIGRATION_STRATEGIES.md** and name the appropriate strategy (Strangler Fig, Branch by Abstraction, Feature Flag, etc.) with its first concrete step. Then offer to scaffold the boundary skeleton:
+
+```
+node <skill-dir>/scripts/scaffold-boundary.mjs <domain> <pattern> [output-dir]
+# pattern: hexagonal | vertical-slice | layered
+# Example: node <skill-dir>/scripts/scaffold-boundary.mjs notifications hexagonal src
+```
+
+The scaffold generates typed interface stubs (ports, adapters, entities) as a starting point with no implementation. Invoke the `refactor` or `planning` skill for implementation once the user confirms the scaffold structure.
 
 ### Expert Principles
 
@@ -222,13 +239,6 @@ Do NOT escalate to architecture if:
 - **NEVER** use "Hidden Coupling" (Global state, Singletons that hold logic, implicit environment variable dependencies).
 - **NEVER** implement CQRS or Event Sourcing just for "scalability" unless you can identify a specific read-model bottleneck that justifies the 5x increase in complexity.
 - **NEVER** let a "Utility" module grow past 3 unrelated functions. Split it by domain responsibility immediately.
+- **NEVER** propose an internal Event Bus or message broker to decouple modules within the same codebase. This applies in both new designs and refactoring scenarios. It makes coupling implicit and untraceable. Use explicit interface injection or function composition instead.
 
-**Required output for Mode B:** A proposed public surface (interface/type signatures — no implementation bodies), the result of the Swap Test stated explicitly ("If we swapped X, only Y would change"), a single ADR entry using the template in `references/ADR_TEMPLATE.md`, and — once the user approves — a recommended migration strategy from `references/MIGRATION_STRATEGIES.md` plus an offer to scaffold the boundary:
-
-```
-node <skill-dir>/scripts/scaffold-boundary.mjs <domain> <pattern> [output-dir]
-# pattern: hexagonal | vertical-slice | layered
-# Example: node <skill-dir>/scripts/scaffold-boundary.mjs notifications hexagonal src
-```
-
-The scaffold creates typed interface stubs (ports, adapters, entities) as a starting point — no implementation. No implementation until the user approves and invokes the appropriate downstream skill.
+**Required output for Mode B:** A proposed public surface (interface/type signatures — no implementation bodies), the result of the Swap Test stated explicitly ("If we swapped X, only Y would change"), and a single ADR entry using the template in `references/ADR_TEMPLATE.md`. After user approval, proceed to Step 4 (migration strategy + scaffold offer).
