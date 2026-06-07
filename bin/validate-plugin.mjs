@@ -10,7 +10,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
-import { execSync } from 'child_process';
+import { execSync, execFileSync } from 'child_process';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const pluginRoot = path.resolve(__dirname, '..');
@@ -53,10 +53,11 @@ function validateFrontmatter(filePath, componentType) {
 
   let fmData;
   try {
-    const jsonStr = execSync(`"${pythonPath}" "${helperPath}"`, {
+    const jsonStr = execFileSync(pythonPath, [helperPath], {
       input: frontmatter,
       stdio: ['pipe', 'pipe', 'pipe'],
-    }).toString();
+      encoding: 'utf-8',
+    });
     fmData = JSON.parse(jsonStr);
   } catch (err) {
     const errMsg = err.stderr ? err.stderr.toString().trim() : err.message;

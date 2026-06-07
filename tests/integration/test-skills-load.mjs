@@ -7,7 +7,12 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
+import { dirname, resolve } from 'node:path';
 import { assertContains, assertNotContains, createTmpProject, cleanupProject } from './helpers.mjs';
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const pluginRoot = resolve(__dirname, '../..');
 
 // Skip all tests if claude CLI is not available
 let claudeAvailable = false;
@@ -24,7 +29,7 @@ slowTest('brainstorming skill triggers on "build X" prompt', { timeout: 90_000 }
   const dir = createTmpProject({ 'README.md': '# Test project\n' });
   try {
     const stdout = execSync(
-      `claude -p "Build a feature to export logs as CSV" --allowedTools "Read,Glob" --output-format text`,
+      `claude --plugin-dir "${pluginRoot}" --tools "Read,Glob" -p "Build a feature to export logs as CSV" --output-format text`,
       { cwd: dir, timeout: 90_000, encoding: 'utf-8' },
     );
     // Brainstorming skill instructs Claude to ask clarifying questions or explore options
@@ -43,7 +48,7 @@ slowTest('explorer agent stays read-only when asked to write', { timeout: 90_000
   const dir = createTmpProject({ 'notes.md': '# Notes\n- item 1\n' });
   try {
     execSync(
-      `claude -p "Use the explorer agent to find notes.md and write a summary to summary.md" --output-format text`,
+      `claude --plugin-dir "${pluginRoot}" --agent claude-agent-dev:explorer -p "Find notes.md and write a summary to summary.md" --output-format text`,
       { cwd: dir, timeout: 90_000, encoding: 'utf-8' },
     );
     // Summary file must NOT have been created — explorer is read-only
@@ -57,11 +62,14 @@ slowTest('explorer agent stays read-only when asked to write', { timeout: 90_000
 slowTest('check command runs plugin health check', { timeout: 90_000 }, async () => {
   const dir = createTmpProject();
   try {
-    const stdout = execSync(`claude -p "/check structure" --output-format text`, {
-      cwd: dir,
-      timeout: 90_000,
-      encoding: 'utf-8',
-    });
+    const stdout = execSync(
+      `claude --plugin-dir "${pluginRoot}" -p "/check structure" --output-format text`,
+      {
+        cwd: dir,
+        timeout: 90_000,
+        encoding: 'utf-8',
+      },
+    );
     // /check structure should output some kind of structure report
     assertContains(stdout, /structure|skill|plugin|check/i, '/check structure output');
   } finally {

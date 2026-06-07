@@ -63,6 +63,21 @@ export function createTmpProject(files = {}) {
 
 export function cleanupProject(dir) {
   if (dir && existsSync(dir)) {
-    rmSync(dir, { recursive: true, force: true });
+    const maxRetries = 10;
+    for (let i = 0; i < maxRetries; i++) {
+      try {
+        rmSync(dir, { recursive: true, force: true });
+        return;
+      } catch (err) {
+        if (i === maxRetries - 1) {
+          console.warn(`[cleanup] Failed to remove directory ${dir}: ${err.message}`);
+          return;
+        }
+        // Sleep 200ms before retrying
+        try {
+          execSync(`"${process.execPath}" -e "setTimeout(() => {}, 200)"`);
+        } catch {}
+      }
+    }
   }
 }

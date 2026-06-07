@@ -13,6 +13,7 @@ const MAX_STDIN_SIZE = 10 * 1024 * 1024; // 10MB
 
 /** Read all of stdin and parse it as the hook event JSON. Never throws. */
 export async function readStdin() {
+  if (process.stdin.isTTY) return {};
   const chunks = [];
   let totalSize = 0;
   try {
