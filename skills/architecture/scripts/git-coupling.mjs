@@ -1,4 +1,4 @@
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import path from 'node:path';
 
 /**
@@ -19,11 +19,19 @@ export function runGitCoupling(dir, { minCount = 3, topN = 20, since = '6 months
 
   let log;
   try {
-    log = execSync(`git log --name-only --format="COMMIT" --since="${since}" -- "${absDir}"`, {
-      cwd: absDir,
-      encoding: 'utf8',
-      stdio: ['pipe', 'pipe', 'pipe'],
-    });
+    // execFileSync (no shell) so `since`/`absDir` can't be reinterpreted by the
+    // shell, and paths containing quotes/spaces don't break the invocation.
+    log = execFileSync(
+      'git',
+      // `format:COMMIT` emits the literal marker "COMMIT" per commit; a bare
+      // `--format=COMMIT` is rejected by git as an unknown pretty format.
+      ['log', '--name-only', '--format=format:COMMIT', `--since=${since}`, '--', absDir],
+      {
+        cwd: absDir,
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'pipe'],
+      },
+    );
   } catch {
     return { pairs: [], fileChurn: [], error: 'Not a git repository or git not available.' };
   }

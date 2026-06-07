@@ -3,9 +3,11 @@
 // Additive only: it adds one line of context, never erases the prompt, fires at
 // most once per session, and honors the `brainstorm_nudge` plugin config.
 
-import { appendJsonl, readJsonlTail } from '../utils.mjs';
+import { appendJsonl, readJsonlTail, trimJsonl } from '../utils.mjs';
 
 const STATE = '.claude/state/brainstorm-nudge.jsonl';
+const WINDOW = 2000; // read window — large enough that a session marker can't scroll out
+const MAX_STATE = 2000; // bound the file so it can't grow unbounded
 
 // "Start a build" intent: an imperative verb aimed at a unit of work.
 const INTENT =
@@ -28,10 +30,11 @@ export function nudge(input = {}) {
   if (!INTENT.test(prompt) || ALREADY.test(prompt)) return null;
 
   const session = input.session_id || 'unknown';
-  const already = readJsonlTail(STATE, 50).some((r) => r.session && r.session === session);
+  const already = readJsonlTail(STATE, WINDOW).some((r) => r.session && r.session === session);
   if (already) return null; // once per session
 
   appendJsonl(STATE, { ts: new Date().toISOString(), session });
+  trimJsonl(STATE, MAX_STATE);
 
   return (
     'Note: this looks like a new build. Consider a quick `brainstorming` pass ' +

@@ -347,7 +347,11 @@ def extract_failure_snippet(log_text: str, max_lines: int, context: int) -> str:
     end = min(len(lines), marker_index + context)
     window = lines[start:end]
     if len(window) > max_lines:
-        window = window[-max_lines:]
+        marker_offset = marker_index - start
+        half = max_lines // 2
+        new_start = max(0, marker_offset - half)
+        new_start = min(new_start, len(window) - max_lines)
+        window = window[new_start : new_start + max_lines]
     return "\n".join(window)
 
 

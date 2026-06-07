@@ -6,7 +6,7 @@
 // the path of least resistance — see AGENTS.md → "Hooks are additive only".
 
 import { execFileSync } from 'node:child_process';
-import { appendFileSync, readFileSync, mkdirSync } from 'node:fs';
+import { appendFileSync, readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 
 const MAX_STDIN_SIZE = 10 * 1024 * 1024; // 10MB
@@ -88,6 +88,22 @@ export function readJsonlTail(relPath, n) {
       .filter(Boolean);
   } catch {
     return [];
+  }
+}
+
+/**
+ * Keep only the last `max` lines of a JSONL state file so it can't grow
+ * unbounded over a project's lifetime. Best-effort; never throws.
+ */
+export function trimJsonl(relPath, max) {
+  try {
+    const file = join(getProjectDir(), relPath);
+    const lines = readFileSync(file, 'utf8').split('\n').filter(Boolean);
+    if (lines.length > max) {
+      writeFileSync(file, `${lines.slice(-max).join('\n')}\n`, 'utf8');
+    }
+  } catch {
+    // nothing to trim, or file missing — fine
   }
 }
 

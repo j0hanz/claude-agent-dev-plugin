@@ -636,8 +636,24 @@ def wire_agents_files(source: Path, targets: list[Path]) -> int:
     exit_code = 0
     for target in targets:
         target = target.resolve()
-        if target.exists() or target.is_symlink():
-            target.unlink()
+        if target == source:
+            safe_print(
+                f"FAIL: target is the same file as source, skipping: {target}",
+                file=sys.stderr,
+            )
+            exit_code = 1
+            continue
+        try:
+            if target.is_dir() and not target.is_symlink():
+                raise IsADirectoryError(f"target is a directory: {target}")
+            if target.exists() or target.is_symlink():
+                target.unlink()
+        except OSError as e:
+            safe_print(
+                f"FAIL: could not remove existing target {target}: {e}", file=sys.stderr
+            )
+            exit_code = 1
+            continue
 
         # Try symlink first
         try:

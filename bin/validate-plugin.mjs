@@ -19,17 +19,19 @@ const errors = [];
 const warnings = [];
 
 function getPythonPath() {
-  const paths = [
+  const venvPaths = [
     path.join(pluginRoot, '.venv', 'Scripts', 'python.exe'),
     path.join(pluginRoot, '.venv', 'bin', 'python'),
-    'python3',
-    'python',
   ];
-  for (const p of paths) {
+  for (const p of venvPaths) {
     try {
-      if (fs.existsSync(p)) {
-        return p;
-      }
+      if (fs.existsSync(p)) return p;
+    } catch (e) {}
+  }
+  for (const cmd of ['python3', 'python']) {
+    try {
+      execSync(`${cmd} --version`, { stdio: 'ignore' });
+      return cmd;
     } catch (e) {}
   }
   return 'python';

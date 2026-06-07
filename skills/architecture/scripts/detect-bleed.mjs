@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { extractImports, detectLang } from './utils/extractor.mjs';
+import { extractImportsWithPositions, detectLang } from './utils/extractor.mjs';
 import { walkDir } from './utils/walk.mjs';
 
 const defaultExclude = [
@@ -46,19 +46,17 @@ export function runBleedDetection(targetDir, infraPackages) {
     const lang = detectLang(file);
     const lines = content.split('\n');
 
-    for (let i = 0; i < lines.length; i++) {
-      const line = lines[i];
-      const imports = extractImports(line, lang);
-
-      for (const imp of imports) {
-        if (infraPackages.includes(imp) || infraPackages.some((pkg) => imp.startsWith(`${pkg}/`))) {
-          violations.push({
-            file,
-            violation: imp,
-            line: i + 1,
-            code: line.trim(),
-          });
-        }
+    // Scan the whole file (not line-by-line) so multiline `import { ... } from
+    // '...'` statements — the default Prettier/ESLint output — are not missed.
+    for (const { specifier: imp, index } of extractImportsWithPositions(content, lang)) {
+      if (infraPackages.includes(imp) || infraPackages.some((pkg) => imp.startsWith(`${pkg}/`))) {
+        const lineNo = content.slice(0, index).split('\n').length;
+        violations.push({
+          file,
+          violation: imp,
+          line: lineNo,
+          code: (lines[lineNo - 1] || '').trim(),
+        });
       }
     }
   }

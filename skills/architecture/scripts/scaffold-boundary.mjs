@@ -221,6 +221,7 @@ export class ${pascal(domain)}Controller {
 function pascal(str) {
   return str
     .split(/[-_\s]+/)
+    .filter(Boolean) // drop empties from leading/trailing/doubled separators
     .map((w) => w[0].toUpperCase() + w.slice(1))
     .join('');
 }

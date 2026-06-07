@@ -4,6 +4,57 @@ import { extractImports, detectLang } from './utils/extractor.mjs';
 import { findCycles } from './utils/graph.mjs';
 import { walkDir } from './utils/walk.mjs';
 
+/**
+ * Resolve a relative import to candidate on-disk paths, per language.
+ * The previous implementation only tried `.ts`/index.ts, so fan-out and cycle
+ * detection silently returned empty for JS, Python, and Go projects.
+ * @param {string} fromFile  File containing the import
+ * @param {string} imp       Relative import specifier (starts with '.')
+ * @param {'js'|'py'|'go'} lang
+ * @returns {string[]}
+ */
+function importCandidates(fromFile, imp, lang) {
+  const fromDir = path.dirname(fromFile);
+
+  if (lang === 'py') {
+    // Leading dots are package levels: one dot = current package (same dir),
+    // each extra dot = one parent up.
+    let dots = 0;
+    while (imp[dots] === '.') dots++;
+    const rest = imp.slice(dots).split('.').filter(Boolean);
+    let base = fromDir;
+    for (let d = 1; d < dots; d++) base = path.dirname(base);
+    const resolved = path.join(base, ...rest);
+    return [`${resolved}.py`, path.join(resolved, '__init__.py')];
+  }
+
+  // js / go (Go rarely uses relative file imports, but handle them gracefully)
+  const resolved = path.resolve(fromDir, imp);
+  const candidates = [];
+  if (/\.[^./\\]+$/.test(path.basename(imp))) {
+    // Import already carries an extension, e.g. './b.js' (ESM/Node style).
+    candidates.push(resolved);
+    // TS allows a '.js' specifier to resolve to the '.ts' source.
+    const noExt = resolved.replace(/\.[^.]+$/, '');
+    candidates.push(`${noExt}.ts`, `${noExt}.tsx`);
+  }
+  candidates.push(
+    `${resolved}.ts`,
+    `${resolved}.tsx`,
+    `${resolved}.js`,
+    `${resolved}.jsx`,
+    `${resolved}.mjs`,
+    `${resolved}.cjs`,
+    `${resolved}.go`,
+    path.join(resolved, 'index.ts'),
+    path.join(resolved, 'index.tsx'),
+    path.join(resolved, 'index.js'),
+    path.join(resolved, 'index.jsx'),
+    path.join(resolved, 'index.mjs'),
+  );
+  return candidates;
+}
+
 export function runLocalityCheck(
   targetDir,
   exclude = [
@@ -51,18 +102,14 @@ export function runLocalityCheck(
 
     for (const imp of imports) {
       // Only care about relative imports for locality
-      if (imp.startsWith('.')) {
-        // Crude resolution: just append .ts (assumes fixtures logic for now)
-        // A robust script would need proper node module resolution here
-        const resolved = path.resolve(path.dirname(file), imp);
-        for (const candidate of [`${resolved}.ts`, `${resolved}.tsx`, `${resolved}/index.ts`]) {
-          try {
-            fs.statSync(candidate);
-            graph[file].push(candidate);
-            break;
-          } catch {
-            // not found, try next candidate
-          }
+      if (!imp.startsWith('.')) continue;
+      for (const candidate of importCandidates(file, imp, lang)) {
+        try {
+          fs.statSync(candidate);
+          graph[file].push(candidate);
+          break;
+        } catch {
+          // not found, try next candidate
         }
       }
     }

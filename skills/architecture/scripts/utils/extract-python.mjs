@@ -10,7 +10,17 @@
  *   from . import sibling
  */
 export function extractPythonImports(fileContent) {
-  const imports = [];
+  return extractPythonImportsWithPositions(fileContent).map((m) => m.specifier);
+}
+
+/**
+ * Like {@link extractPythonImports} but also returns each match's character
+ * offset, so callers can compute line numbers for multiline-aware scanning.
+ * @param {string} fileContent
+ * @returns {Array<{ specifier: string, index: number }>}
+ */
+export function extractPythonImportsWithPositions(fileContent) {
+  const results = [];
 
   // `import X` and `import X as Y` — capture the module name
   const importRegex = /^import\s+([\w.]+)/gm;
@@ -19,14 +29,14 @@ export function extractPythonImports(fileContent) {
 
   let match;
   while ((match = importRegex.exec(fileContent)) !== null) {
-    imports.push(match[1]);
+    results.push({ specifier: match[1], index: match.index });
   }
   while ((match = fromRegex.exec(fileContent)) !== null) {
     // Relative imports start with '.' — preserve the dot so callers can detect them
-    imports.push(match[1] || '.');
+    results.push({ specifier: match[1] || '.', index: match.index });
   }
 
-  return imports;
+  return results;
 }
 
 /**

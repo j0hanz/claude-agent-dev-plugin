@@ -85,7 +85,8 @@ DECL_PATTERNS: list[re.Pattern[str]] = [
     re.compile(r"\bfn\s+([A-Za-z_]\w*)"),
     re.compile(r"\b(?:struct|enum|trait|impl)\s+([A-Za-z_]\w*)"),
     re.compile(
-        r"\b(?:public|private|protected|internal|static|final|abstract)\s+[\w<>\[\],\s]*?\s+([A-Za-z_]\w*)\s*\("
+        r"\b(?:public|private|protected|internal|static|final|abstract)\b"
+        r"(?:\s+[\w<>\[\],]+){0,6}\s+([A-Za-z_]\w*)\s*\("
     ),
 ]
 

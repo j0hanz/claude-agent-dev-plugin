@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { walkDir } from './utils/walk.mjs';
 import { extractImports, detectLang } from './utils/extractor.mjs';
 
@@ -43,7 +43,13 @@ export function estimateRisk(targetFiles, rootDir) {
       if (!imp.startsWith('.')) continue;
       const resolved = path.resolve(path.dirname(src), imp);
       for (const tf of targetFiles) {
-        if (tf.startsWith(resolved) || resolved === tf.replace(/\.[^.]+$/, '')) {
+        // Match the import to this target by exact path, extension-stripped
+        // equality (extensionless import), or `<dir>/index.*`. A raw startsWith
+        // over-counts files whose path is merely a prefix of another
+        // (e.g. user.ts vs userService.ts).
+        const tfNoExt = tf.replace(/\.[^.]+$/, '');
+        const isIndex = path.basename(tfNoExt) === 'index';
+        if (resolved === tf || resolved === tfNoExt || (isIndex && resolved === path.dirname(tf))) {
           callerCounts[tf]++;
         }
       }
@@ -53,14 +59,26 @@ export function estimateRisk(targetFiles, rootDir) {
   const results = [];
   for (const tf of targetFiles) {
     const callers = callerCounts[tf] || 0;
-    const base = tf.replace(/\.(ts|tsx|js|mjs|py)$/, '');
-    const hasTests = allFiles.some(
-      (f) => f.includes('.test.') || f.includes('.spec.') || f.includes('_test.'),
-    );
+    // Per-file test detection: does a test file exist for *this* module?
+    // (The previous global `allFiles.some(...)` returned the same value for
+    // every target whenever the repo had any test anywhere.)
+    const baseName = path.basename(tf).replace(/\.[^.]+$/, '');
+    const hasTests = allFiles.some((f) => {
+      if (f === tf) return false;
+      const fb = path.basename(f);
+      return (
+        fb.startsWith(`${baseName}.test.`) ||
+        fb.startsWith(`${baseName}.spec.`) ||
+        fb.startsWith(`${baseName}_test.`) ||
+        fb === `test_${baseName}.py`
+      );
+    });
 
     let churn = 0;
     try {
-      const log = execSync(`git log --oneline --since="90 days ago" -- "${tf}"`, {
+      // execFileSync (no shell) so paths/args with special chars can't be
+      // reinterpreted by the shell.
+      const log = execFileSync('git', ['log', '--oneline', '--since=90 days ago', '--', tf], {
         encoding: 'utf8',
         stdio: ['pipe', 'pipe', 'pipe'],
       });

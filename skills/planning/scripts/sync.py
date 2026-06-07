@@ -82,7 +82,7 @@ def sync(spec_path: Path, plan_path: Path) -> int:
             covered |= task.satisfies
 
     missing_impl = [id_ for id_ in impl_ids if id_ not in covered]
-    ac_covered = bool(ac_ids) and all(a in covered for a in ac_ids)
+    ac_covered = all(a in covered for a in ac_ids)
 
     if not missing_impl and ac_covered:
         print(f"sync: nothing to add — all {len(impl_ids)} IDs already covered.")
@@ -151,7 +151,7 @@ def sync(spec_path: Path, plan_path: Path) -> int:
 
         plan_path.write_text(new_plan_content, encoding="utf-8")
 
-    added = len(missing_impl) + (0 if ac_covered else 1)
+    added = len(missing_impl) + (1 if ac_stub else 0)
     print(f"sync: added {added} stub(s) to {plan_path}")
     return added
 

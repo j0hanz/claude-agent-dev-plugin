@@ -1,5 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { runLocalityCheck } from './check-locality.mjs';
 import { runBleedDetection } from './detect-bleed.mjs';
 import { runGitCoupling } from './git-coupling.mjs';
@@ -27,20 +28,35 @@ export function runHotspotDetection(dir, infraPkgs = [], { since = '6 months ago
   const violations = infraPkgs.length > 0 ? runBleedDetection(absDir, infraPkgs) : [];
   const { fileChurn } = runGitCoupling(absDir, { since, minCount: 1 });
 
+  // git reports paths relative to the repo root, not to absDir. fanOut/bleed
+  // keys are absolute paths, so churn must be keyed by absolute paths too or
+  // the join silently drops every file (churnScore always 0).
+  let repoRoot = absDir;
+  try {
+    repoRoot = execFileSync('git', ['rev-parse', '--show-toplevel'], {
+      cwd: absDir,
+      encoding: 'utf8',
+      stdio: ['pipe', 'pipe', 'pipe'],
+    }).trim();
+  } catch {
+    // not a git repo; fileChurn is empty anyway
+  }
+  const toAbs = (gitRelPath) => path.resolve(repoRoot, gitRelPath);
+
   // Build lookup maps
   const fanOutMap = Object.fromEntries(fanOut.map((f) => [f.file, f.count]));
   const bleedMap = {};
   for (const v of violations) {
     bleedMap[v.file] = (bleedMap[v.file] || 0) + 1;
   }
-  const churnMap = Object.fromEntries(fileChurn.map((f) => [f.file, f.commits]));
+  const churnMap = Object.fromEntries(fileChurn.map((f) => [toAbs(f.file), f.commits]));
   const maxChurn = Math.max(...fileChurn.map((f) => f.commits), 1);
 
   // Union of all files
   const allFiles = new Set([
     ...fanOut.map((f) => f.file),
     ...violations.map((v) => v.file),
-    ...fileChurn.map((f) => path.resolve(absDir, '..', f.file)),
+    ...fileChurn.map((f) => toAbs(f.file)),
   ]);
 
   const results = [];

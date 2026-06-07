@@ -1,3 +1,4 @@
+import io
 import sys
 import json
 import yaml
@@ -5,7 +6,7 @@ import yaml
 
 def main():
     try:
-        content = sys.stdin.read()
+        content = io.TextIOWrapper(sys.stdin.buffer, encoding="utf-8").read()
         data = yaml.safe_load(content)
         if not isinstance(data, dict):
             print("Frontmatter must be a key-value mapping", file=sys.stderr)

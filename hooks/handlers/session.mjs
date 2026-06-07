@@ -22,7 +22,7 @@ export function start() {
   if (branch) {
     lines.push(`Branch: \`${branch}\``);
   } else {
-    lines.push('Branch: [git branch timed out]');
+    lines.push('Branch: [git branch unavailable]');
   }
 
   if (changed.length) {
@@ -31,7 +31,7 @@ export function start() {
     lines.push(...preview);
     if (changed.length > 10) lines.push(`  …and ${changed.length - 10} more`);
   } else if (status === null) {
-    lines.push('Uncommitted changes: [git status timed out — may have changes]');
+    lines.push('Uncommitted changes: [git status unavailable — may have changes]');
   } else {
     lines.push('Working tree: clean');
   }
@@ -40,7 +40,7 @@ export function start() {
     lines.push('Recent commits:');
     lines.push(...log.split('\n').map((l) => `  ${l}`));
   } else {
-    lines.push('Recent commits: [git log timed out]');
+    lines.push('Recent commits: [git log unavailable]');
   }
 
   return lines.join('\n');
