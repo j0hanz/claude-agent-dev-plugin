@@ -17,6 +17,7 @@ skills/*/eval-workspace/
 !.claude/settings.json
 .claude/telemetry.log
 .claude/explorer-breadcrumbs.log
+.continue
 
 # IDE
 .vscode/
