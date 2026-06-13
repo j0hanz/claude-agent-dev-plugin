@@ -9,9 +9,12 @@ allowed-tools: Bash(node *)
 
 ## Before Routing
 
-If the user's message provides no clear intent — a single word, a vague noun, no codebase context — ask one targeted question before selecting a mode:
+If the user's message provides no clear intent — a single word, a vague noun, no codebase context — ask one targeted question before selecting a mode, providing clear options with the recommended one listed first:
 
-> "Are you looking to diagnose an existing codebase, or design something new?"
+> "To help us get started, are you looking to:
+>
+> 1. **[Recommended]** Diagnose an existing codebase (find and fix structural issues, circular dependencies, God modules, or testability barriers)?
+> 2. Design a new feature, module, or system from scratch?"
 
 Only apply the routing table once you have enough signal to distinguish Mode A from Mode B. Do not silently analyze a nearby codebase just because one exists; confirm it's the intended target first.
 
@@ -67,10 +70,12 @@ Architectural refactoring fails when it adds indirection without adding depth. *
 
 Walk the codebase using the automated analysis scripts. Scripts gracefully skip inaccessible directories and unreadable files. All scripts support TypeScript, JavaScript, and Python projects — no configuration needed.
 
+- **INTELLIGENT PRE-CHECK**: First inspect the project dependencies (`package.json`, `pyproject.toml`, `requirements.txt`, or `setup.py`) to auto-detect the web framework, ORM, database client, and libraries (e.g., Express, Prisma, Django, FastAPI, SQLAlchemy, Stripe, etc.). Use these identified names in the scripts below instead of guessing.
 - **MANDATORY — RUN SCRIPT**: **Locality Check**: Run `node <skill-dir>/scripts/check-locality.mjs [dir]` to find circular dependencies and "God modules" (high fan-out). Example: `node <skill-dir>/scripts/check-locality.mjs src`
-- **MANDATORY — RUN SCRIPT**: **Bleed Detection**: Run `node <skill-dir>/scripts/detect-bleed.mjs [domain_dir] [infra_packages]` to find infrastructure leaks (e.g., Express or Prisma in domain logic). Examples: `node <skill-dir>/scripts/detect-bleed.mjs src/domain express,prisma,typeorm` — for Python/FastAPI: `node <skill-dir>/scripts/detect-bleed.mjs src/domain sqlalchemy,django,flask,fastapi,celery,requests`
+- **MANDATORY — RUN SCRIPT**: **Bleed Detection**: Run `node <skill-dir>/scripts/detect-bleed.mjs [domain_dir] [infra_packages]` using the detected dependencies. Examples: `node <skill-dir>/scripts/detect-bleed.mjs src/domain express,prisma,typeorm` — for Python/FastAPI: `node <skill-dir>/scripts/detect-bleed.mjs src/domain sqlalchemy,django,flask,fastapi,celery,requests`
 - **RECOMMENDED — RUN SCRIPT**: **Git Coupling**: Run `node <skill-dir>/scripts/git-coupling.mjs [dir]` to find files that always change together in git history — the hidden coupling that import graphs cannot reveal. Example: `node <skill-dir>/scripts/git-coupling.mjs src`. If the output shows pairs with >5 co-changes that have no imports of each other, those are your highest-priority seam candidates.
-- **RECOMMENDED — RUN SCRIPT**: **Hotspot Detection**: Run `node <skill-dir>/scripts/detect-hotspots.mjs [dir] [infra_packages]` for a single ranked table combining fan-out + bleed + churn + size into an Architectural Debt Score. Use this when you need to triage a large codebase quickly. Example: `node <skill-dir>/scripts/detect-hotspots.mjs src express,prisma,sqlalchemy`
+- **RECOMMENDED — RUN SCRIPT**: **Hotspot Detection**: Run `node <skill-dir>/scripts/detect-hotspots.mjs [dir] [infra_packages]` using the detected dependencies. Example: `node <skill-dir>/scripts/detect-hotspots.mjs src express,prisma,sqlalchemy`
+- **PATH & EXISTENCE VERIFICATION**: Before presenting any candidate paths to the user in Phase 2, verify that the files actually exist on the filesystem using read or find tools.
 
 **After scripts complete — spawn the `architecture-scanner` subagent** (`agents/architecture-scanner.md`):
 
@@ -141,7 +146,7 @@ You must constrain yourself. Do NOT write implementation code, typed interface s
 
 End your response exactly with:
 
-> "Which of these candidates interests you most?"
+> "Which of these candidates interests you most? (Candidate 1 is recommended as it has the highest impact-to-risk ratio)."
 
 **STOP HERE.** Do not proceed to Phase 3 content (seam interfaces, domain interview, migration strategies) until the user has selected a candidate in their next message. Do not append bonus analysis, interface sketches, or migration notes below the question.
 
@@ -149,11 +154,11 @@ End your response exactly with:
 
 Once the user picks a candidate, do NOT start writing code immediately.
 
-1. **Align Terminology**: Conduct a brief interview (1 question at a time, see **DOMAIN_INTERVIEW.md** in references/) to establish Canonical Terms and resolve ambiguous concepts.
+1. **Align Terminology**: Conduct a brief interview (1 question at a time, see **DOMAIN_INTERVIEW.md** in references/) to establish Canonical Terms and resolve ambiguous concepts. **MANDATORY**: For every question you ask, you must provide a concrete **[Recommended]** option based on your code analysis so that it is extremely easy for the user to select or confirm it.
 
 2. **Propose the Seam**: Only after the domain language is clear, propose the concrete refactoring — specifically, the _new interface shape_ using the agreed-upon glossary terms. Examples are in **INTERFACE_SHAPES.md** in references/. Show what callers will import and use; don't write implementation yet.
 
-3. **Apply the Deletion Test aloud**: Ask the user: "If we deleted this module, where would the logic go?" If they say "it would duplicate across 5 callers," you've got a good deepening. If they say "it would just move to the caller," the module is shallow and needs rethinking.
+3. **Apply the Deletion Test aloud**: Ask the user: "If we deleted this module, would we have to duplicate its logic across callers, or would the logic just move elsewhere? (Recommended check: Yes, we would have to duplicate the logic across callers, confirming this is a deep, high-leverage module)."
 
 4. Wait for user approval before modifying files.
 
@@ -186,7 +191,7 @@ Architecture is the set of decisions that are hard to change later. Your goal is
 Before proposing a structure, run this diagnosis:
 
 1. **Identify the Core Domain**: What is the "Business Fact" this code exists to manage? Separate this from the "Mechanism" (how it's stored or delivered).
-2. **Map the Change Drivers**: Ask "If X changes (e.g., swapping SQL for NoSQL, moving from Web to CLI), what code _must_ break?"
+2. **Map the Change Drivers**: Ask "If we change the mechanism (e.g., swapping SQL for NoSQL, moving from Web to CLI), what code must break? (Recommended check: Only the infrastructure adapters should break/change, while the core domain remains untouched)."
 3. **Boundary Stress Test**: Mentally attempt to move a feature module to a separate repository. If the "seams" are bleeding implementation details, the boundary is wrong.
 4. **Select Pattern**:
    - **MANDATORY**: If considering a specific pattern (Layered, Hexagonal, CQRS, etc.), you MUST read `references/architecture-patterns.md` to evaluate its failure modes before recommending.
@@ -197,7 +202,7 @@ Before proposing a structure, run this diagnosis:
 
 #### Step 3: Confirm
 
-6. **Apply the Swap Test**: Ask the user: "If we swapped [the key mechanism — the database, the HTTP framework, the payment provider], what code changes?" If the answer is "only the adapter/infra layer," the boundary is right. If domain logic would change, redraw the seam.
+6. **Apply the Swap Test**: Ask the user: "If we swapped the key mechanism (e.g., [insert mechanism, e.g., the database, payment provider]), what code changes? (Recommended check: Only the infrastructure layer/adapters should change. Does this seam isolate the mechanism properly?)."
 
 #### Step 4: Scaffold (after user approves the design)
 
