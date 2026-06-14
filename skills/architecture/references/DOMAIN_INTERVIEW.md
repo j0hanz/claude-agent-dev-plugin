@@ -2,6 +2,8 @@
 
 When a user picks an architectural candidate, you need to understand the domain boundaries before proposing code changes. This guide provides a structured interview to clarify terminology, constraints, and the target interface.
 
+> **Ask every question with the three-option Decision Protocol from SKILL.md:** option 1 is your **✅ Recommended** answer with the evidence behind it, option 2 is the **second-most-likely** answer, and option 3 is **a custom answer** the user types themselves. Options below are templates — fill the brackets from the actual code you scanned, never leave them generic. Ask one question at a time.
+
 ---
 
 ## Why Interview?
@@ -24,19 +26,23 @@ A 5-10 minute interview prevents this.
 
 **Questions** (ask ONE at a time, listen for ambiguity):
 
-1. **"In your domain, what is the core concept we're extracting? (Recommended: [Pre-analyzed concept, e.g. Auth, Billing])"**
-   - Examples: "We're extracting Auth," "We're extracting the Order calculation," "We're extracting billing"
-   - Listen for: Do they have a clear name? Do they hesitate?
-   - If hesitation: "Help me understand — is this about [concept A] or [concept B]?"
+1. **"What is the core concept we're extracting?"**
+   1. ✅ Recommended — **`[pre-analyzed concept, e.g. Auth]`** — the dominant concern in the files you scanned (cite the giveaway, e.g. "bcrypt + jwt + user lookup are all co-located here").
+   2. Also likely — **`[the second concept the code hints at, e.g. Session]`** — if they frame the boundary differently than the imports suggest.
+   3. Something else — they name a concept you didn't infer; capture their exact word.
+   - Listen for hesitation. If they pause, fall back to: "Is this about `[concept A]` or `[concept B]`?"
 
-2. **"When you talk about this with your team, what do you call it? (Recommended: [Canonical Term, e.g. auth])"**
-   - Clarifies team terminology. They might call it "the Auth module" but the code calls it "AuthService."
-   - Establish: We'll call it `[Canonical Term]` in the refactored code.
+2. **"When you talk about this with your team, what do you call it?"**
+   1. ✅ Recommended — **`[canonical term, e.g. auth]`** — matches how the code/folders already read.
+   2. Also likely — **`[the class/file name in use, e.g. AuthService]`** — the literal symbol name, if that's their shared vocabulary.
+   3. Something else — they use a different team word; adopt it verbatim as the canonical term.
+   - Establish: we'll call it `[chosen term]` in the refactored code.
 
-3. **"Are there concepts this module will depend on that should have their own domains? (Recommended: Keep [Concept, e.g. User] as a separate domain module/concept)"**
-   - Example: "Auth depends on User. Should User be a separate module?"
-   - Example: "Payment depends on Customer. Is Customer part of Payment or separate?"
-   - Map out the boundaries.
+3. **"Does this module depend on a concept that deserves its own domain?"**
+   1. ✅ Recommended — **Yes, keep `[dependency, e.g. User]` separate** — you saw it imported but with its own distinct responsibility.
+   2. Also likely — **No, fold it in** — if the dependency is only ever used by this module and nothing else.
+   3. Something else — they identify a different boundary; map it out with them.
+   - Example: "Auth depends on User — separate module, or part of Auth?"
 
 ### Step 2: Understand Constraints (2-3 minutes)
 
@@ -44,18 +50,21 @@ A 5-10 minute interview prevents this.
 
 **Questions**:
 
-1. **"What parts of the system currently depend on this logic? (Recommended: Focus on known callers: [List found callers])"**
-   - List the callers: routes, other modules, workflows, etc.
-   - Example: "Routes call it, the scheduler calls it, a cron job calls it."
+1. **"What parts of the system currently depend on this logic?"**
+   1. ✅ Recommended — **The callers I found: `[list the actual callers, e.g. routes, middleware, the cron job]`** — these are every import site the scan surfaced.
+   2. Also likely — **Those plus runtime/dynamic callers I can't see statically** — if they reach it via DI, reflection, or an HTTP boundary.
+   3. Something else — they know a caller the scan missed; add it to the interface's required surface.
    - This tells you what the interface must support.
 
-2. **"Is there anything about the current implementation that's non-negotiable? (Recommended: Preserve the core logic of [Key mechanism, e.g., bcrypt password hashing] for compatibility/safety)"**
-   - Example: "We can't change how password hashing works because of compliance."
-   - Example: "We must support both sync and async password checks."
-   - Example: "Users expect sub-millisecond latency, so we need caching."
+2. **"Is there anything about the current implementation that's non-negotiable?"**
+   1. ✅ Recommended — **Preserve `[key mechanism, e.g. bcrypt hashing]`** — the behavior most likely bound by compatibility or compliance.
+   2. Also likely — **A performance/latency contract** — e.g. it must stay sync, or sub-millisecond, or cache-backed.
+   3. Something else — they name a different hard constraint; record it before designing the interface.
 
-3. **"Are there any features or edge cases we shouldn't touch during this refactor? (Recommended: Focus strictly on extracting [core candidate logic] and leave [potential out-of-scope logic, e.g., third-party OAuth] untouched for now)"**
-   - Scope constraints. Example: "Don't change how OAuth works, just focus on password auth."
+3. **"Are there features or edge cases we should NOT touch in this refactor?"**
+   1. ✅ Recommended — **Leave `[out-of-scope logic, e.g. third-party OAuth]` alone** — adjacent but separable from the candidate seam.
+   2. Also likely — **Nothing off-limits — extract the whole concern** — if the module is cohesive enough to move wholesale.
+   3. Something else — they fence off a different area; scope strictly around it.
 
 ### Step 3: Propose the Interface (3-5 minutes)
 
@@ -79,21 +88,27 @@ A 5-10 minute interview prevents this.
 > const result = await operation1(input);
 > ```
 >
-> Does this feel right? (Recommended response: Yes, proceed with this interface design.)"
+> Does this interface feel right?"
 
-**If they say "no,"** ask: "What's different from what you imagined?"
+Offer the confirmation as three options:
 
-Iterate until they say "yes."
+1. ✅ Recommended — **Yes, proceed with this design** — it covers the callers and constraints you described.
+2. Also likely — **Close, but one signature needs to change** — e.g. error vs. null, sync vs. async (name the specific one you're unsure about).
+3. Something else — **It's not what I imagined** — then ask: "What's different from what you pictured?"
+
+Iterate until they choose option 1.
 
 ### Step 4: Apply the Deletion Test (1 minute)
 
-**Say**: "Let me check this with the deletion test: If we deleted this module, would we have to duplicate its logic across callers, or would the logic just move elsewhere? (Recommended check: Yes, we would have to duplicate the logic across callers, confirming this is a deep, high-leverage module)."
+**Say**: "Let me check this with the deletion test: if we deleted this module, what happens to its logic?"
 
-**Expected answer**: "We'd have to duplicate it across 3-5 callers" (= it earns its keep, good deepening opportunity).
+1. ✅ Recommended — **It duplicates across callers** — confirms a deep, high-leverage module (you'd copy `[key logic]` into `[N]` callers). This is the green light.
+2. Also likely — **It just moves elsewhere intact** — the module is shallow; reconsider the extraction or pick a different seam.
+3. Something else — **partly both** — they describe a mixed outcome; weigh whether the duplicated part alone justifies the seam.
 
-**Red flag**: "The logic would just move to the caller" (= module is shallow, reconsider extraction).
+**Green light**: option 1 — duplication across 3-5 callers means it earns its keep.
 
-If red flag, go back to Step 3 and refine the boundaries.
+**Red flag**: option 2 — if the logic would just move to one caller, go back to Step 3 and refine the boundaries.
 
 ---
 
@@ -101,49 +116,71 @@ If red flag, go back to Step 3 and refine the boundaries.
 
 ### Candidate: Extract Auth from Scattered Files
 
+Notice how each question offers a grounded **Recommended** answer, a real **Also likely** alternative, and a **custom** escape hatch — and how the recommendation cites what was seen in the code.
+
 #### Step 1: Canonical Terms
 
-> **You**: "In your domain, what is the core concept we're extracting? (Recommended: Auth)"
+> **You**: "What is the core concept we're extracting?
 >
-> **User**: "Authentication. We have password hashing in one place, JWT in another..."
+> 1. ✅ Recommended — **Auth** — `password.ts`, `token.ts`, and the login route all cluster around credentials and JWTs.
+> 2. Also likely — **Session** — if you think of this as session lifecycle rather than credential checking.
+> 3. Something else — tell me your word for it."
 >
-> **You**: "When you talk with your team, what do you call it? (Recommended: auth)"
+> **User**: "Auth. We have password hashing in one place, JWT in another..."
 >
-> **User**: "We usually say 'auth'. The LoginService class is confusing because it doesn't just log in — it also generates tokens."
+> **You**: "When you talk with your team, what do you call it?
 >
-> **You**: "Got it. We'll use 'auth' as the canonical term. The new module will be `auth/`. Inside, we'll separate concerns clearly — passwords, tokens, and the main authenticate operation. Does that match what you do mentally?"
+> 1. ✅ Recommended — **`auth`** — shortest, matches the folder you'll create.
+> 2. Also likely — **`LoginService`** — the current class name, if that's the shared vocabulary.
+> 3. Something else — your team's term."
 >
-> **User**: "Yes, exactly."
+> **User**: "We say 'auth'. `LoginService` is confusing — it doesn't just log in, it also generates tokens."
 >
-> **You**: "The auth module will need to look up users. Is that 'part of Auth' or something separate? (Recommended: Separate user lookup from auth)"
+> **You**: "Then `auth` it is. The auth module will need to look up users. Is that part of Auth or separate?
+>
+> 1. ✅ Recommended — **Separate** — keeps Auth pure; the caller passes in a user or a lookup function (Auth never imports the user store).
+> 2. Also likely — **Part of Auth** — if Auth is the only thing that ever reads users.
+> 3. Something else — describe the split you want."
 >
 > **User**: "Separate. Auth doesn't know about users — we pass in a user object or a lookup function."
 >
-> **You**: "Perfect. So Auth is pure, and the caller handles 'get the user, then authenticate them.' Next question: Are there other concepts — like roles or permissions — that should be separate from Auth? (Recommended: Keep roles/permissions as a separate module)"
+> **You**: "Perfect — Auth stays pure. Same question for roles/permissions:
 >
-> **User**: "Roles are separate. Auth just validates credentials. Roles check what you can do after you're authenticated."
+> 1. ✅ Recommended — **Separate module** — credential checking ≠ access control; they change for different reasons.
+> 2. Also likely — **Inside Auth** — if roles are only ever derived during authentication.
+> 3. Something else — your call."
+>
+> **User**: "Roles are separate. Auth just validates credentials."
 
 #### Step 2: Constraints
 
-> **You**: "What parts of the system currently depend on auth logic? (Recommended: Focus on routes, middleware, and CLI callers)"
+> **You**: "What currently depends on this logic?
 >
-> **User**: "Routes use it, obviously. The API middleware. We also have a CLI tool that logs users in programmatically."
+> 1. ✅ Recommended — **The callers I found: routes, API middleware** — every static import site of the auth functions.
+> 2. Also likely — **Those plus a runtime caller** — e.g. a CLI or job that reaches it dynamically and won't show in the import graph.
+> 3. Something else — name a caller I missed."
 >
-> **You**: "So three callers. Do they all need the same interface, or do they call different operations? (Recommended: Keep interface unified with authenticate, register, and verifyToken)"
+> **User**: "Option 2 — routes and middleware, plus a CLI tool that logs users in programmatically."
 >
-> **User**: "They all do login and token verification. The CLI also does registration, but routes don't."
+> **You**: "So three callers. Anything non-negotiable about the implementation?
 >
-> **You**: "Got it. Our interface will support login, register, and verifyToken. Any non-negotiables? (Recommended: Preserve bcrypt password hashing and token validation)"
+> 1. ✅ Recommended — **Preserve bcrypt password hashing** — it's the kind of thing compliance usually pins down.
+> 2. Also likely — **A latency contract** — token checks must stay fast/sync.
+> 3. Something else — your hard constraint."
 >
-> **User**: "Password hashing must use bcrypt — no shortcuts for compliance. It should be fast, but bcrypt is already slow by design, so that's fine."
+> **User**: "Bcrypt is non-negotiable — compliance. Speed is fine, bcrypt is slow by design anyway."
 >
-> **You**: "Anything we should not touch? (Recommended: Focus strictly on the password-based auth seam, leaving OAuth untouched for now)"
+> **You**: "Anything we should NOT touch?
 >
-> **User**: "Yeah, keep OAuth out of this refactor. We'll tackle that separately."
+> 1. ✅ Recommended — **Leave OAuth alone** — it's adjacent but separable from the password seam.
+> 2. Also likely — **Nothing off-limits** — extract the whole auth concern at once.
+> 3. Something else — fence off a different area."
+>
+> **User**: "Keep OAuth out of this one. We'll tackle that separately."
 
 #### Step 3: Propose Interface
 
-> **You**: "Based on what you described, here's the interface I'm proposing:
+> **You**: "Based on that, here's the interface:
 >
 > ```typescript
 > // What Auth exports
@@ -159,29 +196,35 @@ If red flag, go back to Step 3 and refine the boundaries.
 > });
 > ```
 >
-> All password hashing and JWT generation happen inside. Callers don't import bcrypt or jsonwebtoken. Does this feel right? (Recommended response: Yes, proceed with this interface design.)"
+> All hashing and JWT generation stay inside; callers never import bcrypt or jsonwebtoken. Does this interface feel right?
 >
-> **User**: "Yes, but I want to make sure verifyToken doesn't throw when the token is invalid. We handle that explicitly."
+> 1. ✅ Recommended — **Yes, proceed** — covers all three callers and keeps bcrypt internal.
+> 2. Also likely — **Close, but `verifyToken`'s failure behavior needs deciding** — throw vs. return null.
+> 3. Something else — it's not what you pictured; tell me what's off."
 >
-> **You**: "Good catch. Let me adjust:
+> **User**: "Option 2 — I want to be sure how `verifyToken` signals an invalid token."
 >
-> ```typescript
-> export function verifyToken(token: Token): { userId: string } | null;
-> ```
+> **You**: "Then let's decide that one signature:
 >
-> Or would you prefer it throws an error and you catch it? (Recommended: Throw error to align with current catch-all middleware)"
+> 1. ✅ Recommended — **Throws** — aligns with your existing catch-all middleware, so callers wrap it in try/catch.
+> 2. Also likely — **Returns `{ userId } | null`** — if you'd rather branch on the result explicitly.
+> 3. Something else — a Result type or status enum."
 >
 > **User**: "Throws is fine. We already catch it in middleware."
 >
-> **You**: "Perfect. So verifyToken throws on invalid token. Callers wrap it in try-catch."
+> **You**: "Done — `verifyToken` throws on invalid token; callers wrap it in try/catch."
 
 #### Step 4: Deletion Test
 
-> **You**: "Let me apply the deletion test: If we deleted the auth module, where would password hashing and token generation go? (Recommended check: Yes, we would have to duplicate the logic across callers, confirming this is a deep, high-leverage module)."
+> **You**: "Last check — if we deleted the auth module, what happens to password hashing and token generation?
 >
-> **User**: "Ugh, everywhere. Routes, middleware, CLI — they'd all duplicate it."
+> 1. ✅ Recommended — **Duplicates across callers** — routes, middleware, and the CLI would each re-implement it.
+> 2. Also likely — **Moves to one place intact** — meaning it's shallow and not worth a module.
+> 3. Something else — a mix."
 >
-> **You**: "Exactly. The fact that you'd duplicate complex logic across 3+ callers means this extraction is worth doing."
+> **User**: "Option 1 — ugh, everywhere. Routes, middleware, CLI would all duplicate it."
+>
+> **You**: "Exactly. Duplicating complex logic across 3+ callers is what makes this extraction worth doing."
 
 ---
 
@@ -219,31 +262,33 @@ You: "OK, I'll include it."
 
 ## Questions Cheat Sheet
 
+Each entry below is `Question → ✅ Recommended / Also likely / Custom`. Fill the brackets from the code you scanned; option 3 is always "the user's own answer."
+
 **For understanding the domain:**
 
-- "What is the core concept here? (Recommended: [Pre-analyzed Concept, e.g. Auth, Billing])"
-- "When you talk about this with your team, what do you call it? (Recommended: [Canonical Term, e.g. auth])"
-- "Are there concepts this module will depend on that should have their own domains? (Recommended: Keep [Concept, e.g. User] as a separate domain module/concept)"
+- "What is the core concept here?" → ✅ `[pre-analyzed concept, e.g. Auth]` / `[second concept, e.g. Session]` / their own word
+- "What do you and your team call it?" → ✅ `[canonical term, e.g. auth]` / `[the symbol name in code, e.g. AuthService]` / their term
+- "Does this depend on a concept that deserves its own domain?" → ✅ Keep `[dependency, e.g. User]` separate / Fold it in / a different boundary
 
 **For understanding callers:**
 
-- "What parts of the system currently depend on this logic? (Recommended: Focus on known callers: [List found callers])"
-- "Do they all need the same interface, or do they call different operations? (Recommended: Keep interface unified with [List core operations])"
+- "What depends on this logic?" → ✅ `[the callers the scan found]` / those plus a dynamic/runtime caller / a caller I missed
+- "Do callers need one interface or different operations?" → ✅ Unified `[core operations]` / split by caller type / their answer
 
 **For understanding constraints:**
 
-- "Is there anything about the current implementation that's non-negotiable? (Recommended: Preserve the core logic of [Key mechanism] for compatibility/safety)"
-- "Are there any features or edge cases we shouldn't touch during this refactor? (Recommended: Focus strictly on extracting [core candidate logic] and leave [out-of-scope logic] untouched)"
+- "What's non-negotiable in the implementation?" → ✅ Preserve `[key mechanism]` / a latency/perf contract / a different hard constraint
+- "What should we NOT touch in this refactor?" → ✅ Leave `[out-of-scope logic]` alone / nothing off-limits / a different fenced area
 
 **For confirming the interface:**
 
-- "Does this match what you imagined? (Recommended response: Yes, proceed with this interface design.)"
-- "Should this be sync or async? (Recommended: [Sync or Async, based on codebase patterns])"
-- "What happens when it fails? Error or null? (Recommended: [Error or Null, based on codebase patterns])"
+- "Does this interface match what you imagined?" → ✅ Yes, proceed / close but one signature changes / not what I pictured
+- "Sync or async?" → ✅ `[sync or async, from codebase patterns]` / the opposite / their preference
+- "On failure — throw or return null?" → ✅ `[throw or null, from codebase patterns]` / the opposite / a Result/status type
 
 **For confirming the extraction is worth it:**
 
-- "If we deleted this module, would we have to duplicate its logic across callers, or would the logic just move elsewhere? (Recommended check: Yes, we would have to duplicate the logic across callers, confirming this is a deep, high-leverage module)."
+- "If we deleted this module, what happens to its logic?" → ✅ Duplicates across callers (deep, keep it) / moves elsewhere intact (shallow, reconsider) / a mix
 
 ---
 

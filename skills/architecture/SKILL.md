@@ -2,19 +2,37 @@
 name: architecture
 description: "Use when a codebase has structural problems (circular deps, God modules, testability issues) or when designing new systems. Trigger on 'architecture review', 'where should this code live', 'too coupled', 'God class', 'design this system'."
 disable-model-invocation: false
-allowed-tools: Bash(node *)
+allowed-tools: Bash(node *), AskUserQuestion
 ---
 
 # Architecture
 
+## Decision Protocol (how to ask EVERY question)
+
+This skill is conversational: you route, interview, and confirm seams by asking the user. Every question — routing, the domain interview, the Deletion/Swap tests, interface confirmation — MUST be offered as **exactly three options derived from your own analysis**, never generic boilerplate:
+
+1. **✅ Recommended — `<concrete answer>`** — the option your evidence most supports. Append one line of _that evidence_: caller count, the specific imports you saw, churn, the detected framework, file size. This is what makes the skill smart — the recommendation is earned, not guessed.
+2. **Also likely — `<the second-most-plausible concrete answer>`** — a real alternative the user might hold, not a strawman. Append one line on the condition under which this becomes the right call.
+3. **Something else (your call)** — none fit, or it's a blend of 1 and 2; the user answers in their own words.
+
+Rules:
+
+- Options 1 and 2 are **specific answers**, not "yes / no". When the honest answer space is binary, make option 1 the recommended verdict and option 2 the opposite verdict — each carrying its own evidence.
+- **Ground every recommendation.** Cite the file, import, or number that justifies it. If you lack the data to rank the options, say so and tag the pick `(low confidence)` rather than fabricating evidence.
+- Ask **one** question at a time and wait for the answer before the next.
+- **Rendering:** when the `AskUserQuestion` tool is available, ask through it — put option 1's label first with a `(Recommended)` suffix, option 2 as the alternative, and let the tool's automatic "Other" choice serve as option 3 (the custom answer). When it is not available, present the three options as the numbered markdown block shown above. Candidate selection in Phase 2 is the one exception (it is a 3–6 item menu, handled in that section).
+
 ## Before Routing
 
-If the user's message provides no clear intent — a single word, a vague noun, no codebase context — ask one targeted question before selecting a mode, providing clear options with the recommended one listed first:
+If the user's message provides no clear intent — a single word, a vague noun, no codebase context — ask one targeted question before selecting a mode, using the **Decision Protocol** above:
 
-> "To help us get started, are you looking to:
+> "To get started, which fits best?
 >
-> 1. **[Recommended]** Diagnose an existing codebase (find and fix structural issues, circular dependencies, God modules, or testability barriers)?
-> 2. Design a new feature, module, or system from scratch?"
+> 1. ✅ **Recommended — Diagnose existing code** — find and fix structural issues (circular deps, God modules, testability barriers) in a codebase that already exists.
+> 2. **Design something new** — decide where new logic should live and how to shape its boundaries from a blank page.
+> 3. **Something else** — neither is quite it; tell me what you're after in a sentence."
+
+**Pick the Recommended option from context, don't hard-code it:** mark **Diagnose** as recommended when a codebase is present in the working directory or the user pasted existing code; mark **Design** as recommended when there is no code to look at. State the signal you used in one line (e.g. "recommending Diagnose — I can see a `src/` directory").
 
 Only apply the routing table once you have enough signal to distinguish Mode A from Mode B. Do not silently analyze a nearby codebase just because one exists; confirm it's the intended target first.
 
@@ -144,9 +162,13 @@ You must constrain yourself. Do NOT write implementation code, typed interface s
 - **Risk:** MEDIUM — 3 callers, no dedicated test file, changed 7 times in 90 days.
 ```
 
-End your response exactly with:
+End your response by asking the user to choose, framed as three paths (the candidate menu is the one place options 1 and 2 point at list items rather than free-form answers):
 
-> "Which of these candidates interests you most? (Candidate 1 is recommended as it has the highest impact-to-risk ratio)."
+> "Which candidate should we deepen first?
+>
+> 1. ✅ **Recommended — Candidate 1** — highest impact-to-risk ratio (<one-line evidence: caller count, missing tests, churn>).
+> 2. **Also strong — Candidate \<N\>** — <one line on why it's the runner-up: e.g. lower risk, or unblocks the others>.
+> 3. **Something else** — a different candidate from the list above, or an angle I haven't surfaced — tell me which and I'll dig in."
 
 **STOP HERE.** Do not proceed to Phase 3 content (seam interfaces, domain interview, migration strategies) until the user has selected a candidate in their next message. Do not append bonus analysis, interface sketches, or migration notes below the question.
 
@@ -154,11 +176,14 @@ End your response exactly with:
 
 Once the user picks a candidate, do NOT start writing code immediately.
 
-1. **Align Terminology**: Conduct a brief interview (1 question at a time, see **DOMAIN_INTERVIEW.md** in references/) to establish Canonical Terms and resolve ambiguous concepts. **MANDATORY**: For every question you ask, you must provide a concrete **[Recommended]** option based on your code analysis so that it is extremely easy for the user to select or confirm it.
+1. **Align Terminology**: Conduct a brief interview (1 question at a time, see **DOMAIN_INTERVIEW.md** in references/) to establish Canonical Terms and resolve ambiguous concepts. **MANDATORY**: Ask every interview question through the **Decision Protocol** — a Recommended answer grounded in your code analysis, a second plausible answer, and a custom option — so the user can confirm with a single tap instead of composing prose.
 
 2. **Propose the Seam**: Only after the domain language is clear, propose the concrete refactoring — specifically, the _new interface shape_ using the agreed-upon glossary terms. Examples are in **INTERFACE_SHAPES.md** in references/. Show what callers will import and use; don't write implementation yet.
 
-3. **Apply the Deletion Test aloud**: Ask the user: "If we deleted this module, would we have to duplicate its logic across callers, or would the logic just move elsewhere? (Recommended check: Yes, we would have to duplicate the logic across callers, confirming this is a deep, high-leverage module)."
+3. **Apply the Deletion Test aloud**, using the Decision Protocol: "If we deleted this module, what happens to its logic?"
+   1. ✅ **Recommended — It duplicates across callers** — confirms a deep, high-leverage module worth extracting (you found \<N\> callers that would each re-implement it).
+   2. **It just moves elsewhere intact** — the module is shallow; reconsider the extraction or pick a different seam.
+   3. **Something else** — partly both, or you see a third outcome; describe it.
 
 4. Wait for user approval before modifying files.
 
@@ -191,7 +216,11 @@ Architecture is the set of decisions that are hard to change later. Your goal is
 Before proposing a structure, run this diagnosis:
 
 1. **Identify the Core Domain**: What is the "Business Fact" this code exists to manage? Separate this from the "Mechanism" (how it's stored or delivered).
-2. **Map the Change Drivers**: Ask "If we change the mechanism (e.g., swapping SQL for NoSQL, moving from Web to CLI), what code must break? (Recommended check: Only the infrastructure adapters should break/change, while the core domain remains untouched)."
+2. **Map the Change Drivers**: Ask, using the Decision Protocol: "If we change the mechanism (swap SQL for NoSQL, Web for CLI), what should break?"
+   1. ✅ **Recommended — Only the infrastructure adapters** — the core domain stays untouched; this is the boundary we're aiming for.
+   2. **The domain breaks too** — today's design leaks the mechanism into policy, which is exactly the seam to fix.
+   3. **Something else** — a different blast radius; describe it.
+
 3. **Boundary Stress Test**: Mentally attempt to move a feature module to a separate repository. If the "seams" are bleeding implementation details, the boundary is wrong.
 4. **Select Pattern**:
    - **MANDATORY**: If considering a specific pattern (Layered, Hexagonal, CQRS, etc.), you MUST read `references/architecture-patterns.md` to evaluate its failure modes before recommending.
@@ -202,7 +231,10 @@ Before proposing a structure, run this diagnosis:
 
 #### Step 3: Confirm
 
-6. **Apply the Swap Test**: Ask the user: "If we swapped the key mechanism (e.g., [insert mechanism, e.g., the database, payment provider]), what code changes? (Recommended check: Only the infrastructure layer/adapters should change. Does this seam isolate the mechanism properly?)."
+6. **Apply the Swap Test**, using the Decision Protocol: "If we swapped [the concrete mechanism — e.g., the database, the payment provider], what changes?"
+   1. ✅ **Recommended — Only the infrastructure adapters** — the seam isolates the mechanism cleanly; proceed to scaffold.
+   2. **Domain code changes too** — the proposed boundary still leaks; tighten it before scaffolding.
+   3. **Something else** — describe what you expect to change, and we'll check the seam against it.
 
 #### Step 4: Scaffold (after user approves the design)
 
