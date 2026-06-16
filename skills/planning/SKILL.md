@@ -42,7 +42,7 @@ Every plan task carries `Satisfies: REQ-001, SEC-002` linking it to spec IDs. `v
 
 ## Step-by-Step Execution
 
-**skill-dir:** directory containing this `SKILL.md` file, or `$CLAUDE_PLUGIN_ROOT` if set. All `python <skill-dir>/scripts/...` commands resolve against it.
+**skill-dir:** directory containing this `SKILL.md` file (use the absolute path of this file's parent directory if `$CLAUDE_PLUGIN_ROOT` is not set). All `python <skill-dir>/scripts/...` commands resolve against it.
 
 ### Step 1 — Intake
 
@@ -82,7 +82,7 @@ Document all answers inline. Mark unknowns `UNKNOWN: [what and why]` — don't g
 **Otherwise (normal flow):**
 
 ```bash
-python <skill-dir>/scripts/scaffold.py NAME --depth contract [--domain api|cli] [--goal "..."]
+python <skill-dir>/scripts/scaffold.py "NAME" --depth contract [--domain api|cli] [--goal "..."]
 ```
 
 Creates `plan/NAME.specs.md` and `plan/NAME.plan.md` with matching ID skeletons.
@@ -94,7 +94,7 @@ Fill `NAME.specs.md`. Use `REQ-###`/`SEC-###`/`PERF-###`/`CON-###`/`AC-###`/`VAL
 **GATE:** Run `validate.py --spec` — resolve all ERRORS before continuing.
 
 ```bash
-python <skill-dir>/scripts/validate.py NAME --spec --level <depth>
+python <skill-dir>/scripts/validate.py "NAME" --spec --level <depth>
 ```
 
 **Self-check:** Use the checklist in `references/spec-template.md` to catch what the validator cannot: unmeasured adjectives, compound REQs, and missing interface error cases. Fix all before proceeding.
@@ -102,7 +102,7 @@ python <skill-dir>/scripts/validate.py NAME --spec --level <depth>
 ### Step 4 — Sync plan stubs
 
 ```bash
-python <skill-dir>/scripts/sync.py plan/NAME.specs.md
+python <skill-dir>/scripts/sync.py "plan/NAME.specs.md"
 ```
 
 Populates `NAME.plan.md` with one stub per requirement, `Satisfies:` pre-filled. Idempotent.
@@ -131,13 +131,13 @@ Fill each stub's `Action`, `Validate`, and `Expected result`. Rules:
 **GATE:** Run `validate.py --plan` — resolve all ERRORS.
 
 ```bash
-python <skill-dir>/scripts/validate.py NAME --plan
+python <skill-dir>/scripts/validate.py "NAME" --plan
 ```
 
 ### Step 7 — Cross-validate
 
 ```bash
-python <skill-dir>/scripts/validate.py NAME --cross
+python <skill-dir>/scripts/validate.py "NAME" --cross
 ```
 
 Checks: every spec requirement covered by ≥1 task; every `Satisfies:` ID exists in spec; every AC mapped. Fix all ERRORS — do not proceed with an uncovered requirement or orphan task.
@@ -156,7 +156,7 @@ It scores spec quality, plan quality, and traceability together and writes findi
 This step is REQUIRED — handoff is incomplete without a review file. Verify:
 
 ```bash
-python <skill-dir>/scripts/validate.py NAME --review
+python <skill-dir>/scripts/validate.py "NAME" --review
 ```
 
 `--review` mode checks that `plan/NAME.review.md` exists with `ready_for_execution: true`. Only then proceed to handoff.
@@ -181,6 +181,7 @@ Expected result: Observable success signal (e.g., "All 8 tests pass").
 
 ## Anti-Patterns
 
+- **Never execute bash commands containing user-provided variables without properly wrapping them in quotes.**
 - **Never hand-type a spec ID** — run `scaffold.py` to generate them. If scaffold already ran and you need a new ID, re-run it with the same NAME (idempotent).
 - **Never hand-type a file path** — use `discover.py` output. For new (non-existent) files, document the intended path with an `[UNVERIFIED]` prefix (see Step 5).
 - **Never edit `Satisfies:` manually** — re-run `sync.py` if requirements change.
