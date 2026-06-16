@@ -32,20 +32,30 @@ function describe(tool, input = {}) {
 export function breadcrumb(input = {}) {
   const note = describe(input.tool_name, input.tool_input);
   if (!note) return null;
-  appendJsonl(TRAIL, { ts: new Date().toISOString(), note });
+  appendJsonl(TRAIL, {
+    ts: new Date().toISOString(),
+    note,
+    session: input.session_id || 'unknown',
+  });
   return null;
 }
 
 /** SessionStart: surface the recent exploration trail so context survives resume. */
-export function replay() {
+export function replay(input = {}) {
   const recent = readJsonlTail(TRAIL, 12);
   if (!recent.length) return null;
+
+  const sessionId = input.session_id || 'unknown';
+  const currentSession = recent.filter((e) => (e.session || 'unknown') === sessionId);
+
+  // Use current session entries if available, otherwise fall back to all entries
+  const entries = currentSession.length > 0 ? currentSession : recent;
+
   // De-duplicate while preserving recency (most recent win) and session-relative order.
-  // Each breadcrumb has ts (ISO timestamp) for temporal context; group by session.
   const seen = new Set();
   const notes = [];
-  for (let i = recent.length - 1; i >= 0; i--) {
-    const entry = recent[i];
+  for (let i = entries.length - 1; i >= 0; i--) {
+    const entry = entries[i];
     const n = entry.note;
     if (n && !seen.has(n)) {
       seen.add(n);

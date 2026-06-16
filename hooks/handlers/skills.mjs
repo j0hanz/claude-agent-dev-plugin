@@ -38,5 +38,6 @@ export function announce() {
     'one, invoke it with the Skill tool rather than improvising; for overlaps ' +
     'and sequencing, this routing guide is authoritative.';
 
-  return `${header}\n\n${body}`.slice(0, MAX_CHARS);
+  const content = (header + '\n\n' + body).slice(0, MAX_CHARS - 26);
+  return `<IMPORTANT>\n${content}\n</IMPORTANT>`;
 }

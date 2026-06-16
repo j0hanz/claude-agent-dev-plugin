@@ -2,6 +2,7 @@
 export const CONTEXT_EVENTS = new Set([
   'SessionStart',
   'UserPromptSubmit',
+  'PreToolUse',
   'PostToolUse',
   'PostToolUseFailure',
 ]);

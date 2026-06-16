@@ -43,5 +43,40 @@ export function start() {
     lines.push('Recent commits: [git log unavailable]');
   }
 
-  return lines.join('\n');
+  // Stashes
+  const stashes = sh('git', ['stash', 'list', '--format=%gd: %s'], { timeout: 5000 });
+  lines.push('Stashes:');
+  if (stashes) {
+    const stashLines = stashes.split('\n').filter(Boolean).slice(0, 5);
+    lines.push(...stashLines.map((l) => `  ${l}`));
+    if (stashes.split('\n').filter(Boolean).length > 5) {
+      lines.push(`  …and ${stashes.split('\n').filter(Boolean).length - 5} more`);
+    }
+  } else {
+    lines.push('  none');
+  }
+
+  // Upstream divergence
+  const divergence = sh('git', ['rev-list', '--count', '--left-right', 'HEAD...@{u}'], {
+    timeout: 5000,
+  });
+  lines.push('Upstream:');
+  if (divergence) {
+    const [ahead, behind] = divergence.trim().split('\t');
+    lines.push(`  ${ahead} ahead / ${behind} behind`);
+  } else {
+    lines.push('  no tracking branch');
+  }
+
+  // Runtime versions
+  const nodeVersion = sh(process.execPath, ['--version'], { timeout: 3000 });
+  const pythonVersion =
+    sh('python', ['--version'], { timeout: 3000 }) ||
+    sh('python3', ['--version'], { timeout: 3000 });
+  lines.push('Runtime:');
+  if (nodeVersion) lines.push(`  Node: ${nodeVersion}`);
+  if (pythonVersion) lines.push(`  Python: ${pythonVersion}`);
+
+  const output = lines.join('\n');
+  return output.slice(0, 2000);
 }

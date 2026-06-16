@@ -14,7 +14,11 @@ const PROBES = [
   { re: /\b(?:describe|it|test)\.only\s*\(/, label: 'test .only (focused test)' },
   { re: /\b(?:fdescribe|fit)\s*\(/, label: 'focused test (fdescribe/fit)' },
   { re: /\b(?:pdb\.set_trace|breakpoint)\s*\(/, label: 'python breakpoint' },
-  { re: /\bTODO\b|\bFIXME\b|\bXXX\b|\bHACK\b/, label: 'TODO/FIXME marker' },
+  { re: /\/\/\s*@ts-ignore/, label: 'ts-ignore suppression' },
+  { re: /\/\/\s*@ts-nocheck/, label: 'ts-nocheck suppression' },
+  { re: /eslint-disable(?:-next-line)?/, label: 'eslint-disable annotation' },
+  { re: /\bTODO\b|\bFIXME\b/, label: 'TODO/FIXME marker' },
+  { re: /\bHACK\b|\bXXX\b/, label: 'HACK/XXX marker' },
 ];
 
 /** Stop: scan added lines in the working diff for debug artifacts. */

@@ -13,13 +13,18 @@ const MAX_STATE = 2000; // bound the file so it can't grow unbounded
 
 function errorExcerpt(input) {
   const r = input.tool_response;
-  const text = typeof r === 'string' ? r : r?.stderr || r?.error || r?.output || '';
+  let text = '';
+  if (typeof r === 'string') {
+    text = r;
+  } else if (r) {
+    text = r?.error || r?.stderr || r?.output || '';
+  }
   return String(text).split('\n').filter(Boolean).slice(0, 3).join(' ⏎ ').slice(0, 240);
 }
 
 /** PostToolUseFailure: nudge toward the diagnose skill after repeated failures. */
 export function onFailure(input = {}) {
-  if (input.tool_name !== 'Bash') return null;
+  if (!['Bash', 'Edit', 'MultiEdit'].includes(input.tool_name)) return null;
 
   const session = input.session_id || 'unknown';
   appendJsonl(STATE, { ts: new Date().toISOString(), session });

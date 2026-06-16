@@ -36,6 +36,39 @@
     ],
     "PreToolUse": [
       {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" shell-safety check",
+            "timeout": 5,
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" fileguard protect",
+            "timeout": 10,
+            "async": false
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" webcache check",
+            "timeout": 10,
+            "async": false
+          }
+        ]
+      },
+      {
         "matcher": "Grep|Glob|Read|WebFetch|WebSearch",
         "hooks": [
           {
@@ -65,6 +98,11 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" skill-transitions checkWrite",
             "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" fileguard expand",
+            "timeout": 10
           }
         ]
       },
@@ -77,11 +115,22 @@
             "timeout": 10
           }
         ]
+      },
+      {
+        "matcher": "WebFetch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" webcache store",
+            "timeout": 15,
+            "async": true
+          }
+        ]
       }
     ],
     "PostToolUseFailure": [
       {
-        "matcher": "Bash",
+        "matcher": "Bash|Edit|MultiEdit",
         "hooks": [
           {
             "type": "command",
@@ -98,6 +147,11 @@
           {
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" debug scan",
+            "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" fileguard restore",
             "timeout": 15
           }
         ]
