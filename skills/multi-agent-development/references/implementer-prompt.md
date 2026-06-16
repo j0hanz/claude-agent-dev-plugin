@@ -1,62 +1,63 @@
-# Implementer Subagent Prompt Template
+# Implementer Subagent Prompt
 
-Use this template when dispatching the `coder` subagent in Phase 1.
-Fill in every `[FIELD]` with task-specific content before dispatching.
-Remove all template annotations — the subagent receives only the filled prompt.
+**purpose:** Execute a single scoped task — implement exactly what the spec states.
+**when:** Phase 1. One task per subagent call.
 
 ---
 
 ## Dispatch Template
 
-```
+```text
 SCOPE:
-  Files/dirs IN scope:   [list exact file paths or directories this task touches]
-  Files/dirs OUT of scope: [list what must NOT be modified]
+  Files/dirs IN scope:     [exact file paths or directories this task touches]
+  Files/dirs OUT of scope: [must NOT be modified]
 
 OBJECTIVE:
-  [Paste the full task spec verbatim. One concrete outcome. Do not paraphrase.]
+  [Paste full task spec verbatim. One concrete outcome. Do not paraphrase.]
 
 CONTEXT:
   Codebase root: [absolute path]
   Relevant existing code:
     [file:line — function signature, type definition, or pattern this task extends]
     [file:line — test file pattern to follow]
-    [file:line — any interface or contract this task must satisfy]
-  Last commit: [git hash] — use this as your baseline for diff and self-review.
+    [file:line — interface or contract this task must satisfy]
+  Last commit: [git hash] — use as baseline for diff and self-review.
 
 CONSTRAINTS:
-  - Implement exactly what the spec states. Nothing more, nothing less.
+  - Read all in-scope files before making any edits.
+  - Implement exactly what the spec states — nothing more, nothing less.
   - Write tests before or alongside implementation (red → green).
   - Do NOT restructure code outside this task's file scope.
-  - Do NOT add "nice to have" features not in the spec.
+  - Do NOT add features not in the spec.
   - Commit when complete: git commit -m "Task [N]: [task title]"
-  - [Add any task-specific constraints here]
+  - [Add task-specific constraints here]
 
 OUTPUT:
-  Return a single final message with this exact structure:
-
   STATUS: [DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT]
 
   SUMMARY:
-  [2-4 sentences: what was built, which functions/classes were added, how tests verify it]
+  [2-4 sentences: what was built, which functions/classes added, how tests verify it]
 
   FILES_CHANGED:
-  [file path] — [what changed]
   [file path] — [what changed]
 
   COMMIT: [git hash]
 
-  CONCERNS: [if DONE_WITH_CONCERNS: describe the ambiguity or risk. Otherwise: none.]
-  BLOCKER: [if BLOCKED: exact blocker — missing requirement, conflicting constraint, etc.]
+  CONCERNS: [if DONE_WITH_CONCERNS: describe ambiguity or risk. Otherwise: none.]
+  BLOCKER:  [if BLOCKED: exact blocker — missing requirement, conflicting constraint.]
   QUESTION: [if NEEDS_CONTEXT: one specific clarifying question.]
 ```
 
 ---
 
-## Guidance for the Dispatcher
+## Dispatcher Rules
 
-- **Read before writing:** The implementer must read all files in scope before making any edits.
-- **Ask before assuming:** If the spec is ambiguous on a design decision with multiple valid approaches, the implementer returns `NEEDS_CONTEXT` rather than guessing.
-- **One task per subagent:** Never bundle two tasks into one implementer call.
-- **Worktree isolation:** Always dispatch with `isolation: "worktree"` when the task writes files, to prevent collisions with the parent working tree.
-- **Model selection:** Use `model: "sonnet"` (default) for standard implementation. Use `model: "opus"` only for tasks involving security-sensitive logic, complex algorithmic design, or adversarial edge cases.
+| Condition | Action |
+| :--- | :--- |
+| Spec ambiguous — multiple valid approaches exist | Return `NEEDS_CONTEXT`; do not guess |
+| Task writes files | Dispatch with `isolation: "worktree"` |
+| Security-sensitive, complex algorithmic, or adversarial edge cases | Use `model: "opus"` |
+| Standard implementation | Use `model: "sonnet"` (default) |
+
+**constraint:** Never bundle two tasks into one implementer call.
+**constraint:** Return `NEEDS_CONTEXT` rather than guessing on any ambiguous design decision.

@@ -1,13 +1,13 @@
-# Spec Compliance Reviewer Prompt Template
+# Spec Compliance Reviewer Prompt
 
-Use this template when dispatching the `detective` subagent in Phase 2.
-Fill in every `[FIELD]` before dispatching. The reviewer reads actual code — not the implementer's report.
+**purpose:** Verify implementation matches task spec — nothing more, nothing less.
+**when:** Immediately after implementer returns `DONE` or `DONE_WITH_CONCERNS`.
 
 ---
 
 ## Dispatch Template
 
-```
+```text
 SCOPE:
   Files changed: [list from implementer's FILES_CHANGED]
   Baseline commit: [git hash from BEFORE implementer ran]
@@ -18,45 +18,47 @@ OBJECTIVE:
 
 CONTEXT:
   Task spec (verbatim):
-  [Paste the full original task spec here]
+  [Paste full original task spec — do not paraphrase]
 
-  What the implementer claims they built:
-  [Paste the implementer's SUMMARY verbatim]
+  Implementer's claimed summary:
+  [Paste implementer's SUMMARY verbatim]
 
 CONSTRAINTS:
-  - DO NOT trust the implementer's summary. Verify by reading the actual code.
+  - Do NOT trust the implementer's summary — verify by reading actual code.
   - Read every file listed in FILES_CHANGED.
-  - Compare the actual implementation to the spec line by line.
-  - DO NOT evaluate code quality, style, or test coverage — that is Phase 3's job.
-  - Focus only on: did they build what was asked?
+  - Compare implementation to spec line by line.
+  - Do NOT evaluate code quality, style, or test coverage — that is Phase 3.
+  - Flag only: did they build exactly what was asked?
 
 OUTPUT:
-  Return a single final message with this exact structure:
-
   VERDICT: [SPEC_PASS | SPEC_FAIL]
 
   MISSING_REQUIREMENTS:
-  [list anything the spec required that was NOT implemented — with file:line references]
+  [spec requirement not implemented — file:line reference]
   [or: none]
 
   EXTRA_WORK:
-  [list anything implemented that was NOT in the spec — with file:line references]
+  [implemented but not in spec — file:line reference]
   [or: none]
 
   MISINTERPRETATIONS:
-  [list cases where the implementation solves a different problem than specified]
+  [implementation solves different problem than specified — file:line reference]
   [or: none]
 
   SUMMARY:
-  [2-3 sentences: overall compliance verdict with evidence from code, not from report]
+  [2-3 sentences: compliance verdict with evidence from code, not from report]
 ```
 
 ---
 
-## Guidance for the Dispatcher
+## Dispatcher Rules
 
-- **Run this immediately** after a `DONE` or `DONE_WITH_CONCERNS` from the implementer.
-- **Provide the spec verbatim** — do not paraphrase or summarize. The reviewer compares code to exact requirements.
-- **Supply both commit hashes** so the reviewer can diff and see only what changed.
-- **SPEC_FAIL triggers a fix loop:** Dispatch a new coder subagent with the MISSING_REQUIREMENTS and EXTRA_WORK listed verbatim. Then re-run Phase 2.
-- **Max 2 fix iterations** before surfacing to the user — persistent spec failure signals an ambiguous or conflicting spec.
+| Condition | Action |
+| :--- | :--- |
+| `SPEC_PASS` | Advance to Phase 3 |
+| `SPEC_FAIL` | Dispatch new coder with MISSING_REQUIREMENTS + EXTRA_WORK verbatim; re-run Phase 2 |
+| 2nd `SPEC_FAIL` | Surface to user — spec is ambiguous or conflicting |
+
+**constraint:** Max 2 fix iterations before escalating to user.
+**constraint:** Provide task spec verbatim — never paraphrase.
+**constraint:** Supply both commit hashes so reviewer diffs exactly what changed.
