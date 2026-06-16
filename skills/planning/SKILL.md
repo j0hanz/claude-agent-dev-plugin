@@ -163,7 +163,29 @@ python <skill-dir>/scripts/validate.py "NAME" --review
 
 ### Step 9 — Handoff
 
-Export `plan/NAME.specs.md` + `plan/NAME.plan.md`. The spec says _what_ and _why_; the plan says _how_ and _in what order_. Pass the plan to `test-driven-development` for execution.
+Export `plan/NAME.specs.md` + `plan/NAME.plan.md`. Additionally, generate and write a `plan/NAME.plan.json` containing the structured array of tasks, dependencies, and requirements mapped from the markdown plan. The spec says _what_ and _why_; the plan says _how_ and _in what order_. Pass the plan to `test-driven-development` for execution.
+
+**Required JSON output format (`plan/NAME.plan.json`):**
+Write this structure to `plan/NAME.plan.json` to make inter-skill data extraction deterministic:
+
+```json
+{
+  "name": "NAME",
+  "tasks": [
+    {
+      "id": "TASK-001",
+      "title": "Action title",
+      "depends_on": ["TASK-000"],
+      "files": ["path/to/file.ts"],
+      "symbols": ["functionName"],
+      "satisfies": ["REQ-001", "SEC-002"],
+      "action": "Single specific imperative implementation action.",
+      "validate": "npm test -- path/to/file.test.ts",
+      "expected_result": "Observable success signal"
+    }
+  ]
+}
+```
 
 ## Canonical Task Block
 

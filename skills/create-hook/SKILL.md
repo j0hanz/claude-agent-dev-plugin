@@ -206,6 +206,7 @@ exit 0
 - [ ] Make scripts executable: `chmod +x` (macOS/Linux). Reference via `$CLAUDE_PROJECT_DIR`.
 - [ ] **`Stop`/`SubagentStop` handlers: read `stop_hook_active` from stdin and `exit 0` immediately when it is `true`** — skipping this causes an infinite loop. The block cap fires after 8 consecutive blocks; raise it with `CLAUDE_CODE_STOP_HOOK_BLOCK_CAP`.
 - [ ] Set a sensible `timeout` (seconds); command default is 600, `UserPromptSubmit` caps at 30. Stop hooks running test suites should set a realistic timeout (e.g. 120).
+- [ ] **Define a Timeout Fallback (Dead-Letter):** When a hook script invokes an external process or subagent that might timeout or fail, the script MUST implement a graceful fallback (e.g., return a safe default, log to a dead-letter file, or use shallow heuristics) instead of causing the hook to crash or hang the workflow.
 - [ ] If a profile prints to stdout for non-interactive shells, guard it (`[[ $- == *i* ]]`) — it corrupts hook JSON.
 - [ ] PowerShell handlers require `"shell": "powershell"` in the hook config — without it the command runs under bash/sh and will fail.
 - [ ] Fire-and-forget hooks (logging, notifications) should set `"async": true` to avoid adding latency.

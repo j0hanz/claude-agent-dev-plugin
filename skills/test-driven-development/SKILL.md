@@ -55,11 +55,12 @@ Tests written in bulk verify _imagined_ behavior. By the time you implement the 
 
 ### Phase 2: The GREEN (Implementation)
 
-1. Write the _minimum_ code required to make the test pass.
-2. **NEVER add speculative abstractions.** Agents love to build "robust" architectures prematurely. Stop yourself. If the test requires returning `0`, literally `return 0`.
-3. Run the test.
-4. **If stuck in RED for 3+ attempts**: Your approach is fundamentally flawed.
-   - **Procedure**: Revert the implementation to the last GREEN state. Delete the failing test. Write a _smaller_, simpler test to make fractional progress.
+1. **State Checkpoint:** Before writing the implementation code, create a deterministic rollback point using `git commit -am "WIP: pre-green checkpoint"` (if there are staged/tracked changes) or ensure you have a clean working tree. Do not rely on manual file editing for error recovery.
+2. Write the _minimum_ code required to make the test pass.
+3. **NEVER add speculative abstractions.** Agents love to build "robust" architectures prematurely. Stop yourself. If the test requires returning `0`, literally `return 0`.
+4. Run the test.
+5. **If stuck in RED for 3+ attempts**: Your approach is fundamentally flawed.
+   - **Procedure**: Revert the implementation to the last GREEN state using `git reset --hard HEAD` or `git restore <file>`. Delete the failing test. Write a _smaller_, simpler test to make fractional progress.
 
 ### Phase 3: The REFACTOR (Cleanup)
 

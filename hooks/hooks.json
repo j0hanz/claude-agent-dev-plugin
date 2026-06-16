@@ -49,7 +49,7 @@
     ],
     "PostToolUse": [
       {
-        "matcher": "Edit|Write|MultiEdit",
+        "matcher": "Edit|Write|MultiEdit|write_file|replace",
         "hooks": [
           {
             "type": "command",
@@ -60,6 +60,21 @@
             "type": "command",
             "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" debug scan",
             "timeout": 15
+          },
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" skill-transitions checkWrite",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|run_shell_command",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"${CLAUDE_PLUGIN_ROOT}/hooks/runner.mjs\" skill-transitions checkBash",
+            "timeout": 10
           }
         ]
       }

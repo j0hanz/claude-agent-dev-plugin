@@ -92,6 +92,7 @@ The system prompt **is** the agent — for a subagent it _replaces_ the default 
 - **Design the handoff.** State exactly what the agent returns, because that final message is the _only_ thing the parent keeps. Tool calls and intermediate reasoning are discarded.
 - **One job, fenced.** Boundaries prevent the classic failure: an agent asked to review code that starts rewriting it.
 - **No angle brackets in `description`.** The `description` field must not contain `<` or `>` — use plain words instead of `<example>` tags or `<field-name>` placeholders. `validate_agent.py` warns on `DESC003`; avoid triggering it.
+- **Dead-Letter & Timeout Handling:** If the agent delegates to a subagent or a potentially slow external tool, the system prompt MUST define an explicit fallback procedure. Instruct the agent to fall back to shallow heuristics (like regex search) or partial data if the delegated task times out, ensuring the workflow does not fail completely.
 
 ---
 

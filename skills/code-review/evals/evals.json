@@ -11,7 +11,11 @@
         "The blocking finding identifies the shell injection vulnerability: user_input is interpolated directly into a shell command string with shell=True",
         "The output provides a concrete fix: either use shell=False with a list argument, or sanitize/escape the input",
         "The blocking finding is classified at Tier 1 (security) and is not marked as advisory"
-      ]
+      ],
+      "layer_a_assertions": {
+        "regex_matches": ["FAIL ✗", "Tier 1", "subprocess\\.run"],
+        "required_tools": []
+      }
     },
     {
       "id": 2,

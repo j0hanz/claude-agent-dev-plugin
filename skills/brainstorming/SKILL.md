@@ -66,6 +66,7 @@ Spawn via Agent tool. Do not redo their work manually.
 **Stakeholder probe:** If who will use the feature is not evident from context, ask this one question while the scanner runs: "Who interacts with this feature most — end users, internal teams, or other systems?" This single answer changes Phase 4 design tradeoffs significantly.
 
 Spawn `codebase-scanner` — pass the feature description exactly as stated. Wait for the Codebase Context Report.
+**Timeout / Dead-Letter Fallback:** If `codebase-scanner` times out or fails (e.g. due to repository size), do not fail the workflow. Instead, automatically fall back to shallow regex heuristics: use `grep_search` and `glob` with strict depth limits to map the immediate domain, or explicitly request the user to limit the scope.
 
 Summarize your understanding in one paragraph, drawing from the report: what was found, what constraints exist, what Key Unknowns were flagged, and what you don't know yet. Ask the user to confirm.
 
@@ -203,9 +204,9 @@ Ambiguous responses ("sounds good") → clarify which specific approach they're 
 
 1. Summarize the approved approach in one short paragraph: chosen option and key tradeoffs.
 2. If Phase 2 captured terms or Phase 3 captured risks: offer to write to `glossary.md` or `CONTEXT.md`. **If there are Open TBDs, offer to save them to `TODO.md` or a tracker.**
-3. Produce the Design Brief below and stop — do not invoke `/plan` or write code automatically. Conclude: "You can now use `/plan` to generate a detailed implementation plan based on this brief. Would you like me to start that for you?"
+3. Produce the Design Brief below and write a corresponding `design-brief.json` file to disk. Stop — do not invoke `/plan` or write code automatically. Conclude: "You can now use `/plan` to generate a detailed implementation plan based on this brief. Would you like me to start that for you?"
 
-**Required output format:**
+**Required Markdown output format:**
 
 ```markdown
 ## Design Brief
@@ -236,6 +237,24 @@ Ambiguous responses ("sounds good") → clarify which specific approach they're 
 
 **First step:** [One concrete action to begin — a file to open, a test to write, an interface to define]
 **Open TBDs:** [Unresolved items with owner and due date, or "None"]
+```
+
+**Required JSON output format (`design-brief.json`):**
+Write this structure to `design-brief.json` to make inter-skill data extraction deterministic:
+
+```json
+{
+  "chosen_approach": "Approach letter + name",
+  "why": "Key tradeoff",
+  "scope": "System/component touched",
+  "constraints": ["Constraint 1", "Constraint 2"],
+  "interface": "Input and output description",
+  "architecture": ["Component 1: responsibility"],
+  "acceptance_criteria": ["Given [context], when [action], then [observable result]"],
+  "risks": [{ "risk": "Description", "likelihood": "H/M/L", "mitigation": "Action" }],
+  "first_step": "Action",
+  "open_tbds": ["Unresolved items"]
+}
 ```
 
 > **Downstream note:** The `planning` skill reads this brief directly. The **Scope**, **Constraints**, and **Interface** fields map to planning's intake fields of the same name — planning will skip its interview questions for any field already answered here.

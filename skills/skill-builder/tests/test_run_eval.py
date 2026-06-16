@@ -15,7 +15,7 @@ import scripts.run_eval as run_eval
 
 
 def _run(eval_set, fake, **kwargs):
-    """Invoke run_eval with run_single_query replaced by `fake`."""
+    """Invoke run_eval with _run_single_query_fn injected."""
     defaults = dict(
         skill_name="demo",
         description="desc",
@@ -24,14 +24,10 @@ def _run(eval_set, fake, **kwargs):
         project_root=Path("."),
         runs_per_query=3,
         trigger_threshold=0.5,
+        _run_single_query_fn=fake,
     )
     defaults.update(kwargs)
-    orig = run_eval.run_single_query
-    run_eval.run_single_query = fake
-    try:
-        return asyncio.run(run_eval.run_eval(eval_set=eval_set, **defaults))
-    finally:
-        run_eval.run_single_query = orig
+    return asyncio.run(run_eval.run_eval(eval_set=eval_set, **defaults))
 
 
 def test_all_runs_timeout_are_errors_not_nontriggers():

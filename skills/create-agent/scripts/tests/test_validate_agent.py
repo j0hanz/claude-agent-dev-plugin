@@ -46,9 +46,13 @@ def test_parse_inline_list():
     assert fm["tools"] == ["Read", "Grep", "Glob"]
 
 
-def test_parse_block_list():
+def test_parse_block_list_extracts_list():
     fm = va.parse_frontmatter("skills:\n  - one\n  - two\nmodel: opus")
     assert fm["skills"] == ["one", "two"]
+
+
+def test_parse_block_list_extracts_scalar():
+    fm = va.parse_frontmatter("skills:\n  - one\n  - two\nmodel: opus")
     assert fm["model"] == "opus"
 
 

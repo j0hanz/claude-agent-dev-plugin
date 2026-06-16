@@ -75,6 +75,8 @@ Rank your planned changes before writing a line:
 
 ## Step 4: Execute in Small, Verified Steps
 
+**State Checkpoint**: Before touching any code or beginning the refactor, you MUST create a deterministic rollback point using `git commit -am "WIP: pre-refactor checkpoint"` (if there are staged/tracked changes) or ensure you have a clean working tree. If you make a mistake and tests fail, use `git reset --hard HEAD` or `git restore <file>` to revert to your checkpoint instead of trying to manually un-edit the file.
+
 One change at a time. After each change:
 
 1. Verify the code still does what it did (read the diff, check callers)

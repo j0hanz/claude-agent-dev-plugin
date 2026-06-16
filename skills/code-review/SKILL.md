@@ -13,6 +13,8 @@ Code review is not verification (does it work?) and not architecture (is it well
 
 **Integration Check**: Before proceeding, verify that associated unit tests have passed. If you are unsure, ask the user to confirm that tests passed in the current session or run them using `verification-before-completion`. Do not perform a review if the code hasn't been verified.
 
+**Context Checkpoint**: Because a code review requires deep focus, your context window should not be polluted with early discovery dialogue or debugging logs. Before you begin reviewing the diff, you MUST use the `/compact` or `/clear` command (or the equivalent CLI command in your environment) to clear the conversational history, retaining _only_ the generated artifacts (Specs, Plans) and the diff itself.
+
 ---
 
 ## NEVER

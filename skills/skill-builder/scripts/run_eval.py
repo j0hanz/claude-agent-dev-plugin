@@ -159,12 +159,14 @@ async def run_eval(
     runs_per_query: int = 1,
     trigger_threshold: float = 0.5,
     model: str | None = None,
+    _run_single_query_fn=None,
 ) -> dict:
     semaphore = asyncio.Semaphore(num_workers)
+    run_fn = _run_single_query_fn or run_single_query
 
     async def sem_run_single(item):
         async with semaphore:
-            return await run_single_query(
+            return await run_fn(
                 item["query"],
                 skill_name,
                 description,

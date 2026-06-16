@@ -57,14 +57,14 @@ The value of this methodology is that it forces you to know — not guess — be
 
 **Gate:** Before moving to Phase 3, confirm your loop reproduces the exact failure the user described. If it does not, return to Phase 1.
 
-### Phase 3: Hypothesize
+### Phase 3: Hypothesize & Parallel Execution (Split)
 
 - **Goal:** Generate 3-5 falsifiable hypotheses BEFORE testing.
 - **Format:** "If [X] is the cause, then [Y] will change when I do [Z]."
 - **Ranking:** Bayesian prior: Recent changes > Code logic > Environment/config > External dependency.
-- **Action:** Rank hypotheses and present to user before testing any of them.
+- **Action:** Rank hypotheses, then utilize a **Parallel Split/Join** pattern (Scatter-Gather). Spawn multiple subagents concurrently (e.g., using `invoke_agent` with the `generalist` or `codebase_investigator` agent, setting `wait_for_previous` to `false`) to falsify each distinct hypothesis simultaneously via targeted instrumentation.
 
-**GATE — mandatory stop:** Do not touch any code or run any instrumentation until you have stated the ranked hypothesis list out loud. If the user has not responded, wait. Testing a hypothesis you haven't declared is not debugging — it's guessing.
+**GATE — mandatory stop:** Do not touch any code manually until you have stated the ranked hypothesis list out loud and dispatched the subagents to test them in parallel. Testing hypotheses sequentially when parallel subagents can be used is an anti-pattern.
 
 **Example hypotheses for a KeyError crash:**
 
