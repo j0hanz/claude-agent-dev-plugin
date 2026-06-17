@@ -9,10 +9,26 @@ argument-hint: '[path to plan file]'
 
 Orchestrate sequential task execution with zero context pollution and high quality-assurance.
 
+## NEVER Do This
+
+- **NEVER** skip Phase 2 or 3 to save time. **WHY:** Bypassing gates leads to regression and spec drift.
+- **NEVER** trust a summary. Verify actual code changes yourself.
+- **NEVER** reuse subagents across tasks. **WHY:** Context pollution from previous tasks will cause hallucinations.
+- **NEVER** dispatch a reviewer without reading the prompt file first. **WHY:** Reference paths are NOT automatically resolved by subagents; you must load the text.
+- **NEVER** start implementation without verifying **disjoint file sets**. **WHY:** Parallel or sequential tasks must not overlap on the same files unless dependencies are explicitly managed.
+
 ## Decision Gate
 
 - **Dependencies or shared state?** → **Sequential** (This skill).
 - **Independent tasks?** → **Parallel** (`multi-agent-dispatch`).
+
+## Partitioning & Scope
+
+Before starting Phase 1, you MUST:
+
+1. Identify all files each task in the plan will touch.
+2. Verify no two tasks touch the same file unless they are strictly ordered.
+3. If overlap is found, you MUST consolidate those tasks or ensure the downstream task receives the upstream task's commits as context.
 
 ## The Core Loop (Per Task)
 
@@ -26,13 +42,17 @@ Execute Phases 1 → 2 → 3 in strict order.
 
 ### Phase 2: Spec Compliance Gate
 
-- Dispatch a read-only `general-purpose` agent as Reviewer (`references/spec-reviewer-prompt.md`).
+- **MANDATORY**: Read `references/spec-reviewer-prompt.md` and use its content as the prompt for the Reviewer.
+- Dispatch a read-only `general-purpose` agent as Reviewer.
+- **Contract:** Expect `VERDICT: [SPEC_PASS | SPEC_FAIL]`, `MISSING_REQUIREMENTS`, `EXTRA_WORK`.
 - **Check:** Did implementer build everything? Anything extra?
 - **Failure:** Dispatch implementer to fix. Max 2 attempts before escalating as BLOCKED.
 
 ### Phase 3: Code Quality Gate
 
-- Dispatch a read-only `general-purpose` agent as Quality Auditor (`references/quality-reviewer-prompt.md`).
+- **MANDATORY**: Read `references/quality-reviewer-prompt.md` and use its content as the prompt for the Quality Auditor.
+- Dispatch a read-only `general-purpose` agent as Quality Auditor.
+- **Contract:** Expect `VERDICT: [QUALITY_PASS | CRITICAL | IMPORTANT | MINOR]`, `CRITICAL_ISSUES`, `IMPORTANT_ISSUES`.
 - **Check:** Responsibility, decomposition, error handling, test coverage.
 - **Severity:** `CRITICAL` (Block), `IMPORTANT` (Block), `MINOR` (Log).
 
@@ -45,8 +65,6 @@ Advance only after Phase 3 passes. After ALL tasks pass:
 
 ## Operational Rules
 
-- **NEVER** skip Phase 2 or 3 to save time.
-- **NEVER** trust a summary. Verify actual code.
-- **NEVER** reuse subagents across tasks. Fresh agent per task.
-- **NEVER** start implementation without verifying disjoint file sets.
+- **Fresh agent per task.**
 - **Prompt Discipline:** Subagents start cold. Embed every fact.
+- **Commit Baseline:** Always provide `Baseline commit` and `Implementation commit` to reviewers for precise diffing.

@@ -15,15 +15,29 @@ Verification is valid ONLY when:
 - **Developer Reports:** \"Tests pass, manually verified, no debug logs found.\" (Accept this).
 - **Execution Proof:** Test runner output or manual interaction log (Preferred).
 
+### Manual Exercise Evidence Template
+
+When documenting manual verification, use this format:
+
+```markdown
+### Manual Verification
+
+- **Input:** [Specific values or actions]
+- **Expected:** [Observed side-effect or return]
+- **Observed:** [Actual behavior]
+- **Status:** PASS/FAIL
+```
+
 ## 1. Mandatory Checklist
 
 Before declaring any task done, verify ALL:
 
 - [ ] **Targeted Tests:** Specific tests for changed code MUST pass.
 - [ ] **Regression Suite:** Full test suite runs clean.
-- [ ] **Manual Exercise:** If no automated tests, document inputs/outputs observed.
+- [ ] **Manual Exercise:** If no automated tests, document inputs/outputs observed using the template above.
 - [ ] **Reproduction Proof:** If fixing a bug, confirm original failure was observed, then confirm it is gone.
-- [ ] **Debug Sweep:** `grep` for `console.log`, `debugger`, `print`, `pdb`.
+- [ ] **Debug Sweep:** `grep` for `console.log`, `debugger`, `print`, `pdb`, `TODO`, `FIXME`.
+- [ ] **Linter Sweep:** Ensure no new unused imports or variables were introduced.
 - [ ] **Diff Audit:** Confirm every change is intentional. No accidental files staged.
 
 ## 2. Decision Logic
@@ -48,4 +62,5 @@ Before declaring any task done, verify ALL:
 ## Expert Patterns
 
 - **N-1 Test:** Revert fix → Confirm FAIL → Re-apply fix → Confirm PASS. Eliminates \"false greens\".
+  - **Automation Pattern:** `git stash push -m "temp_fix" && <run_tests> && git stash pop && <run_tests>`
 - **Edge Case Blitz:** Explicitly test `null`, `undefined`, boundary integers, and empty collections.

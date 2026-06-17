@@ -27,20 +27,25 @@ Route, interview, and confirm via `AskUserQuestion` (or 3-option markdown block)
 1. **Explore (Phase 1)**:
    - Detect tech stack (`package.json`, etc.).
    - Run `check_locality.py`, `detect_bleed.py`, `git_coupling.py`, and `detect_hotspots.py`.
-   - Dispatch `general-purpose` agent with `references/dispatch-template.md` for structural analysis.
+   - **Fallback**: If scripts fail to run, manually analyze imports for circularities, use `grep` to find "God" modules (>500 lines or 20+ exports), and check file history for coupling.
+   - Read `references/dispatch-template.md` before dispatching.
+   - Dispatch `general-purpose` agent with the template for structural analysis.
 2. **Present (Phase 2)**: List 3-6 deepening opportunities. Format: [Short Name], [Files], [The Bleed], [The Deepening], [Impact], [Risk], [Mermaid Diagram].
 3. **Align (Phase 3)**:
-   - Conduct `DOMAIN_INTERVIEW.md`.
+   - Read `references/DOMAIN_INTERVIEW.md` and conduct the interview.
    - Propose the Seam (New Interface Shape).
+     - **Requirement**: The proposal MUST include a TypeScript/Python interface definition, a description of the data flow, and a "Before vs. After" dependency graph (Mermaid).
    - Write `architecture-brief.json` (approach, scope, constraints, interface, first_step).
    - Handoff to `refactor` or `planning`.
 
 ## MODE B — DESIGN: Procedure
 
 1. **Diagnose**: Identify Core Domain vs. Mechanism.
-2. **Select Pattern**: Reference `references/architecture-patterns.md`.
+2. **Select Pattern**:
+   - Read `references/architecture-patterns.md` before proceeding.
 3. **Stress Test**: Apply Swap Test (If we swap [mechanism], what changes?).
 4. **Scaffold**: Write `architecture-brief.json` and run `scaffold_boundary.py`.
+   - **Fallback**: If `scaffold_boundary.py` fails, manually create the directory structure and interface files based on the brief.
 
 ## Core Heuristics
 

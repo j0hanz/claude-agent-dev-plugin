@@ -23,9 +23,11 @@ Confirm the bug matches the report. Achievement of >50% reproduction rate is man
 
 ## Phase 3: Hypothesize & Falsify (Parallel Split)
 
+- Read `references/phases.md` for guidance on the scientific falsification method before generating hypotheses.
+
 1. **Generate Hypotheses:** 3-5 falsifiable hypotheses using Bayesian priors (Recent Changes > Logic > Env).
 2. **Format:** \"If [X] is the cause, then [Y] will change when I do [Z].\"
-3. **Dispatch Gate:** If hypotheses are independent, invoke `multi-agent-dispatch` to test in parallel.
+3. **Dispatch Gate:** If hypotheses are independent (i.e., they test different modules, layers, or subsystems that don't share state), invoke `multi-agent-dispatch` to test in parallel.
 
 ## Phase 4: Instrumentation (Targeted Probes)
 

@@ -10,7 +10,10 @@ Structured discovery to prevent rework. Always run for new features or ambiguous
 ## Phase 1: Discovery
 
 1. **Stakeholder Probe:** Ask who uses the feature (end users, internal, systems?).
-2. **Codebase Scan:** Dispatch `general-purpose` subagent with `references/codebase-scanner-prompt.md`.
+2. **Codebase Scan:**
+   - Read `references/codebase-scanner-prompt.md` before dispatching.
+   - Dispatch `general-purpose` subagent with the prompt.
+   - **Integration**: Upon subagent completion, extract the "Contextual Findings," "Potential Blockers," and "Architectural Fit" sections. These MUST be used to ground the Understanding Statement.
 3. **Understanding Statement:** Summarize what was found, constraints, and Key Unknowns. Ask for confirmation.
 4. **Adaptive Routing:**
    - **Scope S + No Unknowns:** Jump to Phase 4 (Design).
@@ -63,3 +66,5 @@ Produce mandatory `markdown-kv` brief:
 - Skipping brainstorming because "it's obvious".
 - Assumed terminology (e.g., Account vs. Customer).
 - Capturing "HOW" (code) before "WHAT" (domain).
+  mization and rigid designs.
+- **NEVER** proceed without an explicit Approval Gate: Proceeding on assumptions guarantees misalignment with user intent.

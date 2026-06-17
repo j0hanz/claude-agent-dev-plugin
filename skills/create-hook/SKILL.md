@@ -21,8 +21,10 @@ Evaluate if a hook is the optimal tool:
 ## 1. Procedure: 7 Strict Decisions
 
 1. **Name the Guarantee:** `When <trigger>, <action> MUST <result>`. (One sentence).
-2. **Pick the Event:** Map trigger to earliest lifecycle event (see `references/events.md`).
+2. **Pick the Event:**
+   - Read `references/events.md` completely to select the correct lifecycle event for the trigger.
 3. **Pick Handler Type:** `command` (default), `http`, `prompt`, `agent`.
+   - **Templates**: Reference `references/recipes.md` for implementation examples and hook "recipes."
 4. **Pick Matcher (+ `if`):** Use narrowest regex and argument filters. Tool events only.
 5. **Pick Scope:** `user | project (committed) | local (ignored) | plugin`.
 6. **Write the Handler (I/O Contract):**

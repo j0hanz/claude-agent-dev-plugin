@@ -23,17 +23,17 @@ Lifecycle management for Claude Agent Skills. Optimized for performance and trig
    - **description:** \"Pushy\" intent triggers. No angle brackets.
    - **body:** Strict imperative form. No \"you should\" or \"maybe\".
 3. **Audit:** Dispatch `general-purpose` agent to check triggering effectiveness.
+   - **Red Flags:** Vague triggers, tool overlap with existing skills, nested loops in instructions, missing I/O contracts.
 
 ## Step 2: Test Definition
 
 Save cases to `evals/evals.json`.
 
-```json
-{
-  "skill_name": "example-skill",
-  "evals": [{ "id": 1, "prompt": "Task", "expectations": ["Assertion A"] }]
-}
-```
+**Baseline Guidance:**
+
+- **Runs:** Minimum 3 runs per eval case to account for variance.
+- **Temperature:** Set `0.0` for deterministic flows, `0.7` for creative drafting.
+- **Diversity:** Include at least one \"negative\" case (where skill should NOT trigger).
 
 ## Step 3: Eval Loop (Iteration N)
 
@@ -43,6 +43,12 @@ Save cases to `evals/evals.json`.
 4. **Grade:** Dispatch agent to score assertions. Save to `grading.json`.
 5. **Aggregate:** `python -m scripts.aggregate_benchmark <workspace>/iteration-N`
 6. **Viewer:** Launch `generate_review.py`. Provide clickable link.
+
+**Error Recovery:**
+
+- **Timeout:** If subagent hangs, check `run_log.txt` in worktree. Rerun with `--timeout 300`.
+- **Disk Full:** `skill-builder` creates worktrees. Run `git worktree prune` if space is low.
+- **Grading Fail:** If grading agent is hallucinating, manually override `grading.json` and aggregate.
 
 ## Step 4: Improvement Loop
 

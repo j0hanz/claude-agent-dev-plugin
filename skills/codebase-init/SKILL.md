@@ -40,15 +40,20 @@ python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" analyze-all . -
 
 This sequentially runs `analyze-env` (package manager, test runner, linter, monorepo structure), `find-dependencies` (installed dependency directories), and `scan-structure` (directory tree, respecting `.gitignore`).
 
-**Manual Fallback:** If the script can't run, inspect `package.json`, `tsconfig.json`, `pytest.ini`, `.github/workflows/`, and root structure directly. Never hallucinate tools.
+**Manual Fallback:** If the script fails, you MUST manually perform the discovery:
+
+1. **Toolchain**: Inspect `package.json` (Node), `pyproject.toml`/`requirements.txt` (Python), `go.mod` (Go), etc., to identify the package manager, test runner, and linter.
+2. **Structure**: Use `ls -R` (limited depth) to map the directory tree and identify core source folders.
+3. **Workflows**: Check `.github/workflows/` or `.gitlab-ci.yml` for automated CI commands.
+   Never hallucinate tools.
 
 ## Phase 1.5: Architecture Mapping
 
-**Required:** Read `references/phase-1.5-architecture.md` to pick the `--language` value for Phase 2 and detect tech stack patterns.
+Read `references/phase-1.5-architecture.md` to pick the `--language` value for Phase 2 and detect tech stack patterns.
 
 ## Phase 2: Draft
 
-**Required:** Generate the skeleton — don't hand-write or hand-copy one. Run:
+Generate the skeleton — don't hand-write or hand-copy one. Run:
 
 ```bash
 python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" scaffold-agents-md \
@@ -91,3 +96,11 @@ Every drafted `AGENTS.md` must satisfy the Required Sections below, in order —
 ## Audit Mode
 
 If the user only wants to validate an existing `AGENTS.md` (no regeneration), skip Phases 0/1/1.5/2 entirely: run `python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" lint-agents-md AGENTS.md` and report the issues found.
+
+## NEVER
+
+- **NEVER** hallucinate tools or commands: Only document what is actually present in the project.
+- **NEVER** hand-write or hand-copy the `AGENTS.md` skeleton: Always use the `scaffold-agents-md` command to ensure correct schema and marker placement.
+- **NEVER** copy/symlink full content into `CLAUDE.md`/`GEMINI.md`: These must be one-line redirect stubs to save token context.
+- **NEVER** reorder the `AGENTS.md` sections by hand: Maintain the standard order for consistency across agents.
+- **NEVER** leave placeholder TODOs in the final file: Every convention and command must be grounded in reality.

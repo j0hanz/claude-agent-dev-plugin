@@ -24,6 +24,7 @@ Agents are high-cost primitives. Use only for isolation, parallelism, or reusabl
 1. **Job Definition:** "This agent <verb + object> so that <main-thread benefit>." (One sentence).
 2. **Primitive Selection:** Subagent | Agent Team | Workflow | Managed Agent.
 3. **System Prompt (markdown-kv):**
+   - Read `references/system-prompt-craft.md` for instructions on writing effective agent prompts.
    - **Role:** Specific persona and single job.
    - **Objective:** Concrete measurable goal.
    - **Procedure:** Ordered imperative steps.
@@ -53,4 +54,6 @@ Agents are high-cost primitives. Use only for isolation, parallelism, or reusabl
 - **Context Bleed:** Too much irrelevant parent history. Use `worktree` and allowlists.
 - **Tool Blindness:** Focus on "what" without tool "how". Add tool-specific steps to Procedure.
 - **Infinite Loops:** Missing termination counters in multi-agent flows.
+- **Permission Bloat:** Using `bypassPermissions` by default.
+  s:\*\* Missing termination counters in multi-agent flows.
 - **Permission Bloat:** Using `bypassPermissions` by default.

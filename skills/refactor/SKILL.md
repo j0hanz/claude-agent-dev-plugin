@@ -19,18 +19,21 @@ Build a mental model before touching code:
 ## Step 2: Pain Point Mapping
 
 If vague, ask: \"What is the hardest part of working with this code?\"
-| Pain | Likely Problem | Rationale |
-| :--- | :--- | :--- |
-| \"Hard to add cases\" | Missing Abstraction | Use Strategy, Enum, or Factory. |
-| \"Hard to understand\" | Poor Naming / Bloat | Rename, extract helpers. |
-| \"Copy-pasted\" | Duplication | Extract shared utility (DRY). |
-| \"Tests breaking\" | Hidden Coupling | Dependency injection, concern separation. |
+
+**MANDATORY**: If the pain point is vague or complex, you MUST read `references/smell-catalog.md` to accurately diagnose the issue.
+
+| Pain                   | Likely Problem      | Rationale                                 |
+| :--------------------- | :------------------ | :---------------------------------------- |
+| \"Hard to add cases\"  | Missing Abstraction | Use Strategy, Enum, or Factory.           |
+| \"Hard to understand\" | Poor Naming / Bloat | Rename, extract helpers.                  |
+| \"Copy-pasted\"        | Duplication         | Extract shared utility (DRY).             |
+| \"Tests breaking\"     | Hidden Coupling     | Dependency injection, concern separation. |
 
 ## Step 3: Priority & Risk
 
-1. **Low Risk (First):** Rename misnomers, replace magic literals, remove dead code, early returns.
+1. **Low Risk (First):** Rename misnomers, replace magic literals, remove dead code, early returns. **DO NOT load `patterns.md` for these changes.**
 2. **Medium Risk:** Split functions, extract classes, introduce types/interfaces.
-3. **High Risk (Confirm First):** Reorganize modules, change public API signatures, apply Observer/Strategy patterns.
+3. **High Risk (Confirm First):** Reorganize modules, change public API signatures, apply Observer/Strategy patterns. **MANDATORY**: Before applying a pattern, read `references/patterns.md`.
 
 ## Step 4: Hidden Bug Protocol
 

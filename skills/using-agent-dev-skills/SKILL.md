@@ -12,7 +12,7 @@ Global entry point for agent-dev plugin coordination. Follow this gated diagnost
 1. **Run Diagnostic Gates:** Evaluate the current task through the 3-Gate decision tree before any action.
 2. **Invoke Immediately:** Once a route is identified, immediately activate and follow that skill.
 3. **Notify:** Output one line: `Routing to \`<skill-name>\`: <reason>.`
-4. **No Skips:** Do NOT skip because a task seems "simple" or "quick". Every change deserves the appropriate rigor.
+4. **No Skips:** Do NOT skip because a task seems \"simple\" or \"quick\". Every change deserves the appropriate rigor.
 
 ## Diagnostic Decision Tree
 
@@ -27,7 +27,7 @@ Global entry point for agent-dev plugin coordination. Follow this gated diagnost
 
 ### Gate 2: Is this a systemic issue or localized?
 
-- **IF** the code has circular dependencies, "God classes", or boundary violations:
+- **IF** the code has circular dependencies, \"God classes\", or boundary violations:
   -> **ROUTE TO:** `architecture`
 - **IF** the issue is localized to a messy function or single file:
   -> **ROUTE TO:** `refactor`
@@ -38,16 +38,27 @@ Global entry point for agent-dev plugin coordination. Follow this gated diagnost
 
 ### Gate 3: Execution Strategy
 
-- **IF** tasks are completely independent (no shared state):
+- **IF** tasks are completely independent (no shared state) AND wall-time is the primary constraint:
   -> **ROUTE TO:** `multi-agent-dispatch`
-- **IF** tasks must be done sequentially:
+- **IF** tasks must be done sequentially OR if token-context usage must be minimized:
   -> **ROUTE TO:** `multi-agent-development`
-- **IF** tasks are a mixed DAG (some independent, some depend on others — e.g. 3 independent tasks plus 1 that depends on all 3):
-  -> **ROUTE TO:** `multi-agent-development`, instructed to batch the independent tasks into one wave (parallel implementer dispatches per wave) with one gated review per wave, instead of forcing strict one-task-at-a-time sequencing.
+- **IF** tasks are a mixed DAG:
+  -> **ROUTE TO:** `multi-agent-development`, instructed to batch the independent tasks into one wave with gated reviews.
 - **IF** writing standard code (single focused feature/fix):
   -> **ROUTE TO:** `test-driven-development` ⚠️
 
 ⚠️ **Agentic Skill Warning:** `test-driven-development` and `request-code-review` execute autonomously. Output `This will start an autonomous session (~N calls). Proceed?` and wait for user confirmation.
+
+## Mandatory Rules (NEVER List)
+
+- **NEVER** route to `test-driven-development` if Gate 1 (spec/plan) is not fully GREEN.
+- **NEVER** skip `architecture` for `refactor` if changes span 3+ files or cross module boundaries.
+- **NEVER** use `multi-agent-dispatch` if tasks have _any_ shared mutable state or logical dependencies.
+- **NEVER** ignore the `diagnose` step when a bug is encountered during a feature implementation.
+
+## Reference Library
+
+- **Lifecycle:** [lifecycle.md](references/lifecycle.md) (Mermaid diagram and state transitions).
 
 ## Auxiliary Skills
 
@@ -55,45 +66,6 @@ Global entry point for agent-dev plugin coordination. Follow this gated diagnost
 - **Delivery:** `github-automation`.
 - **Ecosystem Building:** `skill-builder`, `create-agent`, `create-hook`.
 - **Documentation:** `codebase-init`.
-
-## Lifecycle Chain
-
-```mermaid
-graph TD
-    Start((Start)) --> G1{Gate 1: Defined?}
-    G1 -- No/Vague --> B[brainstorming]
-    G1 -- Needs Plan --> P[planning]
-    G1 -- Yes --> G2{Gate 2: Scope?}
-
-    B --> P
-    P --> G2
-
-    G2 -- Systemic --> ARC[architecture]
-    G2 -- Localized --> REF[refactor]
-    G2 -- Debugging --> DIAG[diagnose]
-    G2 -- Feature --> G3{Gate 3: Strategy}
-
-    ARC --> G3
-    REF --> G3
-    DIAG --> G3
-
-    G3 -- Parallel --> MAD[multi-agent-dispatch]
-    G3 -- Sequential --> MDEV[multi-agent-development]
-    G3 -- "Mixed DAG" --> MDEV
-    G3 -- Standard --> TDD[test-driven-development]
-
-    MAD --> V[verification-before-completion]
-    MDEV --> V
-    TDD --> V
-
-    V --> RCR[request-code-review]
-    RCR -- PASS --> GH[github-automation]
-    RCR -- FAIL --> RECV[receive-code-review]
-    RECV -- "Tier 1/2" --> DIAG
-    RECV -- "Tier 4" --> REF
-    TDD -- "GREEN failure escalation" --> DIAG
-    TDD -- "spec ambiguous" --> P
-```
 
 ## Skip Disclaimer
 

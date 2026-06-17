@@ -28,9 +28,14 @@ Execute exactly ONE scenario per cycle. **NEVER** batch tests (No horizontal sli
 ### Phase 1: RED (The Failing Test)
 
 1. Write the simplest possible test for a single core behavior.
-2. **Run Test:** Execute the runner.
-3. **Analyze Failure:**
-   - **Environment Fail:** (Missing module/import) → Write minimal stub → Rerun.
+2. **Stubbing:** Write the **minimal** stub (e.g., `pass` in Python, `return null` in TS) to allow the test to compile and run. **DO NOT** implement any logic yet.
+3. **Run Test:** Execute the runner.
+   - **Runner Integration:**
+     - **pytest:** Look for `FAILED` or `ERROR`. Check `Captured stderr` for logs.
+     - **vitest/jest:** Look for `FAIL`. Check `AssertionError` diffs.
+     - **go test:** Look for `--- FAIL`.
+4. **Analyze Failure:**
+   - **Environment Fail:** (Missing module/import) → Fix environment → Rerun.
    - **Assertion Fail:** (Correct RED) → Proceed to Green.
    - **Pass?** → Delete and rewrite (tautology check).
 
@@ -45,7 +50,12 @@ Execute exactly ONE scenario per cycle. **NEVER** batch tests (No horizontal sli
 ### Phase 3: REFACTOR (Cleanup)
 
 1. Enter ONLY when current tests are GREEN.
-2. **Action:** DRY logic, rename misnomers, flatten nesting.
+2. **Action:** Perform surgical improvements.
+   - **Refactoring Candidates:**
+     - **Rename:** Misnamed variables or functions.
+     - **Decompose:** Large functions into smaller ones.
+     - **Flatten:** Nested if/else blocks (use guard clauses).
+     - **DRY:** Extract common logic to helpers.
 3. **Rule:** Refactor and Implementation MUST be separate tool calls. Run tests between them.
 
 ## Mandatory Rules
