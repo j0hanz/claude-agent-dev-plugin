@@ -196,7 +196,7 @@ Phase 3 — Code quality:
 2. failures → invoke diagnose skill
 3. invoke verification-before-completion
 4. invoke code-review
-5. invoke github-automation to open PR
+5. Prompt the user to run `/github-automation` to open the PR — it requires user invocation and cannot be triggered automatically
 ```
 
 ---
@@ -212,7 +212,7 @@ Phase 3 — Code quality:
 | :------------------------------- | :--------------------------------------------------- |
 | `verification-before-completion` | After all tasks pass both gates and tests pass       |
 | `code-review`                    | After verification passes                            |
-| `github-automation`              | To open the PR                                       |
+| `github-automation`              | Prompt the user to run `/github-automation` to open the PR — requires user invocation |
 | `diagnose`                       | When npm test fails after all tasks                  |
 | `multi-agent-dispatch`           | For any tasks in the plan that are fully independent |
 

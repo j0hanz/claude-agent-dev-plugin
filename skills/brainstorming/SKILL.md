@@ -280,4 +280,3 @@ Prefer `planning` skill when requirements are clear. Prefer direct implementatio
 - **Requirements feel incomplete** — Ask to explore edge cases, failure modes, or "what should NOT happen."
 - **Brainstorm diverges from goal** — Add a constraint upfront (e.g., "only changes within the hook layer, no new agents").
 - **Success Criteria** — All ambiguous terms defined, scope boundaries clear, key design decisions documented with rationale, no open questions remain.
-  daries clear, key design decisions documented with rationale, no open questions remain.

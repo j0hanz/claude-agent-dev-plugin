@@ -271,6 +271,3 @@ python '<skill-dir>/scripts/package_skill.py' <path/to/skill-folder>
 - `agents/analyzer.md`: Benchmark data interpretation.
 - `references/schemas.md`: JSON schema definitions.
 - `references/cowork.md`: Headless environment workflow.
-  agents/analyzer.md`: Benchmark data interpretation.
-- `references/schemas.md`: JSON schema definitions.
-- `references/cowork.md`: Headless environment workflow.

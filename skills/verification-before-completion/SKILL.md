@@ -52,6 +52,8 @@ State explicitly what could not be verified and why, so the user can decide how 
 
 **No test suite exists:** If there are no automated tests and the feature cannot be exercised manually (e.g., a background job, a webhook handler), document exactly what was changed, what the expected behavior is, and what would need to be true for the change to be correct. Mark verification as INCOMPLETE and surface it to the user before proceeding.
 
+**Regression or failing test found:** If verification surfaces a regression or a failing test, invoke `diagnose` to find the root cause before re-attempting completion — do not re-run verification against the same unresolved failure.
+
 ## Transition
 
 Once all applicable checklist items are confirmed (whether verified by you or reported by the developer):

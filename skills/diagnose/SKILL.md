@@ -62,9 +62,9 @@ Use semantic search or `grep_search` on `references/feedback-loops.md` to retrie
 - **Goal:** Generate 3-5 falsifiable hypotheses BEFORE testing.
 - **Format:** "If [X] is the cause, then [Y] will change when I do [Z]."
 - **Ranking:** Bayesian prior: Recent changes > Code logic > Environment/config > External dependency.
-- **Action:** Rank hypotheses, then utilize a **Parallel Split/Join** pattern (Scatter-Gather). For parallel investigation, invoke the `multi-agent-dispatch` skill. Dispatch one `detective` agent (read-only) per ranked hypothesis to falsify each distinct hypothesis simultaneously via targeted instrumentation.
+- **Action:** Rank hypotheses, then utilize a **Parallel Split/Join** pattern (Scatter-Gather). For parallel investigation, invoke the `multi-agent-dispatch` skill. Dispatch one `detective` agent (read-only) per ranked hypothesis to falsify each distinct hypothesis simultaneously via targeted instrumentation. Exception: a single domain you already fully understand should be tested sequentially, not via dispatch — see `multi-agent-dispatch`'s dispatch gate.
 
-**GATE — mandatory stop:** Do not touch any code manually until you have stated the ranked hypothesis list out loud and dispatched the subagents to test them in parallel. Testing hypotheses sequentially when parallel subagents can be used is an anti-pattern.
+**GATE — mandatory stop:** Do not touch any code manually until you have stated the ranked hypothesis list out loud and dispatched the subagents to test them in parallel (unless the sequential exception above applies). Testing hypotheses sequentially when parallel subagents can be used is an anti-pattern.
 
 **Example hypotheses for a KeyError crash:**
 
@@ -148,6 +148,6 @@ Proceed directly to implementation (skipping this skill) when the bug location i
 ### Troubleshooting
 
 - **Diagnose skill can't find root cause** — Provide a stack trace or exact failing assertion instead of a high-level description.
-- **Fix applied but tests still fail** — The identified root cause may have been a symptom. Re-run the diagnose skill with the new failure as input.
-- **New failures appear after fix** — Stop. Revert changes to confirm scope, then re-diagnose with the regression as input.
+- **Fix applied but tests still fail** — The identified root cause may have been a symptom. Re-run the diagnose skill with the new failure as input. After 2 attempts without a passing fix, stop and surface to the user as BLOCKED instead of re-diagnosing indefinitely.
+- **New failures appear after fix** — Stop. Revert changes to confirm scope, then re-diagnose with the regression as input. After 2 attempts without a passing fix, stop and surface to the user as BLOCKED instead of re-diagnosing indefinitely.
 - **Success Criteria** — Root cause identified (not just symptom fixed), fix is minimal and targeted (no unrelated changes), all tests pass after the fix, and no regressions are introduced.

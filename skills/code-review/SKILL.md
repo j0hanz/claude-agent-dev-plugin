@@ -226,7 +226,10 @@ When in doubt, lean advisory — the goal is to unblock delivery, not to gatekee
 After Phase 3:
 
 - **PASS** → prompt the user to run `/github-automation` to open a pull request or merge — that skill requires user invocation and cannot be triggered automatically
-- **FAIL** → route back to implementation; re-run this skill **only after the developer confirms all blocking issues are resolved** — do not re-review the same unchanged code, and do not downgrade blocking findings to advisory to unblock delivery
+- **FAIL** → route to a concrete target based on the blocking issue type, then re-run this skill **only after the developer confirms all blocking issues are resolved** — do not re-review the same unchanged code, and do not downgrade blocking findings to advisory to unblock delivery:
+  - Correctness or security issues → invoke `diagnose`
+  - Structural issues (coupling, God modules, poor decomposition) → invoke `refactor`
+  - Otherwise → return to the originating implementation skill
 
 Do not merge or submit the pull request until code review returns PASS with zero blocking issues.
 
