@@ -43,8 +43,7 @@ Before declaring any task done, verify ALL:
 
 ## Transition
 
-1. **Non-trivial changes:** Invoke `code-review`.
-2. **Delivery:** Prompt user: \"Run \`/github-automation\` to submit the PR.\" (Cannot trigger automatically).
+1. **Non-trivial changes:** Invoke `code-review`. (`code-review` owns the final delivery handoff prompt.)
 
 ## Expert Patterns
 

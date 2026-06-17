@@ -11,6 +11,10 @@ disallowed-tools: Write, Edit
 
 Focused scan for correctness, security, and hygiene regressions.
 
+## Step 0: Confirm
+
+This will start an autonomous session (~N calls). Proceed? Wait for explicit user confirmation before scanning.
+
 ## Pre-Review Checkpoint
 
 1. **Verification:** Confirm unit tests passed (`verification-before-completion`).
@@ -71,6 +75,17 @@ Scan in strict priority order. Stop and block on any Tier 1.
 - Tier 3 (Performance): [concise summary]
 - Tier 4 (Reuse/API): [concise summary]
 ```
+
+## FAIL Transition
+
+- **Tier 1 / Tier 2 (Blocking, Security or Correctness):** Invoke `diagnose` to root-cause the issue.
+- **Tier 4 (Blocking, Reuse/Hygiene):** Invoke `refactor` to restructure.
+- After the fix lands, re-enter `verification-before-completion` before returning here for re-review.
+
+## Transition
+
+1. **PASS:** Prompt user: "Run `/github-automation` to open the PR."
+2. **FAIL:** Follow the FAIL Transition above, then re-review once fixed.
 
 ## NEVER
 

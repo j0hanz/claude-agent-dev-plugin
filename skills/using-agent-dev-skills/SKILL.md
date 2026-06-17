@@ -42,6 +42,8 @@ Global entry point for agent-dev plugin coordination. Follow this gated diagnost
   -> **ROUTE TO:** `multi-agent-dispatch`
 - **IF** tasks must be done sequentially:
   -> **ROUTE TO:** `multi-agent-development`
+- **IF** tasks are a mixed DAG (some independent, some depend on others — e.g. 3 independent tasks plus 1 that depends on all 3):
+  -> **ROUTE TO:** `multi-agent-development`, instructed to batch the independent tasks into one wave (parallel implementer dispatches per wave) with one gated review per wave, instead of forcing strict one-task-at-a-time sequencing.
 - **IF** writing standard code (single focused feature/fix):
   -> **ROUTE TO:** `test-driven-development` ⚠️
 
@@ -77,6 +79,7 @@ graph TD
 
     G3 -- Parallel --> MAD[multi-agent-dispatch]
     G3 -- Sequential --> MDEV[multi-agent-development]
+    G3 -- "Mixed DAG" --> MDEV
     G3 -- Standard --> TDD[test-driven-development]
 
     MAD --> V[verification-before-completion]
@@ -84,7 +87,11 @@ graph TD
     TDD --> V
 
     V --> CR[code-review]
-    CR --> GH[github-automation]
+    CR -- PASS --> GH[github-automation]
+    CR -- "FAIL (Tier 1/2)" --> DIAG
+    CR -- "FAIL (Tier 4)" --> REF
+    TDD -- "GREEN failure escalation" --> DIAG
+    TDD -- "spec ambiguous" --> P
 ```
 
 ## Skip Disclaimer

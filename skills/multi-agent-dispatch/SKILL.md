@@ -24,7 +24,7 @@ Answer BOTH before spawning:
    - **Investigator (Read-only):** Trace root cause, provide fix as code block. No edits.
    - **Writer (Isolation: worktree):** Implement spec, write tests, report changes.
    - **Researcher (Read-only):** Explore code/docs, report file paths and usages.
-3. **LAUNCH:** Emit ALL `Agent` calls in **ONE message** for true concurrency.
+3. **LAUNCH:** Before launching, enumerate each subagent's intended write-paths (from its SCOPE) and diff them against every other subagent's write-paths. If any overlap is found, fail closed: do NOT launch in parallel — defer to `multi-agent-development` instead. Only if disjoint, emit ALL `Agent` calls in **ONE message** for true concurrency.
 4. **INTEGRATE:** Reconcile findings/diffs. Run full project validation.
 
 ## Subagent Prompt Contract (Zero-Shot)

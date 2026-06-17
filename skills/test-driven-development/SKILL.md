@@ -8,6 +8,10 @@ user-invocable: true
 
 Autonomous TDD execution. **HARD GATE:** No implementation code WITHOUT a failing test.
 
+## Step 0: Confirm
+
+This will start an autonomous session (~N calls). Proceed? Wait for explicit user confirmation before writing any test.
+
 ## 0. Pre-TDD: Interface Definition
 
 Document the public surface before writing tests:
@@ -36,6 +40,7 @@ Execute exactly ONE scenario per cycle. **NEVER** batch tests (No horizontal sli
 2. **Action:** Write the **absolute minimum** code to pass the specific test.
 3. **Constraint:** No speculative abstractions or \"just-in-case\" logic.
 4. **Failure:** If stuck for 3+ attempts, revert implemention and write a smaller test.
+5. **Escalation:** If a smaller test still fails 3+ times on the same scenario, STOP looping. Invoke `diagnose` if the implementation is the blocker, or return to `planning` if the spec/scenario itself is ambiguous or conflicting.
 
 ### Phase 3: REFACTOR (Cleanup)
 

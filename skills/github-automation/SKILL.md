@@ -47,5 +47,4 @@ Secure, high-performance GitHub automation.
 
 ## Transition
 
-1. **Pass:** Prompt user: \"Run \`/github-automation\` to open the PR.\"
-2. **Fail:** Invoke `diagnose` or `refactor` based on blocking issue type.
+1. **Fail:** Invoke `diagnose` or `refactor` based on blocking issue type.
