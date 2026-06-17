@@ -48,12 +48,12 @@ This sequentially runs `analyze-env` (package manager, test runner, linter, mono
 
 ## Required Sections
 
-| Section            | Requirement                                                               |
-| :----------------- | :------------------------------------------------------------------------ |
-| **H1 Header**      | `# Agent Instructions` or `# <Project> Agent Instructions`                |
-| **Description**    | Single sentence immediately following H1.                                 |
-| **Toolchain**       | Package manager and critical environment commands.                        |
-| **File Commands**  | Table of file-targeted typecheck/lint/test commands.                      |
-| **Conventions**    | 3-7 specific, actionable bullets (e.g., "Use AppError for all rethrows"). |
-| **Hard Rules**      | Exactly 3 imperative bullets covering commit policy, project maturity, and testing rigor — derived from the Phase 0 survey answers. |
-| **Attribution**    | `Co-Authored-By: <Model Name>` at end of file.                            |
+| Section           | Requirement                                                                                                                         |
+| :---------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| **H1 Header**     | `# Agent Instructions` or `# <Project> Agent Instructions`                                                                          |
+| **Description**   | Single sentence immediately following H1.                                                                                           |
+| **Toolchain**     | Package manager and critical environment commands.                                                                                  |
+| **File Commands** | Table of file-targeted typecheck/lint/test commands.                                                                                |
+| **Conventions**   | 3-7 specific, actionable bullets (e.g., "Use AppError for all rethrows").                                                           |
+| **Hard Rules**    | Exactly 3 imperative bullets covering commit policy, project maturity, and testing rigor — derived from the Phase 0 survey answers. |
+| **Attribution**   | `Co-Authored-By: <Model Name>` at end of file.                                                                                      |

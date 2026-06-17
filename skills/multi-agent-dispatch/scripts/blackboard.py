@@ -10,9 +10,10 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 BLACKBOARD_FILE = PROJECT_ROOT / ".agent_blackboard.json"
 LOCK_FILE = BLACKBOARD_FILE.with_suffix(".json.lock")
 
+
 def acquire_lock(timeout=10, retry_interval=0.05):
     """
-    Acquire a lock using a lock file. 
+    Acquire a lock using a lock file.
     Uses os.O_EXCL for atomic creation on Windows and Linux.
     """
     start_time = time.time()
@@ -21,7 +22,7 @@ def acquire_lock(timeout=10, retry_interval=0.05):
             # os.O_CREAT | os.O_EXCL ensures atomicity
             fd = os.open(str(LOCK_FILE), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
             try:
-                os.write(fd, str(os.getpid()).encode('utf-8'))
+                os.write(fd, str(os.getpid()).encode("utf-8"))
             finally:
                 os.close(fd)
             return True
@@ -31,6 +32,7 @@ def acquire_lock(timeout=10, retry_interval=0.05):
             # On Windows, sometimes PermissionError is raised if the file is being deleted or in a weird state
             time.sleep(retry_interval)
     return False
+
 
 def release_lock():
     """
@@ -42,6 +44,7 @@ def release_lock():
     except (FileNotFoundError, PermissionError):
         pass
 
+
 def read_blackboard():
     """
     Reads the blackboard JSON file. Assumes lock is held.
@@ -49,7 +52,7 @@ def read_blackboard():
     if not BLACKBOARD_FILE.exists():
         return {}
     try:
-        with open(BLACKBOARD_FILE, 'r', encoding='utf-8') as f:
+        with open(BLACKBOARD_FILE, "r", encoding="utf-8") as f:
             content = f.read()
             if not content.strip():
                 return {}
@@ -58,17 +61,19 @@ def read_blackboard():
         # Re-raise to avoid overwriting blackboard with {} on transient read failures
         raise
 
+
 def write_blackboard(data):
     """
     Writes the blackboard JSON file. Assumes lock is held.
     """
     # Write to a temporary file first for extra safety, though lock should handle it
     temp_file = BLACKBOARD_FILE.with_suffix(".json.tmp")
-    with open(temp_file, 'w', encoding='utf-8') as f:
+    with open(temp_file, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
-    
+
     # Atomic replace
     os.replace(temp_file, BLACKBOARD_FILE)
+
 
 def read(key):
     """
@@ -83,6 +88,7 @@ def read(key):
     else:
         raise TimeoutError(f"Could not acquire lock for reading {key}")
 
+
 def write(key, value):
     """
     Write a key-value pair to the blackboard with locking.
@@ -96,6 +102,7 @@ def write(key, value):
             release_lock()
     else:
         raise TimeoutError(f"Could not acquire lock for writing {key}={value}")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Shared Context Blackboard CLI")
@@ -125,6 +132,7 @@ def main():
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
+
 
 if __name__ == "__main__":
     main()
