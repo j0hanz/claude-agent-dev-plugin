@@ -6,7 +6,7 @@ A Claude Code plugin for authoring and maintaining skills and hooks — structur
 
 ## Overview
 
-Agent Dev Plugin extends Claude Code with 14 skills and 8 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on every session event to keep development disciplined. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
+Agent Dev Plugin extends Claude Code with 15 skills and 8 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on every session event to keep development disciplined. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
 
 | Aspect              | Detail                       |
 | :------------------ | :--------------------------- |
@@ -20,7 +20,7 @@ Agent Dev Plugin extends Claude Code with 14 skills and 8 lifecycle hooks coveri
 
 | Feature                  | Description                                                                                                                                    |
 | :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| 14 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                   |
+| 15 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                   |
 | Subagent orchestration   | `multi-agent-dispatch` and `multi-agent-development` drive every `general-purpose` subagent dispatch — no custom agent definitions to maintain |
 | 8 lifecycle hooks        | Fire on session events to enforce workflow discipline automatically                                                                            |
 | Marketplace install      | One-command install from GitHub — no manual clone required                                                                                     |
@@ -71,7 +71,7 @@ claude --plugin-dir ./claude-agent-dev-plugin
 
 ## What's Included
 
-### Skills (14)
+### Skills (15)
 
 Skills are invoked automatically by Claude based on task context, or manually with `/skill-name`.
 
@@ -83,7 +83,8 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 | `create-hook`                    | "create hook", "add hook", "hook for X"                    | Design and test lifecycle hooks                                |
 | `skill-builder`                  | "make skill", "build skill", "run evals"                   | Create, test, and optimize skills                              |
 | `diagnose`                       | "debug", "fix crash", "not working", "why is this failing" | Root-cause debugging before any fix                            |
-| `code-review`                    | "review", "check this", "is this correct"                  | Quality gate — correctness and simplification                  |
+| `request-code-review`            | "review", "check this", "is this correct"                  | Dispatches a fresh-context subagent to review the diff         |
+| `receive-code-review`            | "reviewer said", "PR comments"                             | Verify, push back on, and implement review feedback            |
 | `refactor`                       | "clean up", "refactor", "simplify", "messy"                | Structural improvements                                        |
 | `test-driven-development`        | "TDD", "write tests", "implement this"                     | Red-green-refactor workflow                                    |
 | `architecture`                   | "architecture", "structure", "how is this organized"       | Codebase structural analysis                                   |
@@ -94,12 +95,13 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 
 ### Subagent Dispatch
 
-There are no custom agent definitions in this plugin. Every dispatch uses the built-in `general-purpose` agent, configured per task through the prompt — read-only investigator, worktree-isolated implementer, doc writer, etc. Two skills own this:
+There are no custom agent definitions in this plugin. Every dispatch uses the built-in `general-purpose` agent, configured per task through the prompt — read-only investigator, worktree-isolated implementer, doc writer, etc. Three skills own this:
 
-| Skill                     | Pattern                                                                          |
-| :------------------------ | :------------------------------------------------------------------------------- |
-| `multi-agent-dispatch`    | Parallel fan-out — one `general-purpose` agent per independent domain, one batch |
-| `multi-agent-development` | Sequential — one `general-purpose` implementer per plan task, two review gates   |
+| Skill                     | Pattern                                                                                            |
+| :------------------------ | :------------------------------------------------------------------------------------------------- |
+| `multi-agent-dispatch`    | Parallel fan-out — one `general-purpose` agent per independent domain, one batch                   |
+| `multi-agent-development` | Sequential — one `general-purpose` implementer per plan task, two review gates                     |
+| `request-code-review`     | Read-only — one fresh-context `general-purpose` reviewer per diff, no memory of the implementation |
 
 > [!NOTE]
 > Read-only roles (investigator, scanner) are a prompt constraint, not a tool restriction — the dispatching skill must state "never use Write/Edit/Bash" explicitly. Implementer roles run in an isolated git worktree (`isolation: "worktree"`).

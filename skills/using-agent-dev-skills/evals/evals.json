@@ -42,12 +42,12 @@
     ]
   },
   {
-    "name": "route-to-code-review",
+    "name": "route-to-request-code-review",
     "prompt": "review this diff for bugs before I merge",
     "should_trigger": true,
     "assertions": [
-      "Routing announcement: 'Routing to code-review:'",
-      "code-review skill is invoked"
+      "Routing announcement: 'Routing to request-code-review:'",
+      "request-code-review skill is invoked"
     ]
   },
   {

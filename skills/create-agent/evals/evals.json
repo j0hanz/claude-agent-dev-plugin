@@ -26,7 +26,7 @@
     "should_trigger": false,
     "assertions": [
       "create-agent skill does not trigger",
-      "Request is routed to refactor or code-review skill instead"
+      "Request is routed to refactor or request-code-review skill instead"
     ]
   }
 ]

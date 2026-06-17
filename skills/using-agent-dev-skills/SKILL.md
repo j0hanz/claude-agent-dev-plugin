@@ -47,11 +47,11 @@ Global entry point for agent-dev plugin coordination. Follow this gated diagnost
 - **IF** writing standard code (single focused feature/fix):
   -> **ROUTE TO:** `test-driven-development` ⚠️
 
-⚠️ **Agentic Skill Warning:** `test-driven-development` and `code-review` execute autonomously. Output `This will start an autonomous session (~N calls). Proceed?` and wait for user confirmation.
+⚠️ **Agentic Skill Warning:** `test-driven-development` and `request-code-review` execute autonomously. Output `This will start an autonomous session (~N calls). Proceed?` and wait for user confirmation.
 
 ## Auxiliary Skills
 
-- **Quality/Validation:** `verification-before-completion`, `code-review`.
+- **Quality/Validation:** `verification-before-completion`, `request-code-review`, `receive-code-review`.
 - **Delivery:** `github-automation`.
 - **Ecosystem Building:** `skill-builder`, `create-agent`, `create-hook`.
 - **Documentation:** `codebase-init`.
@@ -86,10 +86,11 @@ graph TD
     MDEV --> V
     TDD --> V
 
-    V --> CR[code-review]
-    CR -- PASS --> GH[github-automation]
-    CR -- "FAIL (Tier 1/2)" --> DIAG
-    CR -- "FAIL (Tier 4)" --> REF
+    V --> RCR[request-code-review]
+    RCR -- PASS --> GH[github-automation]
+    RCR -- FAIL --> RECV[receive-code-review]
+    RECV -- "Tier 1/2" --> DIAG
+    RECV -- "Tier 4" --> REF
     TDD -- "GREEN failure escalation" --> DIAG
     TDD -- "spec ambiguous" --> P
 ```

@@ -1,6 +1,6 @@
 # Code Review Pattern Catalog
 
-Extended reference for Phase 2 findings. Load this file when you need a precise name, canonical description, or example fix for a pattern. Do not load by default.
+Extended reference for the dispatched reviewer subagent's Tier 1-4 findings (see `reviewer-dispatch-prompt.md`). Load this file when you need a precise name, canonical description, or example fix for a pattern. Do not load by default.
 
 ---
 
