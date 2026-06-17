@@ -121,7 +121,7 @@ PATTERNS = {
             },
             {
                 "rel": f"commands/create-{domain}.command.ts",
-                "content": f"// Command — intent to mutate state\nexport class Create{pascal_name}Command {{\n  constructor(public readonly payload: any) {{}}\n}}\n\nexport class Create{pascal_name}Handler {{\n  async handle(command: Create{pascal_name}Command): Promise<void> {{\n    # 1. Load write model\n    # 2. Execute logic\n    # 3. Save write model\n    # 4. Dispatch event\n  }}\n}}\n",
+                "content": f"// Command — intent to mutate state\nexport class Create{pascal_name}Command {{\n  constructor(public readonly payload: any) {{}}\n}}\n\nexport class Create{pascal_name}Handler {{\n  async handle(command: Create{pascal_name}Command): Promise<void> {{\n    // 1. Load write model\n    // 2. Execute logic\n    // 3. Save write model\n    // 4. Dispatch event\n  }}\n}}\n",
             },
             {
                 "rel": f"queries/get-{domain}.query.ts",
@@ -141,7 +141,18 @@ def to_pascal(s: str) -> str:
     return "".join(w.capitalize() for w in words if w)
 
 
+_SAFE_DOMAIN_RE = re.compile(r"^[a-zA-Z0-9_-]+$")
+
+
 def scaffold(domain: str, pattern: str, output_dir: str, force: bool = False) -> None:
+    if not _SAFE_DOMAIN_RE.match(domain):
+        print(
+            f"Invalid domain: {domain!r}. Domain must match {_SAFE_DOMAIN_RE.pattern} "
+            "(no path separators or traversal segments).",
+            file=sys.stderr,
+        )
+        sys.exit(1)
+
     if pattern not in PATTERNS:
         print(
             f"Unknown pattern: {pattern}. Available: {', '.join(PATTERNS.keys())}",
@@ -150,7 +161,14 @@ def scaffold(domain: str, pattern: str, output_dir: str, force: bool = False) ->
         sys.exit(1)
 
     def_pattern = PATTERNS[pattern]
-    base_dir = os.path.abspath(os.path.join(output_dir, domain))
+    out_root = os.path.abspath(output_dir)
+    base_dir = os.path.abspath(os.path.join(out_root, domain))
+    if os.path.commonpath([out_root, base_dir]) != out_root:
+        print(
+            f"Refusing to scaffold outside output_dir: {base_dir}",
+            file=sys.stderr,
+        )
+        sys.exit(1)
     pascal_name = to_pascal(domain)
 
     print(f'\nScaffolding "{pattern}" boundary for domain "{domain}"')

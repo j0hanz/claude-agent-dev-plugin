@@ -14,13 +14,13 @@ warn=""
 if [[ -n "$COMMAND" ]]; then
   declare -A _checks
   checks=(
-    'rm\s+-rf:force-remove pattern'
-    'git\s+push\s+(-f|--force):force-push pattern'
+    'rm\s+(-[a-z]*r[a-z]*f[a-z]*|-[a-z]*f[a-z]*r[a-z]*|--recursive\s+--force|--force\s+--recursive|-r\s+-f|-f\s+-r):force-remove pattern'
+    'git\s+push\b.*(\s-f\b|--force\b|--force-with-lease\b):force-push pattern'
     'DROP\s+TABLE:SQL DROP TABLE'
     'TRUNCATE\s+TABLE:SQL TRUNCATE TABLE'
     'git\s+reset\s+--hard:hard reset pattern'
     'git\s+checkout\s+--:checkout -- discard changes'
-    '>\s*/dev/null.*rm:redirect to null with rm'
+    'rm\s+-[a-z]*r[a-z]*f[a-z]*.*>\s*/dev/null:silenced force-remove pattern'
   )
   for entry in "${checks[@]}"; do
     pattern="${entry%%:*}"

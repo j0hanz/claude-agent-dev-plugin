@@ -59,6 +59,20 @@ def split_ref(ref: str) -> tuple[str, str, str]:
     return repo, subpath, rev
 
 
+class RateLimited(Exception):
+    """Raised when a `gh api` call fails due to GitHub API rate limiting."""
+
+
+def _check_rate_limited(result: subprocess.CompletedProcess) -> None:
+    if result.returncode == 0:
+        return
+    blob = (result.stderr or "") + (result.stdout or "")
+    if "rate limit" in blob.lower() or "API rate limit exceeded" in blob:
+        raise RateLimited(
+            blob.strip().splitlines()[-1] if blob.strip() else "rate limited"
+        )
+
+
 def resolve_via_gh(repo: str, rev: str) -> str | None:
     if not shutil.which("gh"):
         return None
@@ -71,6 +85,7 @@ def resolve_via_gh(repo: str, rev: str) -> str | None:
                 text=True,
                 timeout=15,
             )
+            _check_rate_limited(result)
             if result.returncode == 0 and '"sha"' in result.stdout:
                 sha = _extract_sha(result.stdout)
                 if sha:
@@ -81,6 +96,7 @@ def resolve_via_gh(repo: str, rev: str) -> str | None:
                         text=True,
                         timeout=15,
                     )
+                    _check_rate_limited(deref)
                     if deref.returncode == 0 and '"object"' in deref.stdout:
                         commit_sha = _extract_object_sha(deref.stdout)
                         if commit_sha:
@@ -93,6 +109,7 @@ def resolve_via_gh(repo: str, rev: str) -> str | None:
             text=True,
             timeout=15,
         )
+        _check_rate_limited(result)
         if result.returncode == 0:
             return _extract_sha(result.stdout)
     except (subprocess.TimeoutExpired, OSError):
@@ -141,7 +158,10 @@ def _extract_object_sha(json_text: str) -> str | None:
 
 
 def resolve(repo: str, rev: str) -> str | None:
-    return resolve_via_gh(repo, rev) or resolve_via_ls_remote(repo, rev)
+    # RateLimited propagates to the caller so it can be reported distinctly
+    # from a genuine "ref not found" failure.
+    sha = resolve_via_gh(repo, rev)
+    return sha or resolve_via_ls_remote(repo, rev)
 
 
 def process_line(
@@ -164,7 +184,13 @@ def process_line(
     key = (repo, rev)
     sha = cache.get(key)
     if not sha:
-        sha = resolve(repo, rev)
+        try:
+            sha = resolve(repo, rev)
+        except RateLimited as e:
+            sys.stderr.write(
+                f"  ! rate limited while resolving {repo}@{rev} ({e}) — retry later\n"
+            )
+            return line, "failed"
         if sha:
             cache[key] = sha
     if not sha:

@@ -16,12 +16,40 @@ debug() {
 # JSONL file helpers
 # ---------------------------------------------------------------------------
 
+# _jsonl_lock <file>  — acquire a short-lived mutex for <file> via atomic mkdir.
+# Echoes 1 on success, 0 on failure (caller should proceed best-effort either way).
+_jsonl_lock() {
+  local file="$1" lockdir="${1}.lockdir" tries=0
+  while ! mkdir "$lockdir" 2>/dev/null; do
+    # Break a stale lock (older than 5s — these critical sections are sub-millisecond).
+    if [[ -d "$lockdir" ]]; then
+      local age
+      age=$(( $(date +%s) - $(stat -c %Y "$lockdir" 2>/dev/null || stat -f %m "$lockdir" 2>/dev/null || echo 0) ))
+      if (( age > 5 )); then
+        rmdir "$lockdir" 2>/dev/null || true
+        continue
+      fi
+    fi
+    tries=$(( tries + 1 ))
+    (( tries > 100 )) && { echo 0; return; }
+    sleep 0.02
+  done
+  echo 1
+}
+
+_jsonl_unlock() {
+  rmdir "${1}.lockdir" 2>/dev/null || true
+}
+
 # append_jsonl <rel_path> <json_line>
 append_jsonl() {
   local rel="$1" line="$2"
   local file="${PROJECT_DIR}/${rel}"
   mkdir -p "$(dirname "$file")" 2>/dev/null || true
+  local locked
+  locked=$(_jsonl_lock "$file")
   printf '%s\n' "$line" >> "$file" || true
+  [[ "$locked" == "1" ]] && _jsonl_unlock "$file"
 }
 
 # read_jsonl_tail <rel_path> <n>  — prints up to n last non-empty lines
@@ -37,12 +65,15 @@ trim_jsonl() {
   local rel="$1" max="$2"
   local file="${PROJECT_DIR}/${rel}"
   [[ -f "$file" ]] || return 0
+  local locked
+  locked=$(_jsonl_lock "$file")
   local count
   count=$(grep -c . "$file" 2>/dev/null || echo 0)
   if (( count > max )); then
     local tmp="${file}.tmp.$$"
     tail -n "$max" "$file" > "$tmp" && mv "$tmp" "$file" || rm -f "$tmp"
   fi
+  [[ "$locked" == "1" ]] && _jsonl_unlock "$file"
 }
 
 # ---------------------------------------------------------------------------

@@ -14,6 +14,7 @@ from __future__ import annotations
 
 import argparse
 import fnmatch
+import os
 import sys
 import zipfile
 from pathlib import Path
@@ -97,10 +98,12 @@ def package_skill(
         output_path = Path.cwd()
 
     skill_filename = output_path / f"{skill_name}.skill"
+    tmp_filename = output_path / f"{skill_name}.skill.tmp"
 
-    # Create the .skill file (zip format)
+    # Create the .skill file (zip format) in a temp file, then atomically
+    # replace the final filename so a failed run never leaves a partial archive.
     try:
-        with zipfile.ZipFile(skill_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
+        with zipfile.ZipFile(tmp_filename, "w", zipfile.ZIP_DEFLATED) as zipf:
             # Walk through the skill directory, excluding build artifacts
             for file_path in sorted(skill_path.rglob("*")):
                 if not file_path.is_file():
@@ -114,11 +117,13 @@ def package_skill(
                 zipf.write(file_path, arcname)
                 print(f"  Added: {arcname}")
 
+        os.replace(tmp_filename, skill_filename)
         print(f"\nOK: Successfully packaged skill to: {skill_filename}")
         return skill_filename
 
     except (OSError, zipfile.BadZipFile) as e:
         print(f"ERROR: Error creating .skill file: {e}")
+        tmp_filename.unlink(missing_ok=True)
         return None
 
 

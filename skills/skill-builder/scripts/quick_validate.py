@@ -64,6 +64,8 @@ def validate_skill(skill_path: Path | str) -> tuple[bool, str]:
     if not isinstance(name, str):
         return False, f"Name must be a string, got {type(name).__name__}"
     name = name.strip()
+    if not name:
+        return False, "Name cannot be empty"
     if name:
         # Check naming convention (kebab-case: lowercase with hyphens)
         if not re.match(r"^[a-z0-9-]+$", name):
@@ -88,6 +90,8 @@ def validate_skill(skill_path: Path | str) -> tuple[bool, str]:
     if not isinstance(description, str):
         return False, f"Description must be a string, got {type(description).__name__}"
     description = description.strip()
+    if not description:
+        return False, "Description cannot be empty"
     if description:
         # Check for angle brackets
         if "<" in description or ">" in description:

@@ -216,7 +216,7 @@ def validate(path: Path) -> Report:
     rep = Report(str(path))
     try:
         text = path.read_text(encoding="utf-8")
-    except OSError as e:
+    except (OSError, UnicodeDecodeError) as e:
         rep.error("IO", f"cannot read file: {e}")
         return rep
 

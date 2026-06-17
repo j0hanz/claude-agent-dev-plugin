@@ -39,6 +39,9 @@ class SpecDocument:
     vals: set[str] = field(default_factory=set)
     cons: set[str] = field(default_factory=set)
     raw_lines: list[str] = field(default_factory=list)
+    # (heading, id) pairs found under a heading that didn't match any known
+    # section category — these IDs were NOT added to reqs/acs/vals/cons.
+    unclassified: list[tuple[str, str]] = field(default_factory=list)
 
 
 # ---------------------------------------------------------------------------
@@ -125,14 +128,22 @@ def parse_spec(path: str | Path) -> SpecDocument:
                         or id_str.startswith("CON-")
                     ):
                         doc.reqs.add(id_str)
+                    else:
+                        doc.unclassified.append((current_section, id_str))
                 elif "constraints" in sec_lower:
                     if id_str.startswith("CON-"):
                         doc.cons.add(id_str)
+                    else:
+                        doc.unclassified.append((current_section, id_str))
                 elif "acceptance criteria" in sec_lower or "validation" in sec_lower:
                     if id_str.startswith("AC-"):
                         doc.acs.add(id_str)
                     elif id_str.startswith("VAL-"):
                         doc.vals.add(id_str)
+                    else:
+                        doc.unclassified.append((current_section, id_str))
+                else:
+                    doc.unclassified.append((current_section, id_str))
 
     _flush_section()
     return doc

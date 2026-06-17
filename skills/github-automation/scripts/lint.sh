@@ -37,10 +37,12 @@ if [[ ${#files[@]} -eq 0 ]]; then
 fi
 
 # -------- Tier 1: actionlint --------
+al_rc=0
 if command -v actionlint >/dev/null 2>&1; then
   echo "linter: actionlint"
   actionlint "${files[@]}"
-  exit $?
+  al_rc=$?
+  echo
 fi
 
 # -------- Tier 2: yamllint (YAML-only) --------
@@ -126,6 +128,7 @@ done
 
 # Final exit code: any failure bubbles up.
 rc=0
+[[ $al_rc -ne 0 ]] && rc=1
 [[ $yl_rc -ne 0 ]] && rc=1
 [[ $parse_rc -ne 0 ]] && rc=1
 [[ $crit_rc -ne 0 ]] && rc=1

@@ -27,7 +27,7 @@ def walk_dir(
             return files
 
         for entry in os.scandir(root_dir):
-            if entry.name in exclude:
+            if any(pat in entry.name for pat in exclude):
                 continue
 
             if entry.is_dir(follow_symlinks=True):

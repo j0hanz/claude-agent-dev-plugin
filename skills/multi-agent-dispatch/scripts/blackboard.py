@@ -10,11 +10,78 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
 BLACKBOARD_FILE = PROJECT_ROOT / ".agent_blackboard.json"
 LOCK_FILE = BLACKBOARD_FILE.with_suffix(".json.lock")
 
+STALE_LOCK_SECONDS = 60
+
+
+def _pid_is_alive(pid):
+    """
+    Best-effort liveness check for a PID, cross-platform.
+    Returns True if the process appears to be alive, False if it is
+    definitely gone, and True (fail-safe) if liveness can't be determined.
+    """
+    if pid is None:
+        return True
+    if sys.platform == "win32":
+        try:
+            import ctypes
+
+            PROCESS_QUERY_LIMITED_INFORMATION = 0x1000
+            handle = ctypes.windll.kernel32.OpenProcess(
+                PROCESS_QUERY_LIMITED_INFORMATION, False, pid
+            )
+            if not handle:
+                return False
+            ctypes.windll.kernel32.CloseHandle(handle)
+            return True
+        except Exception:
+            return True
+    else:
+        try:
+            os.kill(pid, 0)
+            return True
+        except ProcessLookupError:
+            return False
+        except (PermissionError, OSError):
+            return True
+
+
+def _read_lock_holder():
+    """
+    Returns (pid, mtime) for the current lock file, or (None, None) if it
+    can't be read (e.g. it was removed concurrently).
+    """
+    try:
+        mtime = LOCK_FILE.stat().st_mtime
+        content = LOCK_FILE.read_text(encoding="utf-8").strip()
+        pid = int(content) if content.isdigit() else None
+        return pid, mtime
+    except (FileNotFoundError, ValueError, OSError):
+        return None, None
+
+
+def _break_stale_lock():
+    """
+    Removes the lock file if its holder is stale: either the PID is no
+    longer alive, or the lock has existed longer than STALE_LOCK_SECONDS.
+    """
+    pid, mtime = _read_lock_holder()
+    if mtime is None:
+        return
+    age = time.time() - mtime
+    if age < STALE_LOCK_SECONDS and _pid_is_alive(pid):
+        return
+    try:
+        LOCK_FILE.unlink()
+    except (FileNotFoundError, PermissionError, OSError):
+        pass
+
 
 def acquire_lock(timeout=10, retry_interval=0.05):
     """
     Acquire a lock using a lock file.
     Uses os.O_EXCL for atomic creation on Windows and Linux.
+    A lock held by a dead process, or older than STALE_LOCK_SECONDS, is
+    treated as abandoned and reclaimed instead of blocking forever.
     """
     start_time = time.time()
     while time.time() - start_time < timeout:
@@ -27,6 +94,7 @@ def acquire_lock(timeout=10, retry_interval=0.05):
                 os.close(fd)
             return True
         except FileExistsError:
+            _break_stale_lock()
             time.sleep(retry_interval)
         except PermissionError:
             # On Windows, sometimes PermissionError is raised if the file is being deleted or in a weird state

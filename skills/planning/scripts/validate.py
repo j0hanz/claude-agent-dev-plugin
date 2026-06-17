@@ -149,6 +149,16 @@ def validate_spec(
     if level != "sketch" and not spec.cons:
         warnings.append("[SPEC] No constraints (CON-###) defined.")
 
+    # 5. Unclassified IDs — found under a heading that didn't match any known
+    # section category, so they were silently excluded from reqs/acs/vals/cons.
+    for heading, id_str in spec.unclassified:
+        warnings.append(
+            f"[SPEC] {id_str} found under unrecognized heading '{heading}' — "
+            "not counted toward any requirement/AC/VAL/CON set. Rename the "
+            "heading to include 'Requirements', 'Constraints', "
+            "'Acceptance Criteria', or 'Validation'."
+        )
+
     return errors, warnings
 
 

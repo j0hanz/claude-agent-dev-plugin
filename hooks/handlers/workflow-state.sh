@@ -4,7 +4,7 @@
 
 # Source helpers
 set -euo pipefail
-source "$(dirname "$0")/../lib.sh"
+source "${BASH_SOURCE[0]%/*}/../lib.sh"
 
 INPUT=$(cat)
 TOOL=$(jq -r '.tool_name // ""' <<< "$INPUT")
