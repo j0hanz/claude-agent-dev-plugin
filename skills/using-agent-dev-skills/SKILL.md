@@ -42,8 +42,12 @@ Global entry point for agent-dev plugin coordination. Follow this routing logic 
 ```mermaid
 graph TD
     A[brainstorming] --> B[planning]
-    B --> C[multi-agent-development]
-    C --> D[verification-before-completion]
+    B --> C1[multi-agent-development]
+    B --> C2[test-driven-development]
+    B --> C3[multi-agent-dispatch]
+    C1 --> D[verification-before-completion]
+    C2 --> D
+    C3 --> D
     D --> E[code-review]
     E --> F[github-automation]
 ```

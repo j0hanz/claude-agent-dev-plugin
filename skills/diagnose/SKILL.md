@@ -48,6 +48,11 @@ Instrument code dynamically.
 - [ ] **Verification:** Verify fix via the Phase 1 loop.
 - [ ] **Clean-up:** Delete throwaway scripts or promote to test suite.
 
+## Transition
+
+- **From Verification:** If triggered by a regression in `verification-before-completion`, return to that skill after Phase 6 for re-verification.
+- **From Implementation:** If triggered during `test-driven-development` or `multi-agent-development`, return to the current task/phase in the parent skill.
+
 ## Required Final Output
 
 ```markdown

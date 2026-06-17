@@ -54,7 +54,7 @@ Dispatch `general-purpose` agent to audit quality (vague goals, missing error ca
 
 ## Step 5: Handoff
 
-Pass plan to `test-driven-development` or `multi-agent-development`.
+Pass plan to `test-driven-development`, `multi-agent-development`, or `multi-agent-dispatch` (for independent task clusters).
 
 ## Canonical Task Block
 

@@ -42,8 +42,6 @@ Advance only after Phase 3 passes. After ALL tasks pass:
 
 1. `npm test && npm run validate`
 2. Invoke `verification-before-completion`
-3. Invoke `code-review`
-4. Prompt user to run `/github-automation` for PR.
 
 ## Operational Rules
 

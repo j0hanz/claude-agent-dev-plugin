@@ -1,6 +1,6 @@
 ---
 name: architecture
-description: "Use when a codebase has system-level structural problems (circular deps, God modules, package/service boundary issues) or when designing new systems. Trigger on 'architecture review', 'where should this code live', 'too coupled', 'God class', 'design this system'."
+description: "Use when a codebase has system-level structural problems (circular deps, God modules, package/service boundary issues) or when designing new systems. Trigger on 'architecture review', 'where should this code live', 'too coupled', 'God class', 'design this system', 'restructure this'."
 disable-model-invocation: false
 allowed-tools: Bash(node *), Bash(python *), AskUserQuestion
 ---

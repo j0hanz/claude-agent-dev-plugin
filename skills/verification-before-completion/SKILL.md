@@ -28,12 +28,12 @@ Before declaring any task done, verify ALL:
 
 ## 2. Decision Logic
 
-| Status                | Action                                                          |
-| :-------------------- | :-------------------------------------------------------------- |
-| **CI-Only?**          | State: \"Blocked by CI. Wait for pipeline GREEN.\"              |
-| **No Test Suite?**    | Document changes and expected behavior. Mark as **INCOMPLETE**. |
-| **Regression Found?** | Stop. Invoke `diagnose` for root-cause analysis.                |
-| **Complete?**         | Transition to `code-review`.                                    |
+| Status             | Action                                                          |
+| :----------------- | :-------------------------------------------------------------- |
+| **CI-Only?**       | State: \"Blocked by CI. Wait for pipeline GREEN.\"              |
+| **No Test Suite?** | Document changes and expected behavior. Mark as **INCOMPLETE**. |
+| Regression Found?  | Stop. Invoke `diagnose`. Return here once fixed.                |
+| **Complete?**      | Transition to `code-review`.                                    |
 
 ## 3. Critical Failure Modes
 
