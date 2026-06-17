@@ -1,63 +1,88 @@
 ---
 name: using-agent-dev-skills
-description: "Entry-point meta-skill for the agent-dev plugin. Check at session start or when uncertain which skill to use. Routes tasks to the correct agent-dev skill: brainstorming, planning, test-driven-development, multi-agent-development, multi-agent-dispatch, diagnose, code-review, refactor, architecture, create-agent, create-hook, skill-builder, github-automation, verification-before-completion, agents-maintainer. Trigger on 'where do I start', 'which skill', 'how does this work', 'about to open a PR', 'ready to merge', or at the beginning of any new task in this repo."
+description: Semantic orchestrator for the agent-dev plugin. Analyzes task maturity, scope, and execution requirements to route development tasks to specialized skills.
 ---
 
 # using-agent-dev-skills
 
-Global entry point for agent-dev plugin coordination. Follow this routing logic for ALL tasks.
+Global entry point for agent-dev plugin coordination. Follow this gated diagnostic flow for ALL tasks to ensure optimal skill routing.
 
 ## Rules
 
-1. **Check Table First:** Evaluate before any action.
-2. **Invoke Immediately:** If a signal matches, route to that skill.
+1. **Run Diagnostic Gates:** Evaluate the current task through the 3-Gate decision tree before any action.
+2. **Invoke Immediately:** Once a route is identified, immediately activate and follow that skill.
 3. **Notify:** Output one line: `Routing to \`<skill-name>\`: <reason>.`
-4. **No Skips:** Do NOT skip because a task seems \"simple\" or \"quick\".
+4. **No Skips:** Do NOT skip because a task seems "simple" or "quick". Every change deserves the appropriate rigor.
 
-## Routing Table
+## Diagnostic Decision Tree
 
-| Signal                                               | Skill                            |
-| :--------------------------------------------------- | :------------------------------- |
-| \"build X\", \"new feature\", Ambiguous design       | `brainstorming`                  |
-| \"write spec\", \"create plan\"                      | `planning`                       |
-| Implementation, writing code, functions              | `test-driven-development` ⚠️     |
-| \"broken\", \"debug\", Production error, Traceback   | `diagnose`                       |
-| \"review this\", Before opening PR                   | `code-review`                    |
-| \"clean up\", \"refactor\", \"simplify\"             | `refactor`                       |
-| \"architecture review\", \"God class\", Coupled code | `architecture`                   |
-| \"add hook\", \"auto-format\", Lifecycle guards      | `create-hook`                    |
-| \"build agent\", \"subagent\", Agent prompt error    | `create-agent`                   |
-| \"in parallel\", \"fan out\", 2+ independent tasks   | `multi-agent-dispatch`           |
-| \"implement plan\", \"build all tasks\"              | `multi-agent-development`        |
-| \"make skill\", \"skill not working\"                | `skill-builder`                  |
-| \"add CI\", GitHub Actions, `gh` CLI                 | `github-automation`              |
-| \"done\", \"ready to merge\"                         | `verification-before-completion` |
-| \"update AGENTS.md\", \"onboard me\"                 | `agents-maintainer`              |
+### Gate 1: Is the task fully defined?
+- **IF** the user has a vague idea, OR if there is no documented specification:
+  -> **ROUTE TO:** `brainstorming`
+- **IF** there is an idea, but we need a concrete execution plan and architecture:
+  -> **ROUTE TO:** `planning`
+- **IF** the spec and plan exist:
+  -> **Proceed to Gate 2.**
 
-⚠️ **Agentic Skill Warning:** `test-driven-development` and `code-review` execute autonomously.
-**Confirm:** Output `This will start an autonomous session (~N calls). Proceed?` and wait for user confirmation.
+### Gate 2: Is this a systemic issue or localized?
+- **IF** the code has circular dependencies, "God classes", or boundary violations:
+  -> **ROUTE TO:** `architecture`
+- **IF** the issue is localized to a messy function or single file:
+  -> **ROUTE TO:** `refactor`
+- **IF** we are actively debugging a crash or traceback:
+  -> **ROUTE TO:** `diagnose`
+- **IF** implementing a planned feature:
+  -> **Proceed to Gate 3.**
+
+### Gate 3: Execution Strategy
+- **IF** tasks are completely independent (no shared state):
+  -> **ROUTE TO:** `multi-agent-dispatch`
+- **IF** tasks must be done sequentially:
+  -> **ROUTE TO:** `multi-agent-development`
+- **IF** writing standard code (single focused feature/fix):
+  -> **ROUTE TO:** `test-driven-development` ⚠️
+
+⚠️ **Agentic Skill Warning:** `test-driven-development` and `code-review` execute autonomously. Output `This will start an autonomous session (~N calls). Proceed?` and wait for user confirmation.
+
+## Auxiliary Skills
+
+- **Quality/Validation:** `verification-before-completion`, `code-review`.
+- **Delivery:** `github-automation`.
+- **Ecosystem Building:** `skill-builder`, `create-agent`, `create-hook`.
+- **Documentation:** `agents-maintainer`.
 
 ## Lifecycle Chain
 
 ```mermaid
 graph TD
-    A[brainstorming] --> B[planning]
-    B --> C1[multi-agent-development]
-    B --> C2[test-driven-development]
-    B --> C3[multi-agent-dispatch]
-    C1 --> D[verification-before-completion]
-    C2 --> D
-    C3 --> D
-    D --> E[code-review]
-    E --> F[github-automation]
+    Start((Start)) --> G1{Gate 1: Defined?}
+    G1 -- No/Vague --> B[brainstorming]
+    G1 -- Needs Plan --> P[planning]
+    G1 -- Yes --> G2{Gate 2: Scope?}
+    
+    B --> P
+    P --> G2
+    
+    G2 -- Systemic --> ARC[architecture]
+    G2 -- Localized --> REF[refactor]
+    G2 -- Debugging --> DIAG[diagnose]
+    G2 -- Feature --> G3{Gate 3: Strategy}
+    
+    ARC --> G3
+    REF --> G3
+    DIAG --> G3
+    
+    G3 -- Parallel --> MAD[multi-agent-dispatch]
+    G3 -- Sequential --> MDEV[multi-agent-development]
+    G3 -- Standard --> TDD[test-driven-development]
+    
+    MAD --> V[verification-before-completion]
+    MDEV --> V
+    TDD --> V
+    
+    V --> CR[code-review]
+    CR --> GH[github-automation]
 ```
-
-## Quick-Start Gates
-
-1. **No spec?** → `brainstorming` → `planning`
-2. **Crash/Failure?** → `diagnose`
-3. **Done?** → `verification-before-completion` → `code-review`
-4. **Building Meta?** → `skill-builder` | `create-agent` | `create-hook`
 
 ## Skip Disclaimer
 
