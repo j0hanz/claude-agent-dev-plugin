@@ -428,6 +428,19 @@ _GENERIC_ADVICE_RE = re.compile(
     re.IGNORECASE,
 )
 _FILE_SCOPED_COMMANDS_RE = re.compile(r"##\s+file-scoped commands", re.IGNORECASE)
+_HARD_RULES_MARKER_RE = re.compile(
+    r"<!--\s*codebase-init:hard-rules\s+v1\s+commit=\S+\s+maturity=\S+\s+testing=\S+\s*-->"
+)
+
+
+def render_hard_rules_marker(commit: str, maturity: str, testing: str) -> str:
+    """Render the trailing hard-rules marker comment encoding the 3 survey answers."""
+    return f"<!-- codebase-init:hard-rules v1 commit={commit} maturity={maturity} testing={testing} -->"
+
+
+def has_hard_rules_marker(content: str) -> bool:
+    """Return True if content contains a valid v1 hard-rules marker comment."""
+    return bool(_HARD_RULES_MARKER_RE.search(content))
 
 
 def validate_agents_md_file(file_path: Path) -> ValidationResult:
