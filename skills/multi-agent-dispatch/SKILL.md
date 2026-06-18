@@ -89,6 +89,7 @@ Analyze the work and confirm the parallel grouping via `AskUserQuestion` — the
 **next skills:**
 
 - `verification-before-completion`: Once all parallel tasks are integrated, to verify the final combined state against project standards.
+- `multi-agent-development`: If the partial-failure protocol reveals hidden coupling between "independent" domains — re-classify as sequential rather than forcing another dispatch.
 - `diagnose`: If integration reveals a regression or conflict between two agents' changes that needs root-cause analysis rather than a guessed merge.
 
 ## Subagent Prompt Contract (Zero-Shot)

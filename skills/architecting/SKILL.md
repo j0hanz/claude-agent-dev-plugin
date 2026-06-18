@@ -87,6 +87,7 @@ Route and confirm via `AskUserQuestion` (or 2-option markdown block) — the too
 - `refactor`: To implement localized improvements found during diagnosis.
 - `planning`: To create a formal spec for a new architectural design or major seam extraction.
 - `multi-agent-development`: To execute the implementation of complex architectural changes.
+- `diagnose`: If Mode A exploration surfaces a live bug (not just structural smell) that needs root-cause isolation before the architectural fix.
 
 **constraint:**
 

@@ -97,6 +97,7 @@ If a bug is discovered during refactoring: **STOP.**
 
 **next skills:**
 
+- `architecting`: If scope creeps beyond a single file/function to a module boundary or 2+ files — this skill's scope is single-file/single-function only.
 - `diagnose`: If a pre-existing bug is discovered during the refactor that requires systematic isolation.
 - `verification-before-completion`: Once the structural changes are complete, to ensure behavior is preserved.
 
