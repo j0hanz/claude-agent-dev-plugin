@@ -53,12 +53,12 @@ digraph create_agent {
 
 ## 0. Decision Tree
 
-- **Context Flooding / Isolation:** Subagent
-- **Reusable Role:** Subagent
-- **Parallel Tasks:** Agent Team
-- **Orchestration/State Machine:** Workflow (Saga, Scatter-Gather)
-- **External API:** Managed Agent
-- **Inline Logic:** Skill
+**action: Select Primitive**
+Analyze the requirement and confirm the primitive type via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [Subagent / Team / Workflow / Managed Agent] based on [isolation / parallelism / orchestration needs].
+2. **Alternative** — [Alternative Primitive] + justification.
+3. **Other** — [Skill / Hook] (redirect to appropriate skill).
 
 ## 1. Procedure: 7 Strict Decisions
 
@@ -82,6 +82,11 @@ digraph create_agent {
    - Run `validate_agent.py`.
    - Run `verification-before-completion`.
    - Ensure `description` has zero overlap with sibling skills.
+
+**next skills:**
+
+- `skill-builder`: To create formal eval sets and benchmark the agent's behavior across multiple runs before deployment.
+- `verification-before-completion`: For initial manual verification of the agent's tool surface and output contract.
 
 ## Expert Patterns
 

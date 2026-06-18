@@ -47,12 +47,14 @@ digraph skill_builder {
 
 ## Step 1: Interview & Draft
 
-1. **Extract:** Tools, step sequence, I/O formats, edge cases.
-2. **Draft:** Write `SKILL.md` immediately.
-   - **name:** kebab-case, max 64 chars.
-   - **description:** \"Pushy\" intent triggers. No angle brackets.
-   - **body:** Strict imperative form. No \"you should\" or \"maybe\".
-3. **Audit:** Dispatch `general-purpose` agent to check triggering effectiveness.
+**action: Draft Skill**
+Extract requirements and confirm the skill draft via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [SKILL.md draft] based on [tools, sequence, and I/O formats].
+2. **Alternative** — [Alternative approach] + reason.
+3. **Other** — Custom draft.
+
+4. **Audit:** Dispatch `general-purpose` agent to check triggering effectiveness.
    - **Red Flags:** Vague triggers, tool overlap with existing skills, nested loops in instructions, missing I/O contracts.
 
 ## Step 2: Test Definition
@@ -86,6 +88,10 @@ Save cases to `evals/evals.json`.
 2. **Generalize:** Bundle repetitive logic into `scripts/`.
 3. **Refine Prompt:** Remove noise; clarify steps.
 4. **Rerun:** Execute next iteration in new directory.
+
+**next skills:**
+
+- `verification-before-completion`: Once the skill passes evals, to perform a final "sanity check" manual run in a real project environment.
 
 ## Skill Design Standards
 

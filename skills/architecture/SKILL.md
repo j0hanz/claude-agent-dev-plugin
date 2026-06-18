@@ -80,6 +80,12 @@ Route and confirm via `AskUserQuestion` (or 3-option markdown block):
 - **Locality:** Can module be understood without reading 5+ dependents?
 - **Stability:** UI/DB depends on Domain; never reverse.
 
+**next skills:**
+
+- `refactor`: To implement localized improvements found during diagnosis.
+- `planning`: To create a formal spec for a new architectural design or major seam extraction.
+- `multi-agent-development`: To execute the implementation of complex architectural changes.
+
 **constraint:**
 
 - Never use PubSub for direct coupling (use composition).

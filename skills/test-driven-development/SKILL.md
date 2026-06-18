@@ -56,17 +56,25 @@ digraph test_driven_development {
 
 ## Step 0: Confirm
 
-**action:** Output "This will start an autonomous session (~N calls). Proceed?"
-**gate:** Wait for explicit user confirmation.
+**action: TDD Confirmation**
+Confirm the start of an autonomous session via `AskUserQuestion`:
+
+1. ✅ **Recommended** — Proceed with TDD for [specific function/feature].
+2. **Alternative** — [Alternative approach] + reason.
+3. **Other** — Custom response.
 
 ## Step 1: Pre-TDD Interface
 
-**action:** Document public surface:
+**action: Document Interface**
+Propose and confirm the public surface via `AskUserQuestion`:
 
-1. **Signatures:** `name(params) -> return_type`
-2. **Error Cases:** Explicit exception types.
-3. **Usage:** 2-3 realistic scenarios.
-4. **Target:** Identify test file path.
+1. ✅ **Recommended** — Signature: [name(params) -> return_type] based on [requirements/conventions].
+2. **Alternative** — [Alternative Signature] + justification.
+3. **Other** — Custom signature.
+
+4. **Error Cases:** Explicit exception types.
+5. **Usage:** 2-3 realistic scenarios.
+6. **Target:** Identify test file path.
 
 ## Step 2: RED (Failing Test)
 
@@ -88,6 +96,12 @@ digraph test_driven_development {
 **gate:** Enter ONLY when tests are GREEN.
 **action:** Perform surgical improvements (Rename, Decompose, Flatten, DRY).
 **constraint:** Refactor and Implementation must be separate tool calls. Run tests between them.
+
+**next skills:**
+
+- `verification-before-completion`: Once all scenarios are covered and passing, to perform final regression sweeps and manual verification.
+
+**transition:** Invoke `verification-before-completion` after final REFACTOR pass.
 
 ## Mandatory Rules
 

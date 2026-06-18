@@ -59,6 +59,13 @@ digraph verification_before_completion {
 
 ## 3. Manual Verification Template
 
+**action: Gather Evidence**
+If no automated pass/fail signal exists, propose a manual test plan via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [Test Plan] based on [feature scope and risk].
+2. **Alternative** — [Lighter Test] + justification.
+3. **Other** — Custom verification.
+
 **format:**
 
 ```markdown
@@ -82,6 +89,10 @@ digraph verification_before_completion {
 
 **action:** Use N-1 test (as defined in `test-driven-development`) to eliminate false greens (Revert → Fail → Fix → Pass).
 **action:** Test `null`, `undefined`, empty collections, and boundary cases to ensure robust coverage.
+
+**next skills:**
+
+- `request-code-review`: Once all verification items are satisfied and behavior is confirmed clean through execution evidence.
 
 ## Transition
 

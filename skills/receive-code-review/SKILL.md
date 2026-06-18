@@ -58,8 +58,15 @@ digraph receive_code_review {
 
 ## 1. Read Before Reacting
 
+**action: Clarify Feedback**
+
 1. Read every item before responding to any of it.
-2. If any item is unclear, stop and ask about all unclear items at once — do not implement the items you understand while a related item is still ambiguous; partial understanding produces a wrong implementation.
+2. If any item is unclear, confirm via `AskUserQuestion`:
+   - ✅ **Recommended** — [Clarification Proposal] for [unclear items].
+   - **Alternative** — [Alternative Interpretation] + query.
+   - **Other** — Custom clarification.
+
+3. Do not implement the items you understand while a related item is still ambiguous; partial understanding produces a wrong implementation.
 
 ## 2. Verify (mandatory before implementing)
 
@@ -91,6 +98,12 @@ Never use a performative-agreement phrase or thank the reviewer.
 3. Complex fixes (refactoring, logic changes).
 
 Test each fix individually as you go — never batch several fixes and run tests once at the end.
+
+**next skills:**
+
+- `diagnose`: For Tier 1/2 blocking issues (security/correctness) that require systematic root-cause analysis.
+- `refactor`: For Tier 4 hygiene or structural feedback that requires code cleanup.
+- `verification-before-completion`: Once all feedback items are implemented and tested, to perform a final clean sweep.
 
 ## Routing Blocking Issues
 

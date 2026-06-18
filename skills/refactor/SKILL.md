@@ -50,7 +50,12 @@ Build a mental model before touching code:
 
 ## Step 2: Pain Point Mapping
 
-If vague, ask: \"What is the hardest part of working with this code?\"
+**action: Map Pain Points**
+If vague, ask "What is the hardest part of working with this code?" and confirm via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [Diagnosis] based on [symptoms: nesting, duplication, coupling].
+2. **Alternative** — [Alternative Diagnosis] + reason.
+3. **Other** — Custom pain point.
 
 **MANDATORY**: If the pain point is vague or complex, you MUST read `references/smell-catalog.md` to accurately diagnose the issue.
 
@@ -90,6 +95,11 @@ If a bug is discovered during refactoring: **STOP.**
 **Why:** [Problem solved / Benefit gained]
 **Deliberately NOT changed:** [Preserved scope / Justification]
 ```
+
+**next skills:**
+
+- `diagnose`: If a pre-existing bug is discovered during the refactor that requires systematic isolation.
+- `verification-before-completion`: Once the structural changes are complete, to ensure behavior is preserved.
 
 ## Critical Rules
 

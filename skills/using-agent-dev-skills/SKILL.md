@@ -52,8 +52,15 @@ digraph using_agent_dev_skills {
 1. **Run Diagnostic Gates:** Evaluate the current task through the 3-Gate decision tree before any action.
 2. **Skill Shadowing Check:** Before invoking a skill, verify that the local version in `skills/` is active. If the system is using a global version (e.g. from `~/.gemini/skills/`) that differs from the local one, warn the user.
 3. **Invoke Immediately:** Once a route is identified, immediately activate and follow that skill.
-4. **Notify:** Output one line: `Routing to \`<skill-name>\`: <reason>.`
-5. **No Skips:** Do NOT skip because a task seems \"simple\" or \"quick\". Every change deserves the appropriate rigor.
+
+**action: Notify Route**
+Announce the identified route and confirm via `AskUserQuestion`:
+
+1. ✅ **Recommended** — Routing to [`<skill-name>`]: [reason] based on [gate evaluation].
+2. **Alternative** — Routing to [Alternative Skill] + justification.
+3. **Other** — Manual intent application.
+
+4. **No Skips:** Do NOT skip because a task seems \"simple\" or \"quick\". Every change deserves the appropriate rigor.
 
 ## Diagnostic Decision Tree
 
@@ -96,6 +103,10 @@ digraph using_agent_dev_skills {
 - **NEVER** skip `architecture` for `refactor` if changes span 3+ files or cross module boundaries.
 - **NEVER** use `multi-agent-dispatch` if tasks have _any_ shared mutable state or logical dependencies.
 - **NEVER** ignore the `diagnose` step when a bug is encountered during a feature implementation.
+
+**next skills:**
+
+- All skills in the `agent-dev` ecosystem are potential successors depending on the diagnostic route identified.
 
 ## Reference Library
 

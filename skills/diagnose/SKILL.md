@@ -47,8 +47,13 @@ digraph diagnose {
 
 ## Phase 3: Hypothesize & Falsify
 
-**action:** Read `references/phases.md` for scientific method.
-**action:** Generate 3-5 falsifiable hypotheses (Recent Changes > Logic > Env).
+**action: Present Hypotheses**
+Read `references/phases.md` and propose 3-5 falsifiable hypotheses via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [Primary Hypothesis] based on [Recent Changes > Logic > Env].
+2. **Alternative** — [Plausible Option] + condition for testing.
+3. **Other** — Custom hypothesis.
+
 **format:** "If [X] is the cause, then [Y] will change when I do [Z]."
 **dispatch:** If hypotheses are independent, use `multi-agent-dispatch`.
 
@@ -70,6 +75,12 @@ digraph diagnose {
 **action:** Remove all `[DEBUG-XXXX]` tags.
 **action:** Verify fix via Phase 1 loop.
 **action:** Delete throwaway scripts or promote to test suite.
+
+**next skills:**
+
+- `test-driven-development`: To implement the verified fix if it involves new logic or refactoring.
+- `refactor`: If the diagnosis reveals a structural "mess" that needs cleanup after the fix is verified.
+- `planning`: If the bug reveals a major gap in the original specification or architecture.
 
 ## Transition
 

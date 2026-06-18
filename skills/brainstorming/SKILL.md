@@ -38,14 +38,20 @@ digraph brainstorming {
 
 ## Phase 1: Discovery
 
-1. **Stakeholder Probe:** Ask who uses the feature (end users, internal, systems?).
-2. **Codebase Scan:**
+**action: Stakeholder Probe**
+Identify the primary users and confirm via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [Audience] based on [feature context].
+2. **Alternative** — [Secondary Audience] + reason for inclusion.
+3. **Other** — Custom stakeholder.
+
+4. **Codebase Scan:**
    - Read `references/codebase-scanner-prompt.md` before dispatching.
    - Dispatch the subagent with the prompt.
    - **Integration:** Extract "Interface Shapes," "Technical Constraints," "Analogous Features," and "Key Unknowns" from the result. Ground the Understanding Statement in these.
    - **Zero-Code Exit:** If the scan finds an existing feature or config that satisfies the request, present it and offer to exit.
-3. **Understanding Statement:** Summarize findings, constraints, and Key Unknowns. Get user confirmation.
-4. **Adaptive Routing:**
+5. **Understanding Statement:** Summarize findings, constraints, and Key Unknowns. Get user confirmation.
+6. **Adaptive Routing:**
    - **Scope S + No Unknowns:** Skip to Phase 4.
    - **Scope XL:** Offer to split into sub-features.
    - **Ambiguous Terms:** Run Phase 2.
@@ -53,7 +59,13 @@ digraph brainstorming {
 
 ## Phase 2: Domain Clarity (Term Definition)
 
-- **Constraint:** One term at a time. Ask for definition, context, and usage.
+**action: Define Term**
+For each ambiguous term, propose a definition via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [Term]: [Definition] based on [codebase usage/patterns].
+2. **Alternative** — [Term]: [Alternative Definition] + context.
+3. **Other** — Custom definition.
+
 - **Goal:** Resolve conflicts between code, docs, and team language.
 - **Exit:** Document in `glossary.md` or `CONTEXT.md`.
 
@@ -114,6 +126,12 @@ Produce mandatory `markdown-kv` brief:
 - **Risk Register:** [Risk/Likelihood/Mitigation table — pull rows from the Response Log if Phase 5 ran]
 - **Review Disposition:** [Arbiter's APPROVED + date, or "Phase 5 not triggered"]
 - **First Step:** [Single concrete action]
+
+**next skills:**
+
+- `planning`: To transform the design brief into a concrete implementation spec and task list.
+- `architecture`: To refine boundaries or choose patterns if the design reveals structural complexity.
+- `create-agent`: If the brainstormed solution requires a new specialized autonomous worker.
 
 ## Red Flags
 

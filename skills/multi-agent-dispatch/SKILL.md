@@ -61,17 +61,27 @@ Answer BOTH before spawning:
 
 ## The Four-Step Loop
 
-1. **GROUP:** Split work into independent domains. One agent per domain. Name what is OUT of scope.
-2. **SELECT:** Configure `general-purpose` agents with specialized roles in prompt constraints.
+**action: Group Tasks**
+Analyze the work and confirm the parallel grouping via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [Groups] based on [disjoint files/hypotheses].
+2. **Alternative** — [Alternative Grouping] + justification.
+3. **Other** — Custom groups.
+
+4. **SELECT:** Configure `general-purpose` agents with specialized roles in prompt constraints.
    - **Investigator (Read-only):** Trace root cause, provide fix as code block. No edits.
    - **Writer (Isolation: worktree):** Implement spec, write tests, report changes.
    - **Researcher (Read-only):** Explore code/docs, report file paths and usages.
-3. **LAUNCH:**
+5. **LAUNCH:**
    - Enumerate each subagent's intended write-paths (from its SCOPE).
    - Diff them against every other subagent's write-paths.
    - **Limit:** Max 5 concurrent agents per batch.
    - If disjoint, emit ALL `Agent` calls in **ONE message** for true concurrency.
-4. **INTEGRATE:** Reconcile findings/diffs. Run full project validation.
+6. **INTEGRATE:** Reconcile findings/diffs. Run full project validation.
+
+**next skills:**
+
+- `verification-before-completion`: Once all parallel tasks are integrated, to verify the final combined state against project standards.
 
 ## Subagent Prompt Contract (Zero-Shot)
 

@@ -63,6 +63,13 @@ If a **Design Brief** (from `brainstorming`) is present, map fields and skip cor
 - **Brief Interface** → Interfaces
 - **Brief Chosen Approach** → Goal
 
+**action: Intake Interview**
+For any missing core field, confirm via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [Field Value] based on [brief/context].
+2. **Alternative** — [Plausible Option] + context.
+3. **Other** — Custom answer.
+
 **Interview (if needed):** Ask only missing **Goal** (One sentence) and **Interface** (Inputs/Outputs). Mark others as `UNKNOWN: [what and why]`.
 
 ## Step 2: Artifact Authoring
@@ -94,6 +101,12 @@ Dispatch `general-purpose` agent to audit quality (vague goals, missing error ca
 ## Step 5: Handoff
 
 Pass plan to `test-driven-development`, `multi-agent-development`, or `multi-agent-dispatch` (for independent task clusters).
+
+**next skills:**
+
+- `test-driven-development`: To implement a single focused feature or fix from the plan.
+- `multi-agent-development`: To execute a multi-task plan sequentially with gated reviews.
+- `multi-agent-dispatch`: To parallelize independent task clusters from the plan.
 
 ## Canonical Task Block
 

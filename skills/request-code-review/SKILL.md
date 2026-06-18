@@ -47,7 +47,12 @@ digraph request_code_review {
 
 ## Step 0: Confirm
 
-State that this starts an autonomous review session and wait for explicit user confirmation before scanning.
+**action: Review Confirmation**
+Confirm the start of an autonomous review session via `AskUserQuestion`:
+
+1. ✅ **Recommended** — Dispatch fresh-context review for [range/summary].
+2. **Alternative** — Inline review (if diff is small/uncommitted).
+3. **Other** — Custom review parameters.
 
 ## Pre-Review Checkpoint
 
@@ -65,6 +70,11 @@ State that this starts an autonomous review session and wait for explicit user c
 ## Phase 2: Hand Off
 
 Take the subagent's `## Code Review Result` output verbatim — do not edit, soften, or re-summarize it. Hand it to `receive-code-review` for verification and implementation.
+
+**next skills:**
+
+- `github-automation`: If the review is a PASS, to proceed with opening the Pull Request.
+- `receive-code-review`: If the review is a FAIL or contains blocking issues, to process and implement the feedback.
 
 ## Transition
 

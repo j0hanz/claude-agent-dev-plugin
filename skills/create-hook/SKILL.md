@@ -53,12 +53,12 @@ digraph create_hook {
 
 ## 0. Tool Selection
 
-Evaluate if a hook is the optimal tool:
+**action: Evaluate Requirement**
+Confirm if a hook is the optimal tool via `AskUserQuestion`:
 
-- **Rule-based/Deterministic?** → **Hook** (e.g., format on save, block `rm -rf`).
-- **Needs Judgment/Reasoning?** → **Prompt/Agent Hook** (e.g., \"is this PR ready?\").
-- **Instruction/Capability?** → **Skill** (not a hook).
-- **Global Context?** → `CLAUDE.md` (not a hook).
+1. ✅ **Recommended** — [Hook] based on [deterministic/rule-based trigger].
+2. **Alternative** — [Prompt/Agent Hook] + reasoning for needing judgment.
+3. **Other** — [Skill / CLAUDE.md] (redirect to appropriate tool).
 
 ## 1. Procedure: 7 Strict Decisions
 
@@ -74,6 +74,10 @@ Evaluate if a hook is the optimal tool:
    - **Decision:** Exit 2 (Block) + `stderr` OR Exit 0 + structured JSON.
    - **Logs:** Use `stderr` for diagnostics; `stdout` for JSON only.
 7. **Test Before Shipping:** `echo '[SAMPLE_JSON]' | <handler_script>`. Verify exit code and output.
+
+**next skills:**
+
+- `verification-before-completion`: Once the hook is written, to manually exercise the event trigger and confirm the deterministic block or execution behavior.
 
 ## Expert Patterns
 

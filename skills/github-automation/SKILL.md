@@ -54,26 +54,38 @@ digraph github_automation {
 
 ## PATH A — ACTIONS: YAML Workflows
 
-1. **Classify Intent:** Map to recipe (CI, Release, Deploy, Matrix, Reuse).
-2. **Author with Hardening (Non-Negotiable):**
+**action: Classify Intent**
+Identify the workflow type and confirm via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [Intent: CI/Release/Deploy] based on [trigger and context].
+2. **Alternative** — [Plausible Option] + reason.
+3. **Other** — Custom intent.
+
+4. **Author with Hardening (Non-Negotiable):**
    - **SHA-Pinning:** Replace `@v4` with `@<full_sha>`.
      - **Command:** `python3 scripts/pin_actions.py path/to/workflow.yml`
    - **Permissions:** Default to `contents: read`. Widen only where needed.
    - **OIDC:** Use `id-token: write` and cloud OIDC actions (AWS, GCP, Azure, HashiCorp Vault).
-3. **Validate:**
+5. **Validate:**
    - **Command:** `python3 scripts/lint.py path/to/workflow.yml`
    - Report linter tier (actionlint | python-lint).
-4. **Audit:** Dispatch `general-purpose` subagent for semantic security review.
+6. **Audit:** Dispatch `general-purpose` subagent for semantic security review.
 
 ## PATH B — CLI: GitHub CLI Automation
 
-1. **Mode Selection:** One-off command (inline) vs. Headless script (file).
-2. **Headless Standards:**
+**action: Mode Selection**
+Identify the execution mode and confirm via `AskUserQuestion`:
+
+1. ✅ **Recommended** — [Inline Command / Headless Script] based on [complexity].
+2. **Alternative** — [Alternative Mode] + justification.
+3. **Other** — Custom approach.
+
+4. **Headless Standards:**
    - Set `GH_PROMPT_DISABLED=1`.
    - Verify auth via `gh auth status` before mutation.
    - Use `gh api --paginate` with `--jq` for structured output.
-3. **Safety:** Snapshot IDs before batch mutations. Add jitter/sleep for write loops.
-4. **Idempotency:** Check existence before `POST`; prefer `PATCH`.
+5. **Safety:** Snapshot IDs before batch mutations. Add jitter/sleep for write loops.
+6. **Idempotency:** Check existence before `POST`; prefer `PATCH`.
 
 ## Mandatory Security Checklist
 
@@ -82,6 +94,10 @@ digraph github_automation {
 - [ ] Untrusted inputs piped through `env:`, never `run:` interpolation.
 - [ ] No long-lived cloud credentials (OIDC only for AWS/GCP/Azure/npm/PyPI).
 - [ ] `pull_request_target` audited for PR head checkout (Forbidden).
+
+**next skills:**
+
+- `verification-before-completion`: After updating workflows or automation scripts, to verify they pass linting and initial validation before committing.
 
 ## Transition
 

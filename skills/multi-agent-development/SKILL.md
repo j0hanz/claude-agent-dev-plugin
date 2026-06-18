@@ -69,11 +69,15 @@ digraph multi_agent_dev {
 
 ## Partitioning & Scope
 
-Before starting Phase 1, you MUST:
+**action: Partition Tasks**
+Analyze the plan and confirm task assignments via `AskUserQuestion`:
 
-1. Identify all files each task in the plan will touch.
-2. Verify no two tasks touch the same file unless they are strictly ordered.
-3. If overlap is found, you MUST consolidate those tasks or ensure the downstream task receives the upstream task's commits as context.
+1. ✅ **Recommended** — [Task Sequence] based on [file dependencies and disjoint sets].
+2. **Alternative** — [Grouped Tasks] + reasoning.
+3. **Other** — Custom partitioning.
+
+4. Verify no two tasks touch the same file unless they are strictly ordered.
+5. If overlap is found, you MUST consolidate those tasks or ensure the downstream task receives the upstream task's commits as context.
 
 ## The Core Loop (Per Task)
 
@@ -107,6 +111,11 @@ Advance only after Phase 3 passes. After ALL tasks pass:
 
 1. `npm test && npm run validate`
 2. Invoke `verification-before-completion`
+
+**next skills:**
+
+- `verification-before-completion`: After all tasks in the plan are complete and pass quality gates, to ensure system-wide integrity.
+- `request-code-review`: For non-trivial changes that require an unbiased, fresh-context audit before merging.
 
 ## Operational Rules
 
