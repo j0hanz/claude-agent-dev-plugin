@@ -3,7 +3,7 @@ name: codebase-init
 description: 'Generate, audit, or onboard a repo with a fresh AGENTS.md (wired to CLAUDE.md/GEMINI.md). User-invoked only (not auto-triggered).'
 disable-model-invocation: true
 user-invocable: true
-allowed-tools: Bash(python *) Bash(python3 *)
+allowed-tools: Bash(python *) Bash(python3 *) AskUserQuestion
 ---
 
 # codebase-init
@@ -29,7 +29,7 @@ digraph codebase_init {
   // Init Flow
   Phase0 [label="Phase 0: Hard Rule Survey\n(Check Marker / Ask Questions)"];
   Phase1 [label="Phase 1: Environment Discovery\n(Analyze Toolchain / Structure)"];
-  Phase1_5 [label="Phase 1.5: Architecture Mapping\n(Detect Patterns)"];
+  Phase1_5 [label="Phase 1.5: Architecting Mapping\n(Detect Patterns)"];
   Phase2 [label="Phase 2: Draft\n(Scaffold AGENTS.md)"];
   Phase3 [label="Phase 3: Write, Wire, Validate\n(Wire variants, Lint)"];
 
@@ -94,9 +94,9 @@ This sequentially runs `analyze-env` (package manager, test runner, linter, mono
 3. **Workflows**: Check `.github/workflows/` or `.gitlab-ci.yml` for automated CI commands.
    Never hallucinate tools.
 
-## Phase 1.5: Architecture Mapping
+## Phase 1.5: Architecting Mapping
 
-Read `references/phase-1.5-architecture.md` to pick the `--language` value for Phase 2 and detect tech stack patterns.
+Read `references/phase-1.5-architecting.md` to pick the `--language` value for Phase 2 and detect tech stack patterns.
 
 ## Phase 2: Draft
 

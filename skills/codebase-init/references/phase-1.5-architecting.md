@@ -1,8 +1,8 @@
-# Phase 1.5 — Architecture & Convention Mapping
+# Phase 1.5 — Architecting & Convention Mapping
 
 From the Phase 1 Environment Discovery data, extract these specific signals **before** proceeding to Phase 2 (Draft).
 
-## Architecture Pattern Detection
+## Architecting Pattern Detection
 
 Use file structure to identify the pattern:
 
@@ -21,7 +21,7 @@ Use file structure to identify the pattern:
 Document these findings concisely (not as prose):
 
 - **Tech Stack:** Language(s), primary framework, ORM/database if applicable, build tool
-- **Architecture:** Which pattern from table above?
+- **Architecting:** Which pattern from table above?
 - **Conventions:** If detectable from file structure:
   - File naming patterns (e.g., `.handler.ts`, `.service.ts`, `_test.go`)
   - Error handling approach (if visible from code)
