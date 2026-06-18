@@ -8,6 +8,12 @@ user-invocable: true
 
 Autonomous TDD execution. **HARD GATE:** No implementation code WITHOUT a failing test.
 
+## When NOT to use TDD
+
+- **Exploratory Spikes:** When the implementation path is unknown and you need to "find the shape" of the code first (throwaway code).
+- **Trivial One-Liners:** Pure data mappings or standard boilerplate with zero logic.
+- **Pure UI/CSS:** Visual styling that requires manual "eye-balling" rather than logical assertions.
+
 ## Process Flow
 
 ```dot
@@ -78,12 +84,16 @@ Propose and confirm the public surface via `AskUserQuestion`:
 
 ## Step 2: RED (Failing Test)
 
+**MANDATORY:** For JavaScript/TypeScript projects, read [js-ts-patterns.md](references/js-ts-patterns.md) before writing the first test.
+
 **action:** Write simplest test for single core behavior.
 **action:** Write minimal stub to allow compilation (e.g., `pass`, `return null`).
 **action:** Run test.
 **gate:** Confirm failure (Assertion Fail). If pass, delete and rewrite.
 
 ## Step 3: GREEN (Minimal Implementation)
+
+**MANDATORY:** Read [minimal-impl-examples.md](references/minimal-impl-examples.md) to understand the "absolute minimum" constraint.
 
 **action:** Commit/stash before editing.
 **action:** Write **absolute minimum** code to pass the test.
@@ -92,6 +102,8 @@ Propose and confirm the public surface via `AskUserQuestion`:
 **escalation:** If still stuck, invoke `diagnose` or `planning`.
 
 ## Step 4: REFACTOR (Cleanup)
+
+**MANDATORY:** Refer to [full-cycle-example.md](references/full-cycle-example.md) for an example of proper REFACTOR timing.
 
 **gate:** Enter ONLY when tests are GREEN.
 **action:** Perform surgical improvements (Rename, Decompose, Flatten, DRY).
