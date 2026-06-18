@@ -5,8 +5,23 @@
 high blast radius, concrete attack surface) or the user asked for a review.
 **subagent_type:** `general-purpose` (Skeptic, Guardian, Advocate, Arbiter).
 
-Dispatch **Skeptic, Constraint Guardian, and User Advocate in parallel** using `multi-agent-dispatch`.
+Dispatch **Skeptic, Constraint Guardian, and User Advocate in parallel** as three `Agent()` calls,
+following the contract shape in `../multi-agent-dispatch/references/subagent-contract.md`.
 Each reviewer receives the design and the compressed codebase report — they do NOT see each other's objections.
+
+## Severity Calibration (applies to all three reviewers and the Arbiter)
+
+Severity is a measure of consequence, not how strongly the reviewer feels.
+
+- **High:** Would cause rework after implementation starts, break a stated constraint, violate a
+  user-stated requirement, or create a concrete production failure/security/data-loss path.
+- **Med:** Would cause a noticeably worse but still-shippable outcome (avoidable complexity, a real
+  but non-blocking edge case, a usability rough edge for the stated stakeholder).
+- **Low:** Worth a one-line mention but does not block approval on its own.
+
+**Out of scope — do not raise as objections at all:** naming/wording preferences, code style, which
+synonym to use in the brief, formatting of the proposal, or "I would have done it differently" with no
+stated consequence. If you notice one, omit it rather than logging it as Low.
 
 ---
 
@@ -97,11 +112,17 @@ CONTEXT:
   Response Log: [Full table — Objection | Source | Severity | Designer Response | Resolution]
 
 CONSTRAINTS:
-  - APPROVED requires every High-severity objection to have a Resolution of "Accept & Fixed" with a
-    corresponding change in the Revised Design, or a "Reject" with a valid technical rationale.
+  - Before counting any objection toward the disposition, check it against the Severity Calibration
+    above. If it is a wording/style/naming preference with no stated consequence, discard it from
+    consideration entirely — even if the reviewer marked it High.
+  - APPROVED requires every genuinely High-severity objection to have a Resolution of "Accept & Fixed"
+    with a corresponding change in the Revised Design, or a "Reject" with a valid technical rationale.
+  - Treat Med/Low objections as informational — they may inform the rationale but never block APPROVED
+    on their own. An open Med/Low row is not grounds for REVISE.
   - REJECT rejections that are just "I disagree" or "Not a priority" if they conflict with stated
     constraints or stakeholder needs.
-  - REVISE if a High-severity objection is ignored or a rejection rationale is weak.
+  - REVISE only if a genuine High-severity objection is ignored, or its rejection rationale is weak.
+    Approve unless there is a serious, substantive gap that would lead to a flawed plan.
 
 OUTPUT:
   ## Arbiter Disposition

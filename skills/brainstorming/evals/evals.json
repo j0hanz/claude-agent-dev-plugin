@@ -38,10 +38,11 @@
     {
       "id": 4,
       "prompt": "We want to add a real-time collaborative editing system to our platform — think Google Docs style, with presence indicators, cursor sharing, conflict resolution via OT or CRDT, and offline sync.",
-      "expected_output": "Skill detects Scope XL (architectural change, 10+ files, multiple modules) and pauses to suggest splitting into sub-features before continuing. Does not proceed blindly into a full Phase 2–4 cycle without user confirmation on scope.",
+      "expected_output": "The scanner finds little or no existing code for this net-new capability, so the raw file-count scope estimate alone would read S/M. The skill recognizes that the request names 4-5 largely independent subsystems (presence, cursor sharing, conflict resolution, offline sync) and overrides the scanner's low file-count signal, treating this as Scope XL based on described complexity rather than matched-file count. It pauses to suggest splitting into sub-features before continuing, and does not proceed blindly into a full Phase 2-4 cycle without user confirmation on scope.",
       "files": [],
       "expectations": [
-        "Skill identifies this as Scope XL based on the scanner report",
+        "Skill does NOT take the scanner's low file-count scope estimate (S/M) at face value for this greenfield request",
+        "Skill identifies Scope XL from the number of distinct subsystems named in the request, not from the scanner's matched-file count",
         "Skill explicitly suggests breaking the feature into smaller phases or sub-features",
         "Skill asks whether to proceed with full scope or tackle a slice first",
         "Skill does NOT skip the scope split-check and jump directly into Phase 2"

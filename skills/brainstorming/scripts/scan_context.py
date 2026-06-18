@@ -92,6 +92,19 @@ _LANG_TYPE_PATTERNS: dict[str, str] = {
 }
 
 
+def _sanitize_noun(raw: str) -> str:
+    """Strip to alphanumeric/hyphen only; reject empty or flag-like results.
+
+    Backstop for the dispatching subagent's own sanitization instructions
+    (references/codebase-scanner-prompt.md) — the script must not trust argv
+    unconditionally before it reaches git grep / rg as a regex pattern.
+    """
+    cleaned = re.sub(r"[^A-Za-z0-9-]", "", raw)
+    if not cleaned or cleaned.startswith("-"):
+        raise ValueError(f"invalid domain noun after sanitization: {raw!r}")
+    return cleaned
+
+
 def _is_skippable(path: Path) -> bool:
     return any(part in _SKIP_DIRS for part in path.parts)
 
@@ -395,6 +408,11 @@ def main() -> None:
         help="Project root (default: current directory)",
     )
     args = parser.parse_args()
+
+    try:
+        args.nouns = [_sanitize_noun(n) for n in args.nouns]
+    except ValueError as exc:
+        parser.error(str(exc))
 
     cwd = args.cwd.resolve()
     if not cwd.is_dir():

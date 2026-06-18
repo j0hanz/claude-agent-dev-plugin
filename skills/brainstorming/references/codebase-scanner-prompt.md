@@ -22,9 +22,10 @@ CONSTRAINTS:
     -> search, catalog). Strip all shell metacharacters ($, `, \, ", ', ;, &, |, <, >) — allow only
     alphanumeric characters and hyphens. Derive 2-3 adjacent synonyms per noun (search -> query, lookup,
     filter).
-  - Preferred: run as a single parallel call using single quotes for all arguments:
+  - Preferred: run as a single parallel call using single quotes for all arguments, piping through the
+    compressor so the result is ready to hand back as "the compressed scan report":
       python '<skill-dir>/scripts/scan_context.py' -- '<sanitized_noun1>' ['<sanitized_noun2>' ...]
-        --cwd '<project_root>'
+        --cwd '<project_root>' | python '<skill-dir>/scripts/compress_report.py'
     Use its JSON output to populate the report. Fall back to manual exploration ONLY if the script fails.
   - Manual fallback (Explorer specific):
     1. Search for domain terms using `grep_search`.
@@ -67,6 +68,9 @@ OUTPUT: Return exactly this structure. Write "None found" for empty sections.
   **Estimate:** [S / M / L / XL]
   **Reasoning:** [1-2 sentences: affected files, change surface, cross-cutting dependencies]
   S = 1-2 files, M = 3-5 files, L = 5-10 files or module boundary, XL = 10+ files or architectural change
+  Note: this estimate is based on *existing* matched files. For a greenfield feature with little or no
+  prior code, it will read low even when the request itself names several independent subsystems — the
+  dispatching skill should weigh the feature description's own breadth too, not just this number.
 
   ### Key Unknowns
   [Things searched but not found — missing tests, no glossary, no ADRs on this subsystem]
