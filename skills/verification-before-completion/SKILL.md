@@ -50,12 +50,14 @@ digraph verification_before_completion {
 
 ## 2. Decision Logic
 
-| Status             | Action                                            |
-| :----------------- | :------------------------------------------------ |
-| **CI-Only**        | Stop. Report: "Blocked by CI. Wait for pipeline." |
-| **No Test Suite**  | Mark as **INCOMPLETE**. Document rationale.       |
-| **Regression**     | Stop. Invoke `diagnose`.                          |
-| **Verified Clean** | Transition to `request-code-review`.              |
+| Status             | Action                                                                                                                                                                                                                                                                                                                                                                                                                                     |
+| :----------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| **CI-Only**        | Stop. Report: "Blocked by CI. Wait for pipeline."                                                                                                                                                                                                                                                                                                                                                                                          |
+| **No Test Suite**  | **Gate, not a pass:** before marking INCOMPLETE, you MUST write at least one executable smoke/characterization test or manual reproduction script proving the change works (see §3 Manual Verification Template) — a prose rationale alone is not sufficient. Only after that evidence exists may you mark **INCOMPLETE** and document why full coverage wasn't added (e.g. route to `test-driven-development` for proper coverage later). |
+| **Regression**     | Stop. Invoke `diagnose`.                                                                                                                                                                                                                                                                                                                                                                                                                   |
+| **Verified Clean** | Transition to `request-code-review`.                                                                                                                                                                                                                                                                                                                                                                                                       |
+
+**"Non-trivial" (for the Transition rule below):** any change that is NOT a single-file, ~20-line-or-fewer edit with no new public surface and no logic branching. When in doubt, treat the change as non-trivial — self-classifying a change as trivial to skip `request-code-review` is itself a verification failure.
 
 ## 3. Manual Verification Template
 

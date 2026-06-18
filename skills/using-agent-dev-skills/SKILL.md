@@ -49,14 +49,17 @@ digraph using_agent_dev_skills {
   Gate1 -> Planning [label="idea only"];
   Gate1 -> Gate2 [label="spec+plan exist"];
 
-  Gate2 -> Arch [label="boundary/God class"];
-  Gate2 -> Refactor [label="messy function"];
+  Gate2 -> Arch [label="boundary/God class/2+ files"];
+  Gate2 -> Refactor [label="messy function,\nsingle file, no boundary crossed"];
   Gate2 -> Diagnose [label="crash/bug"];
   Gate2 -> Gate3 [label="new feature"];
 
+  Gate3 -> TDD [label="trivial (<~20 lines,\n1 file) - skip subagents"];
   Gate3 -> Dispatch [label="independent"];
   Gate3 -> Dev [label="sequential/complex"];
   Gate3 -> TDD [label="standard/focused"];
+  TDD -> Diagnose [label="stuck after 3 attempts"];
+  TDD -> Planning [label="spec ambiguous"];
 
   Dispatch -> Gate4;
   Dev -> Gate4;
@@ -105,17 +108,21 @@ Announce the identified route and confirm via `AskUserQuestion` — the tool sup
 
 ### Gate 2: Is this a systemic issue or localized?
 
-- **IF** the code has circular dependencies, \"God classes\", or boundary violations:
+- **IF** the code has circular dependencies, \"God classes\", or boundary violations, OR the change spans 2+ files / crosses a module boundary:
   -> **ROUTE TO:** `architecting`
-- **IF** the issue is localized to a messy function or single file:
+- **IF** the issue is localized to a messy function within a single file and crosses no module boundary:
   -> **ROUTE TO:** `refactor`
 - **IF** we are actively debugging a crash or traceback:
   -> **ROUTE TO:** `diagnose`
 - **IF** implementing a planned feature:
   -> **Proceed to Gate 3.**
 
+**Tie-break (single file, but the fix logically touches a second file, e.g. an import or call-site update):** default to `refactor` only if the second file's change is a trivial one-line follow-on; escalate to `architecting` for anything broader. `refactor`'s own scope is single-file/single-function (see its description) — never route genuinely multi-file work to it.
+
 ### Gate 3: Execution Strategy
 
+- **IF** the change is trivial (single file, roughly under 20 lines, no new public surface):
+  -> **ROUTE TO:** `test-driven-development` directly, skip the subagent-dispatch question entirely — don't spend an `AskUserQuestion` round-trip deciding dispatch strategy for a one-line fix.
 - **IF** tasks are completely independent (no shared state) AND wall-time is the primary constraint:
   -> **ROUTE TO:** `multi-agent-dispatch`
 - **IF** tasks must be done sequentially OR if token-context usage must be minimized:
@@ -124,6 +131,8 @@ Announce the identified route and confirm via `AskUserQuestion` — the tool sup
   -> **ROUTE TO:** `multi-agent-development`, instructed to batch the independent tasks into one wave with gated reviews.
 - **IF** writing standard code (single focused feature/fix):
   -> **ROUTE TO:** `test-driven-development` ⚠️
+- **IF** `test-driven-development` fails to reach GREEN after 3 attempts:
+  -> **ROUTE TO:** `diagnose` (implementation stuck) or `planning` (spec ambiguous) — see NEVER list.
 
 ⚠️ **Agentic Skill Warning:** `test-driven-development`, `request-code-review`, `multi-agent-development`, and `multi-agent-dispatch` execute autonomously (each dispatches multiple subagent calls). Output `This will start an autonomous session (~N calls). Proceed?` and wait for user confirmation. `multi-agent-development` is the most expensive of these (N tasks × up to 3 subagent phases × up to 2 retries) — never skip its confirmation gate.
 
@@ -139,12 +148,14 @@ After Gate 3's execution skill completes:
 ## Mandatory Rules (NEVER List)
 
 - **NEVER** route to `test-driven-development` if Gate 1 (spec/plan) is not fully GREEN.
-- **NEVER** skip `architecting` for `refactor` if changes span 3+ files or cross module boundaries.
+- **NEVER** skip `architecting` for `refactor` if changes span 2+ files or cross module boundaries — `refactor`'s own scope is single-file/single-function.
 - **NEVER** use `multi-agent-dispatch` if tasks have _any_ shared mutable state or logical dependencies.
 - **NEVER** ignore the `diagnose` step when a bug is encountered during a feature implementation.
-- **NEVER** let `test-driven-development` retry indefinitely — if it fails to pass after 3 attempts, escalate to `diagnose` (implementation stuck) or `planning` (spec ambiguous). See `references/lifecycle.md` Transition States.
+- **NEVER** let `test-driven-development` retry indefinitely — if it fails to pass after 3 attempts, escalate to `diagnose` (implementation stuck) or `planning` (spec ambiguous). This is now reflected directly in Gate 3 above (`references/lifecycle.md` Transition States is the longer-form rationale).
 - **NEVER** treat Gate 4 (`request-code-review`) as optional after `multi-agent-development` — its quality gate does not check security; `request-code-review` is the only skill in the ecosystem that does.
 - **NEVER** auto-invoke `codebase-init` or `github-automation` — both have `disable-model-invocation: true` by design. Recommend them; let the user trigger them.
+- **NEVER** route a request to author/scaffold/validate a skill anywhere except `make-a-skill` — it is not reachable through Gates 0-4, it's a parallel entry point triggered directly by skill-authoring language (see Auxiliary Skills).
+- **NEVER** dispatch subagents (Gate 3) for a change trivial enough to finish in a single inline edit — check the triviality condition before asking the user to confirm a dispatch strategy.
 
 **next skills:**
 
@@ -159,6 +170,7 @@ After Gate 3's execution skill completes:
 - **Quality/Validation:** `verification-before-completion`, `request-code-review`, `receive-code-review` — see Gate 4.
 - **Delivery:** `github-automation` — see Gate 4.
 - **Repo Onboarding:** `codebase-init` — see Gate 0.
+- **Skill Authoring:** `make-a-skill` — not part of the Gate 0-4 flow. Route here directly whenever the task is to scaffold, draft, or validate a _skill_ itself (e.g. "make a skill", "validate this skill"), bypassing Gates 0-4 entirely since it operates on the plugin's own skills/, not the target repo's code.
 
 ## Skip Disclaimer
 

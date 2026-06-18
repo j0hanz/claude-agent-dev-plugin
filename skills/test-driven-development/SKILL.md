@@ -10,7 +10,12 @@ Autonomous TDD execution. **HARD GATE:** No implementation code WITHOUT a failin
 
 ## When NOT to use TDD
 
-- **Exploratory Spikes:** When the implementation path is unknown and you need to "find the shape" of the code first (throwaway code).
+These are escape hatches from the HARD GATE — never self-invoke one silently. Confirm the carve-out via `AskUserQuestion` before skipping RED (the tool supplies a free-text "Other" automatically). Pick from the three categories below (see their definitions immediately following):
+
+1. ✅ **Recommended** — Skip TDD: [the matching category from the list below] because [specific reason this case matches].
+2. **Alternative** — Use full TDD anyway + the reason the carve-out doesn't actually apply.
+
+- **Exploratory Spikes:** When the implementation path is unknown and you need to "find the shape" of the code first (throwaway code). **Mandatory:** once the shape is found, the spike code MUST be discarded (`git stash drop`/delete, not committed) and re-implemented through the normal RED-GREEN-REFACTOR loop. A spike is a sketch, never the shipped diff.
 - **Trivial One-Liners:** Pure data mappings or standard boilerplate with zero logic.
 - **Pure UI/CSS:** Visual styling that requires manual "eye-balling" rather than logical assertions.
 

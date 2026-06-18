@@ -103,6 +103,7 @@ Execute Phases 1 → 2 → 3 in strict order.
 - **Contract:** Expect `VERDICT: [SPEC_PASS | SPEC_FAIL]`, `MISSING_REQUIREMENTS`, `EXTRA_WORK`.
 - **Check:** Did implementer build everything? Anything extra?
 - **Failure:** Dispatch implementer to fix. Max 2 attempts before escalating as BLOCKED.
+- **BLOCKED escalation behavior:** escalating as BLOCKED **pauses the entire sequential plan**, not just the current task. Do not proceed to the next task in the sequence — later tasks were partitioned assuming this one's output exists, so continuing past a BLOCKED task lets downstream work build on a missing/broken foundation. Report the BLOCKED task and its failure reason to the user and wait for a directive (revise the task, skip it explicitly with downstream tasks re-scoped, or abandon the plan) before resuming.
 
 ### Phase 3: Code Quality Gate
 
@@ -130,3 +131,4 @@ Advance only after Phase 3 passes. After ALL tasks pass:
 - **Fresh agent per task.**
 - **Prompt Discipline:** Subagents start cold. Embed every fact.
 - **Commit Baseline:** Always provide `Baseline commit` and `Implementation commit` to reviewers for precise diffing.
+- **Rejection rollback policy:** when Phase 2 or Phase 3 sends a task back to Phase 1 (`SPEC_FAIL`/`CRITICAL`/`IMPORTANT`), the rejected attempt's worktree commit is discarded, not merged-then-reverted — the next Phase 1 dispatch starts a fresh agent in a fresh worktree from the same baseline commit, with the reviewer's findings embedded in its prompt. Never carry forward a rejected attempt's partial diff into the retry; a clean restart prevents compounding a flawed approach. Once a task fully passes Phase 3, its worktree commit is merged into the sequence baseline before the next task starts.

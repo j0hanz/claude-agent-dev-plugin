@@ -44,6 +44,7 @@ digraph diagnose {
 ## Phase 2: Reproduce
 
 **action:** Achieve >50% reproduction rate before hypothesis testing.
+**gate:** Do not advance to Phase 3 without a logged reproduction rate. A root cause declared in Phase 3 without a confirmed repro signal here is not a diagnosis — it's a guess.
 
 ## Phase 3: Hypothesize & Falsify
 
@@ -56,6 +57,7 @@ Read `references/phases.md` and propose 3-5 falsifiable hypotheses via `AskUserQ
 
 **format:** "If [X] is the cause, then [Y] will change when I do [Z]."
 **dispatch:** If hypotheses are independent, use `multi-agent-dispatch`. Each hypothesis agent must be a **Writer with `isolation: worktree`** (not the read-only Investigator role) — instrumenting and running an experiment mutates a working copy, so each agent needs its own worktree. Disjoint by construction since each agent tests a different hypothesis.
+**gate:** Do not declare a root cause until a hypothesis has been confirmed via Phase 4 instrumentation (a logged probe result that distinguishes it from the alternatives) — not by elimination-by-plausibility alone. If no hypothesis survives falsification, return to Phase 3 with new candidates rather than picking the "least falsified" one.
 
 ## Phase 4: Instrumentation
 
@@ -69,6 +71,7 @@ Read `references/phases.md` and propose 3-5 falsifiable hypotheses via `AskUserQ
 **action:** Confirm RED (test fails).
 **action:** Apply minimal fix on working copy.
 **action:** Confirm GREEN (test passes).
+**action:** Run the N-1 test (see [`test-driven-development`](../test-driven-development/SKILL.md#n-1-test-false-green-elimination)) — revert the fix, confirm the regression test fails again, then restore the fix. A regression test written after the fix and never proven RED against the unfixed code is not evidence the bug is fixed.
 
 ## Phase 6: Finalization
 
@@ -84,12 +87,16 @@ Read `references/phases.md` and propose 3-5 falsifiable hypotheses via `AskUserQ
 
 ## Transition
 
-| Triggering Skill                 | Return Destination      |
-| :------------------------------- | :---------------------- |
-| `verification-before-completion` | Re-verify in same skill |
-| `test-driven-development`        | Current task/phase      |
-| `multi-agent-development`        | Current task/phase      |
-| `refactor`                       | Resume refactor cycle   |
+| Triggering Skill                 | Return Destination                                                       |
+| :------------------------------- | :----------------------------------------------------------------------- |
+| `verification-before-completion` | Re-verify in same skill                                                  |
+| `test-driven-development`        | Current task/phase                                                       |
+| `multi-agent-development`        | Current task/phase                                                       |
+| `refactor`                       | Resume refactor cycle                                                    |
+| `multi-agent-dispatch`           | INTEGRATE step (re-run validation once the conflict/regression is fixed) |
+| `receive-code-review`            | Step 4 Implement (continue the severity-ordered fix loop)                |
+| `codebase-init`                  | Failure Recovery step that invoked diagnose (resume Phase 1/2/3)         |
+| `github-automation`              | The script/PR step that failed (resume once root cause is fixed)         |
 
 ## Output Format
 

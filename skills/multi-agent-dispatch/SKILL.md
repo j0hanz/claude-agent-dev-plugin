@@ -56,8 +56,11 @@ digraph multi_agent_dispatch {
 Answer BOTH before spawning:
 
 1. **Authorized?** User requested parallel/agent work OR parent skill phase calls for it.
-2. **Independent?** 2+ domains with NO shared mutable state (disjoint files/hypotheses).
-   → If NO to either: Investigate inline or sequentially.
+2. **Independent?** 2+ domains with NO shared mutable state (disjoint files/hypotheses) AND no hidden coupling. Disjoint write-paths alone are not sufficient — also check:
+   - Does any agent's correctness _assume_ another agent already ran (an ordering assumption), even if it never writes to that agent's files?
+   - Do two or more agents read-then-act on the same external resource (a shared branch/PR, a rate-limited API budget, a singleton config/lockfile, a shared DB row) where one agent's action invalidates another's assumption?
+   - Would the result differ if the agents ran in a different order or interleaving? If yes, they are not independent.
+     → If NO to authorization, OR if disjoint files but hidden coupling exists, OR if both are unclear: Investigate inline or use `multi-agent-development` instead.
 
 ## The Four-Step Loop
 
@@ -74,6 +77,13 @@ Analyze the work and confirm the parallel grouping via `AskUserQuestion` — the
    - **Limit:** Max 5 concurrent agents per batch.
    - If disjoint, emit ALL `Agent` calls in **ONE message** for true concurrency.
 5. **INTEGRATE:** Reconcile findings/diffs. Run full project validation.
+
+**Partial-failure protocol (INTEGRATE step):** if some agents in a batch return `SUCCESS` and others return `BLOCKED`/crash/timeout:
+
+- Keep the successful, validated results — do not discard or re-run agents that already succeeded and passed validation.
+- Re-dispatch only the failed domains, with a fresh agent and the same SCOPE (do not reuse a failed agent's context).
+- If a failed domain blocks on something a successful domain's result would resolve (rare, since domains are supposed to be disjoint — if this happens, the Dispatch Gate's independence check above was wrong), stop and re-classify as sequential via `multi-agent-development` instead of forcing a re-dispatch.
+- Never silently mark the batch "done" with a known BLOCKED domain unreported — surface partial completion to the user explicitly.
 
 **next skills:**
 

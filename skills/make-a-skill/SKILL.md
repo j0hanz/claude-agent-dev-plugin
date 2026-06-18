@@ -8,6 +8,8 @@ disable-model-invocation: false
 
 Scaffold a new skill from a template, draft its body, then validate it before calling it done.
 
+**Entry point:** this skill is reached directly from skill-authoring requests ("make a skill", "validate this skill"), not through `using-agent-dev-skills`'s Gate 0-4 flow — that router operates on the target repo's code, not on the plugin's own `skills/` directory. See `using-agent-dev-skills`'s Auxiliary Skills section.
+
 ## Process Flow
 
 ```dot

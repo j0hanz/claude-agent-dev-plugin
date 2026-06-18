@@ -46,7 +46,7 @@ Build a mental model before touching code:
 
 - **Blast Radius:** Use `Grep` to find all callers and dependencies.
 - **Invariants:** Identify hidden logic requirements.
-- **Tests:** Verify current tests exist and pass.
+- **Tests:** Verify current tests exist and pass. **Gate:** run the suite now and paste the actual output (exit code + pass/fail counts) as the green baseline — a claim that "tests pass" without pasted output does not satisfy this step. If the path being touched has no test covering it, write a characterization test first (see Critical Rules) and confirm IT passes before treating anything as a safety net.
 
 ## Step 2: Pain Point Mapping
 

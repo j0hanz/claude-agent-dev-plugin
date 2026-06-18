@@ -156,6 +156,7 @@ If any analysis script, scaffold command, or wiring step fails:
 1. Stop execution.
 2. Invoke `diagnose` with the script's `stderr` and the current state of `AGENTS.md`.
 3. Do not attempt manual fixes until `diagnose` confirms the root cause (e.g., missing dependencies, wrong Python version).
+4. **Return edge:** Once `diagnose` confirms and fixes the root cause (per its Transition table, `codebase-init` is the listed return destination), resume at the exact phase that failed — do not restart from Phase 0. Re-run only the failed script/step, not the whole pipeline.
 
 ## NEVER
 
