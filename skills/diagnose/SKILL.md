@@ -1,6 +1,6 @@
 ---
 name: diagnose
-description: "Disciplined root-cause analysis for bugs and unexpected behavior. Trigger on 'debug', 'fix crash', 'why is this failing', 'unexpected output'. Mandatory 6-phase workflow before any fix."
+description: "Disciplined root-cause analysis for bugs and crashes. Systematic falsification workflow to identify true causes. Trigger on: 'debug', 'fix crash', 'why is this failing', 'unexpected output', 'diagnose bug', 'root cause analysis', 'feedback loop', 'instrumentation'."
 disable-model-invocation: false
 argument-hint: '[symptom description or error trace]'
 ---

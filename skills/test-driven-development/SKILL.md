@@ -1,6 +1,6 @@
 ---
 name: test-driven-development
-description: "Test-driven development. Trigger on 'TDD', 'test-first', 'write tests', 'write a function', 'implement this', 'add feature', 'build this'. Also trigger proactively before any non-trivial implementation begins, even when TDD is not explicitly requested. Defines strict red-green-refactor procedures for agent-driven development."
+description: "Strict Red-Green-Refactor development. Mandatory failing test before implementation. Trigger on: 'TDD', 'test-first', 'write tests', 'implement feature', 'test-driven-development', 'regression test', 'scenario coverage'."
 user-invocable: true
 ---
 

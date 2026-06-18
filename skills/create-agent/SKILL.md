@@ -1,6 +1,6 @@
 ---
 name: create-agent
-description: "Design, write, test agents and subagents. Trigger on 'build agent', 'create subagent', 'agent prompt', 'multi-agent system design', 'managed agent', 'agent not working', 'agent keeps triggering wrong thing'. Also: agent role selection, permission scoping, tool surface design, choosing between subagent/team/workflow/managed agent."
+description: "Design and implement specialized agents. Use for isolation, parallelism, or reusable roles. Trigger on: 'create subagent', 'build agent', 'agent team', 'multi-agent system', 'managed agent', 'agent prompt design', 'system prompt craft', 'permission scoping', 'agent role selection'."
 disable-model-invocation: false
 argument-hint: '[what the agent should do]'
 allowed-tools: Bash(python *) Bash(python3 *)

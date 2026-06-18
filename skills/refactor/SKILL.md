@@ -1,6 +1,6 @@
 ---
 name: refactor
-description: "Trigger on 'clean up', 'refactor', 'simplify', 'improve', 'modernize', 'messy', 'hard to read'. Also: API changes, discovered bugs, single-file complexity, messy functions, proactive cleanup."
+description: "Improve code structure without changing behavior. Focus on readability and testability. Trigger on: 'clean up', 'refactor', 'simplify code', 'improve structure', 'modernize', 'code smell', 'extract function', 'rename symbol'."
 disable-model-invocation: false
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: using-agent-dev-skills
-description: Semantic orchestrator for the agent-dev plugin. Analyzes task maturity, scope, and execution requirements to route development tasks to specialized skills.
+description: "Global orchestrator for agent-dev skills. Diagnostic gating to route tasks to optimal skills. Trigger on: 'start task', 'route work', 'using-agent-dev-skills', 'skill selection', 'task diagnostic', 'orchestrate development'."
 ---
 
 # using-agent-dev-skills

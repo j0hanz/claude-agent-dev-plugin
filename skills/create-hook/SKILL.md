@@ -1,6 +1,6 @@
 ---
 name: create-hook
-description: "Design, write, and test deterministic Claude Code hooks for lifecycle events. Trigger on 'add hook', 'block tool', 'auto-format', 'run tests', 'inject context'. Master of hook types, matchers, and I/O contracts."
+description: "Design and implement deterministic lifecycle hooks. Use for rule-based guarantees and automation. Trigger on: 'add hook', 'create-hook', 'block tool', 'auto-format hook', 'inject context hook', 'lifecycle events', 'hook matcher', 'I/O contract'."
 disable-model-invocation: false
 argument-hint: '[the deterministic guarantee to implement]'
 ---

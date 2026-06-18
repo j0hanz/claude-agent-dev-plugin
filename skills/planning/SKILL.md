@@ -1,6 +1,6 @@
 ---
 name: planning
-description: "Produces paired spec + plan artifacts for a software feature. Trigger when the user explicitly asks to produce a durable spec document, implementation plan, or both ('write a spec', 'spec and plan this', 'write specs and tasks for X', '/planning ...'). Do NOT trigger for casual brainstorming, quick outlines, or open-ended discussion questions — use the brainstorming skill for those."
+description: "Paired specification and implementation planning. Generates durable spec.md and plan.md artifacts. Trigger on: 'write a spec', 'spec and plan this', 'create implementation plan', 'planning', 'blueprint', 'technical specification', 'task decomposition'."
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *)

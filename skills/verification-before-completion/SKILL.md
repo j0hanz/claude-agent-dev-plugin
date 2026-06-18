@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: "Verify before completion. Trigger when the USER says 'looks good', 'ready to review', 'ready to merge', 'mark as done', or when Claude is about to report a task complete. Test actual behavior — not code inspection alone."
+description: "Evidence-based operational correctness verification. Mandatory execution check before task completion. Trigger on: 'ready to merge', 'looks good', 'mark as done', 'verification-before-completion', 'smoke test', 'manual verification'."
 disable-model-invocation: false
 ---
 

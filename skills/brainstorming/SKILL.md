@@ -1,6 +1,6 @@
 ---
 name: brainstorming
-description: "Structured requirements discovery before implementation. Trigger on 'let's build', 'new feature', 'we need a new', 'I want to implement', 'add X to', 'create a Y', ambiguous design, or unclear terminology — even when the user says 'just build it'. Proactively offer before any implementation begins. Prevents rework by catching problems early."
+description: "Structured discovery to prevent rework. Use for new features or ambiguous requirements. Trigger on: 'let's build', 'new feature', 'I want to implement', 'add X to', 'ambiguous design', 'unclear terminology', 'requirements discovery', 'brainstorming', 'stakeholder probe', 'glossary definition'."
 ---
 
 # brainstorming

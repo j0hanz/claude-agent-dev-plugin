@@ -1,6 +1,6 @@
 ---
 name: architecting
-description: "Use when a codebase has system-level structural problems (circular deps, God modules, package/service boundary issues) or when designing new systems. Trigger on 'architecture review', 'architecting', 'where should this code live', 'too coupled', 'God class', 'design this system', 'restructure this'."
+description: "Expert architecture review and system design. Use when a codebase has structural problems like circular dependencies, God modules, or boundary violations (bleed). Trigger on: 'architecture review', 'restructure this', 'too coupled', 'design this system', 'where should this code live', 'God class', 'circular deps', 'dependency mapping', 'domain boundaries'."
 disable-model-invocation: false
 allowed-tools: Bash(node *), Bash(python *), AskUserQuestion
 ---

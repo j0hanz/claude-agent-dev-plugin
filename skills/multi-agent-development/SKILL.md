@@ -1,6 +1,6 @@
 ---
 name: multi-agent-development
-description: "For tasks with dependencies between them: execute a multi-task plan one task at a time, delegating each to a focused general-purpose implementer subagent and running two review gates (spec compliance, then code quality) before advancing. Trigger on 'implement the plan', 'execute spec', 'agentic development'."
+description: "Sequential task execution with gated reviews. Uses isolated subagents to execute complex multi-task plans. Trigger on: 'implement the plan', 'execute spec', 'agentic development', 'multi-agent-development', 'sequential tasks', 'gated implementation'."
 disable-model-invocation: false
 argument-hint: '[path to plan file]'
 ---

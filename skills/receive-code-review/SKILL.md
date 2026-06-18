@@ -1,6 +1,6 @@
 ---
 name: receive-code-review
-description: "Processes code review feedback once you have it — from request-code-review's dispatched subagent, a human partner, or an external GitHub reviewer/bot. Trigger on 'review feedback', 'reviewer said', 'PR comments', 'fix these review comments', or immediately after request-code-review returns a FAIL result."
+description: "Technical processing of code review feedback. Verification and implementation of reviewer suggestions. Trigger on: 'review feedback', 'reviewer said', 'PR comments', 'fix review comments', 'receive-code-review', 'implement feedback'."
 disable-model-invocation: false
 ---
 
