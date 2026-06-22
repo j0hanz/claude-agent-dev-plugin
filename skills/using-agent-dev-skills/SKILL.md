@@ -71,6 +71,9 @@ digraph using_agent_dev_skills {
   Receive -> Diagnose [label="blocking issue"];
   Receive -> Refactor [label="hygiene issue"];
   Receive -> RCR [label="re-review, capped at 2"];
+
+  Diagnose -> Gate3 [label="bug resolved,\nresume feature"];
+  Diagnose -> Gate4 [label="bug resolved,\nmerge-ready"];
 }
 ```
 
@@ -113,7 +116,7 @@ Announce the identified route and confirm via `AskUserQuestion` — the tool sup
 - **IF** the issue is localized to a messy function within a single file and crosses no module boundary:
   -> **ROUTE TO:** `refactor`
 - **IF** we are actively debugging a crash or traceback:
-  -> **ROUTE TO:** `diagnose`
+  -> **ROUTE TO:** `diagnose` (returns to **Gate 3** when bug is resolved)
 - **IF** implementing a planned feature:
   -> **Proceed to Gate 3.**
 
@@ -132,7 +135,7 @@ Announce the identified route and confirm via `AskUserQuestion` — the tool sup
 - **IF** writing standard code (single focused feature/fix):
   -> **ROUTE TO:** `test-driven-development` ⚠️
 - **IF** `test-driven-development` fails to reach GREEN after 3 attempts:
-  -> **ROUTE TO:** `diagnose` (implementation stuck) or `planning` (spec ambiguous) — see NEVER list.
+  -> **ROUTE TO:** `diagnose` (implementation stuck, returns here after resolution) or `planning` (spec ambiguous) — see NEVER list.
 
 ⚠️ **Agentic Skill Warning:** `test-driven-development`, `request-code-review`, `multi-agent-development`, and `multi-agent-dispatch` execute autonomously (each dispatches multiple subagent calls). Output `This will start an autonomous session (~N calls). Proceed?` and wait for user confirmation. `multi-agent-development` is the most expensive of these (N tasks × up to 3 subagent phases × up to 2 retries) — never skip its confirmation gate.
 
@@ -144,6 +147,16 @@ After Gate 3's execution skill completes:
 - **THEN** -> **ROUTE TO:** `request-code-review` (mandatory for non-trivial changes — it is the only security gate in the multi-agent-development flow).
   - **IF PASS** -> **ROUTE TO:** `github-automation` to open the PR. Note: `disable-model-invocation: true` — this is a deliberate human-invoked delivery gate, not an automatic hop.
   - **IF FAIL** -> **ROUTE TO:** `receive-code-review` to process feedback, which may loop back to `diagnose` (blocking issues) or `refactor` (hygiene), then re-review (capped at 2 cycles before escalating to the user).
+
+## Diagnose Return Paths
+
+The `diagnose` skill is a specialized gate that may be entered from multiple points in the lifecycle when a bug or critical issue is encountered. Once `diagnose` resolves the underlying issue, control must return to an execution gate to resume feature work or complete QA:
+
+- **From Gate 2 (systemic bug):** After diagnosing the crash or bug, return to **Gate 3** to resume the planned feature implementation with the bug fix in place.
+- **From Gate 3 (TDD stuck):** After diagnosing why `test-driven-development` failed to pass after 3 attempts, return to **Gate 3** and retry the implementation with the identified fix.
+- **From Gate 4 (blocking code-review issue):** After diagnosing a blocking issue found during code review, return to **Gate 4** to re-run `request-code-review` with the fix applied. If the issue becomes a systemic refactor, escalate to `refactor` instead.
+
+**Key principle:** `diagnose` is never a terminal state. Every diagnosed issue has a concrete next step that routes back into the main lifecycle. The graph now reflects these return edges explicitly.
 
 ## Mandatory Rules (NEVER List)
 
