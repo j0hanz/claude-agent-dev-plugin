@@ -608,3 +608,84 @@ def test_validate_cli_prints_errors_before_warnings(tmp_path: Path) -> None:
         text=True,
     )
     assert result.stdout.index("ERRORS:") < result.stdout.index("WARNINGS:")
+
+
+# ---------------------------------------------------------------------------
+# Tests for newly implemented fixes
+# ---------------------------------------------------------------------------
+
+
+def test_dangling_reference_with_anchor_passes_validation(tmp_path: Path) -> None:
+    skill_dir = _base_skill(tmp_path)
+    refs_dir = skill_dir / "references"
+    refs_dir.mkdir()
+    (refs_dir / "checklist.md").write_text("Checklist content", encoding="utf-8")
+
+    # Add a markdown link with an anchor/fragment
+    skill_md = skill_dir / "SKILL.md"
+    skill_md.write_text(
+        skill_md.read_text(encoding="utf-8")
+        + "\nRead [checklist](references/checklist.md#step-1) for details.\n",
+        encoding="utf-8",
+    )
+    errors, _ = validate_skill(skill_md)
+    assert errors == []
+
+
+def test_multiline_yaml_frontmatter_description(tmp_path: Path) -> None:
+    skill_dir = tmp_path / "demo-skill"
+    skill_dir.mkdir()
+    (skill_dir / "SKILL.md").write_text(
+        """---\n"""
+        """name: demo-skill\n"""
+        """description: "Does a demonstration thing for tests.\n"""
+        """  Trigger on: 'demo skill', 'run the demo'."\n"""
+        """disable-model-invocation: false\n"""
+        """---\n\n"""
+        """# demo-skill\n\n"""
+        """Does a thing.\n""",
+        encoding="utf-8",
+    )
+    errors, warnings = validate_skill(skill_dir / "SKILL.md")
+    assert errors == []
+    # Make sure we didn't warn about missing trigger clause (since it was on the second line of description)
+    assert not any("Trigger on" in w for w in warnings)
+
+
+def test_evals_json_with_bom_passes(tmp_path: Path) -> None:
+    skill_dir = _base_skill(tmp_path)
+    evals_dir = skill_dir / "evals"
+    evals_dir.mkdir()
+    # Write JSON with UTF-8 BOM
+    (evals_dir / "evals.json").write_text(
+        "\ufeff" + json.dumps([{"prompt": "do the thing", "assertions": ["it did"]}]),
+        encoding="utf-8",
+    )
+    errors, _ = validate_skill(skill_dir / "SKILL.md")
+    assert errors == []
+
+
+def test_passive_voice_and_vague_adjectives_in_code_ignored(tmp_path: Path) -> None:
+    skill_dir = _base_skill(tmp_path)
+    skill_md = skill_dir / "SKILL.md"
+    skill_md.write_text(
+        skill_md.read_text(encoding="utf-8")
+        + "\n```python\n# This code is be executed.\nclass SimpleLogger:\n    pass\n```\n",
+        encoding="utf-8",
+    )
+    errors, warnings = validate_skill(skill_md)
+    assert errors == []
+    # No passive voice warning and no vague adjective "simple" warning since they are in code blocks
+    assert not any("passive voice" in w.lower() for w in warnings)
+    assert not any("simple" in w.lower() for w in warnings)
+
+
+def test_excluded_passive_voice_words(tmp_path: Path) -> None:
+    skill_dir = _base_skill(tmp_path)
+    skill_md = skill_dir / "SKILL.md"
+    skill_md.write_text(
+        skill_md.read_text(encoding="utf-8") + "\nThis must be indeed checked.\n",
+        encoding="utf-8",
+    )
+    _, warnings = validate_skill(skill_md)
+    assert not any("passive voice" in w.lower() for w in warnings)

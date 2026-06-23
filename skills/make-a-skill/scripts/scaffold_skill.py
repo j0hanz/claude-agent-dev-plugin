@@ -133,7 +133,7 @@ def scaffold(
             f"Invalid name {name!r}: must be a lowercase, kebab-case directory name "
             "with no path separators (e.g. 'make-a-skill')"
         )
-    if name in _WINDOWS_RESERVED_NAMES:
+    if name.lower() in _WINDOWS_RESERVED_NAMES:
         raise ValueError(f"Invalid name {name!r}: reserved filename on Windows")
 
     skill_dir = Path(out_dir).resolve() / name

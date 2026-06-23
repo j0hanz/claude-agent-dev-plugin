@@ -24,6 +24,7 @@ import json
 import re
 import sys
 from pathlib import Path
+from typing import Any
 
 PLACEHOLDER_MARKER = "{{FILL"
 
@@ -44,7 +45,8 @@ VAGUE_ADJECTIVES: tuple[str, ...] = (
     "simple",
 )
 _PASSIVE_VOICE_RE = re.compile(
-    r"\bbe\s+(?!(?:red|bed|fed|led|shed)\b)\w+ed\b", re.IGNORECASE
+    r"\bbe\s+(?!(?:red|bed|fed|led|shed|indeed|tired|bleed|speed|feed)\b)\w+ed\b",
+    re.IGNORECASE,
 )
 _FENCED_CODE_RE = re.compile(r"```.*?```", re.DOTALL)
 _INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
@@ -78,8 +80,12 @@ def _parse_frontmatter(content: str) -> tuple[dict[str, str], str] | None:
         return None
     raw, body = match.group(1), content[match.end() :]
     fields: dict[str, str] = {}
+    current_key = None
     for line in raw.splitlines():
         if not line.strip() or line.strip().startswith("#"):
+            continue
+        if current_key and (line.startswith(" ") or line.startswith("\t")):
+            fields[current_key] += "\n" + line.strip()
             continue
         kv_match = re.match(r"^([A-Za-z0-9_-]+):\s*(.*)$", line)
         if not kv_match:
@@ -88,6 +94,7 @@ def _parse_frontmatter(content: str) -> tuple[dict[str, str], str] | None:
         if len(value) >= 2 and value[0] == value[-1] and value[0] in "\"'":
             value = value[1:-1]
         fields[key] = value
+        current_key = key
     return fields, body
 
 
@@ -161,19 +168,20 @@ def validate_body(body: str) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
-    unfilled = _strip_code(body).count(PLACEHOLDER_MARKER)
+    stripped_body = _strip_code(body)
+    unfilled = stripped_body.count(PLACEHOLDER_MARKER)
     if unfilled:
         errors.append(
             f"[BODY] {unfilled} unfilled '{{{{FILL: ...}}}}' placeholder(s) remain in the body"
         )
 
     for adj in VAGUE_ADJECTIVES:
-        if re.search(rf"\b{re.escape(adj)}\b", body, re.IGNORECASE):
+        if re.search(rf"\b{re.escape(adj)}\b", stripped_body, re.IGNORECASE):
             warnings.append(
                 f"[BODY] Vague adjective '{adj}' found - prefer a concrete, checkable claim"
             )
 
-    for line in body.splitlines():
+    for line in stripped_body.splitlines():
         if _PASSIVE_VOICE_RE.search(line):
             warnings.append(f"[BODY] Possible passive voice: {line.strip()[:100]}")
 
@@ -209,7 +217,8 @@ def validate_references(skill_dir: Path, body: str) -> tuple[list[str], list[str
     skill_dir_resolved = skill_dir.resolve()
     for match in LINKED_DIR_PATH_RE.finditer(unfenced_body):
         rel_path = match.group(1).rstrip(".,;:)")
-        target = (skill_dir / rel_path).resolve()
+        file_path_part = rel_path.split("#")[0]
+        target = (skill_dir / file_path_part).resolve()
         # A "../" link that escapes skill_dir is treated as dangling too, not followed.
         if not target.is_relative_to(skill_dir_resolved) or not target.exists():
             missing.add(rel_path)
@@ -238,6 +247,18 @@ def validate_references(skill_dir: Path, body: str) -> tuple[list[str], list[str
     return errors, warnings
 
 
+def _has_fill_placeholder(val: Any) -> bool:
+    if isinstance(val, str):
+        return "FILL:" in val
+    if isinstance(val, list):
+        return any(_has_fill_placeholder(x) for x in val)
+    if isinstance(val, dict):
+        return any(
+            _has_fill_placeholder(k) or _has_fill_placeholder(v) for k, v in val.items()
+        )
+    return False
+
+
 def validate_evals(skill_dir: Path) -> tuple[list[str], list[str]]:
     """Check evals.json is well-formed. Two schemas are both accepted: a bare
     top-level array of cases, or {"skill_name", "evals": [...]}. Case objects
@@ -252,7 +273,7 @@ def validate_evals(skill_dir: Path) -> tuple[list[str], list[str]]:
         return errors, warnings
 
     try:
-        data = json.loads(evals_path.read_text(encoding="utf-8"))
+        data = json.loads(evals_path.read_text(encoding="utf-8-sig"))
     except (OSError, json.JSONDecodeError) as e:
         errors.append(f"[EVALS] evals.json is not valid JSON: {e}")
         return errors, warnings
@@ -288,7 +309,7 @@ def validate_evals(skill_dir: Path) -> tuple[list[str], list[str]]:
                 f"[EVALS] evals[{i}] has neither 'assertions' nor 'expectations' — "
                 "no checkable success criteria"
             )
-        if "FILL:" in json.dumps(case):
+        if _has_fill_placeholder(case):
             errors.append(
                 f"[EVALS] evals[{i}] still contains an unfilled 'FILL:' placeholder"
             )
