@@ -9,6 +9,7 @@ import argparse
 import fnmatch
 import json
 import os
+import platform  # FIX S-1: platform-aware shlex.split
 import re
 import shlex
 import sys
@@ -21,6 +22,7 @@ from typing import IO, Any, ClassVar
 class Config:
     """Central configuration for plugin audit utilities."""
 
+    # ── Dependency directory names → display label ─────────────────────────
     DEPENDENCY_DIRS: ClassVar[dict[str, str]] = {
         "node_modules": "Node.js (npm/pnpm/yarn/bun)",
         "venv": "Python (virtualenv)",
@@ -42,6 +44,7 @@ class Config:
         "extern": "External dependencies",
     }
 
+    # ── Lock file → package manager name ───────────────────────────────────
     PACKAGE_MANAGERS: ClassVar[dict[str, str]] = {
         "pnpm-lock.yaml": "pnpm",
         "yarn.lock": "yarn",
@@ -53,6 +56,7 @@ class Config:
         "go.sum": "go",
     }
 
+    # ── Default gitignore-style patterns always applied ────────────────────
     DEFAULT_IGNORE_PATTERNS: ClassVar[set[str]] = {
         ".git",
         ".vscode",
@@ -64,6 +68,7 @@ class Config:
         ".DS_Store",
     }
 
+    # ── Skill validation constants ─────────────────────────────────────────
     SKILL_REQUIRED_KEYS: ClassVar[tuple[str, ...]] = (
         "name",
         "description",
@@ -72,9 +77,15 @@ class Config:
     MAX_SKILL_LINES: ClassVar[int] = 150
     MAX_AGENTS_MD_LINES: ClassVar[int] = 100
 
-    # Per-language scaffold defaults for `scaffold-agents-md`. Each entry supplies a
-    # *starting point* only — the LLM must override any value Phase 1 discovered to
-    # differ from the default (e.g. a repo using npm instead of pnpm).
+    # ── Per-language scaffold defaults for `scaffold-agents-md` ───────────
+    # Each entry supplies a *starting point* only — the LLM must override any
+    # value Phase 1 discovered to differ from the default (e.g. a repo using
+    # npm instead of pnpm).
+    #
+    # "commands" and "conventions" are lists of (label, value) 2-tuples.
+    # Both elements are always strings; extend the tuple definition AND all
+    # consumers in render_agents_md_skeleton() together if a third element
+    # is ever needed.
     LANGUAGE_DEFAULTS: ClassVar[dict[str, dict[str, Any]]] = {
         "node": {
             "pm": "pnpm",
@@ -282,8 +293,8 @@ class Config:
         },
     }
 
-    # Phase 0 survey answers -> Hard Rules sentence. Keys must match the marker
-    # value encoding in references/hard-rules.md.
+    # ── Survey answers → Hard Rules sentence ───────────────────────────────
+    # Keys must match the marker value encoding in references/hard-rules.md.
     HARD_RULES_TEXT: ClassVar[dict[str, dict[str, str]]] = {
         "commit": {
             "strict": "Conventional Commits format (`type(scope): subject`) required; every AI commit MUST include a `Co-Authored-By:` trailer",
@@ -392,8 +403,11 @@ def safe_print(text: str, file: IO[str] = sys.stdout) -> None:
     try:
         print(text, file=file)
     except UnicodeEncodeError:
-        encoded = text.encode(getattr(file, "encoding", "utf-8") or "utf-8", "replace")
-        print(encoded.decode(getattr(file, "encoding", "utf-8") or "utf-8"), file=file)
+        # FIX S-6/C-4: capture codec once to avoid a race between two separate
+        # getattr() calls, which could diverge when stdout/stderr use different
+        # encodings (e.g. cp1252 vs utf-8 on Windows).
+        codec = getattr(file, "encoding", None) or "utf-8"
+        print(text.encode(codec, "replace").decode(codec), file=file)
 
 
 def load_gitignore(target_dir: Path) -> set[str]:
@@ -420,13 +434,14 @@ def should_ignore(path: Path, patterns: set[str], root: Path) -> bool:
     rel_str = str(rel_path).replace("\\", "/")
     for pattern in patterns:
         is_anchored = pattern.startswith("/")
-        pat_clean = pattern[1:] if is_anchored else pattern
+        # FIX B-7: normalise trailing slash once here so all comparisons below
+        # are consistent, even for patterns that bypass load_gitignore (which
+        # strips trailing slashes).  Previously the strip was applied only at
+        # some of the comparison sites, leaving a latent double-slash bug when
+        # a caller passed a pattern with a trailing slash directly.
+        pat_clean = (pattern[1:] if is_anchored else pattern).rstrip("/")
 
-        if (
-            not is_anchored
-            and "/" not in pat_clean.rstrip("/")
-            and path.name == pat_clean.rstrip("/")
-        ):
+        if not is_anchored and "/" not in pat_clean and path.name == pat_clean:
             return True
         if rel_str == pat_clean or rel_str.startswith(pat_clean + "/"):
             return True
@@ -440,13 +455,23 @@ def should_ignore(path: Path, patterns: set[str], root: Path) -> bool:
 
 
 def _parse_frontmatter(content: str) -> dict[str, str]:
-    """Simple parser for YAML frontmatter."""
+    """Simple parser for YAML frontmatter.
+
+    Only flat ``key: scalar`` pairs are supported. Multi-line values,
+    lists, and nested mappings are silently ignored or misinterpreted.
+    Use a proper YAML parser for richer frontmatter structures.
+    """
     content = content.lstrip("\ufeff").lstrip()
     if not content.startswith("---"):
         return {}
-    end = content.find("\n---", 3)
-    if end == -1:
+    # FIX B-1: use a line-anchored regex so that a YAML scalar value
+    # containing the four-character sequence "\n---" does not prematurely
+    # terminate the frontmatter block.  The closing delimiter must appear
+    # on its own line (optionally followed by whitespace).
+    m = re.search(r"\n---\s*(\n|$)", content[3:])
+    if m is None:
         return {}
+    end = m.start() + 3
     yaml_text = content[3:end]
     result: dict[str, str] = {}
     for line in yaml_text.splitlines():
@@ -550,11 +575,15 @@ def analyze_project_env(target_dir: Path) -> ProjectEnvironment:
     else:
         github_workflows = target_dir / ".github" / "workflows"
         if github_workflows.is_dir():
+            # FIX B-3: a PermissionError on iterdir() means the directory
+            # exists but is unreadable.  Assume GitHub Actions rather than
+            # incorrectly labelling the repo as "local-only", which would
+            # cause scaffold-agents-md to emit a wrong ci: value.
             try:
                 has_files = any(entry.is_file() for entry in github_workflows.iterdir())
+                env.ci_provider = "github-actions" if has_files else "local-only"
             except (PermissionError, OSError):
-                has_files = False
-            env.ci_provider = "github-actions" if has_files else "local-only"
+                env.ci_provider = "github-actions"
         else:
             env.ci_provider = "local-only"
 
@@ -576,6 +605,11 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
             count = 0
             truncated = False
             try:
+                # NOTE: The manual while/next(iterator) pattern is intentional.
+                # A plain `for f in entry.rglob("*")` cannot catch OSError
+                # raised by the iterator's own __next__ call (e.g. when
+                # descending into a sub-directory raises PermissionError).
+                # The inner try/except is the only portable way to handle it.
                 iterator = entry.rglob("*")
                 while True:
                     try:
@@ -591,6 +625,11 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
                             size_mb += f.stat().st_size
                             count += 1
                             if count > Config.MAX_DIR_SCAN_COUNT:
+                                # FIX B-5: discard the partial accumulation so
+                                # the reported size is not a misleading partial
+                                # sum from only the first MAX_DIR_SCAN_COUNT
+                                # files (which may be the smallest ones).
+                                size_mb = 0.0
                                 truncated = True
                                 break
                     except (PermissionError, OSError):
@@ -696,6 +735,7 @@ def validate_skill_files(skills_dir: Path) -> ValidationResult:
     )
 
 
+# ── Compiled regular expressions ──────────────────────────────────────────
 _FILLER_RE = re.compile(
     r"(welcome to|this document explains|you should)", re.IGNORECASE
 )
@@ -711,6 +751,9 @@ _HARD_RULES_MARKER_RE = re.compile(
     r"<!--\s*codebase-init:hard-rules\s+v1\s+commit=\S+\s+maturity=\S+\s+testing=\S+(?:\s+ci=\S+)?\s*-->"
 )
 _TODO_RE = re.compile(r"\bTODO\b", re.IGNORECASE)
+# FIX C-2: moved here from ~106 lines below to join the consolidated group.
+_HARD_RULES_SECTION_RE = re.compile(r"^##\s+Hard Rules\b", re.IGNORECASE | re.MULTILINE)
+_PACKAGE_OVERRIDE_RE = re.compile(r"See\s+\[AGENTS\.md\]", re.IGNORECASE)
 
 
 def render_hard_rules_marker(
@@ -816,10 +859,6 @@ def render_agents_md_skeleton(
     return "\n".join(lines)
 
 
-_HARD_RULES_SECTION_RE = re.compile(r"^##\s+Hard Rules\b", re.IGNORECASE | re.MULTILINE)
-_PACKAGE_OVERRIDE_RE = re.compile(r"See\s+\[AGENTS\.md\]", re.IGNORECASE)
-
-
 def is_package_level_override(content: str) -> bool:
     """Return True if content is a recognized package-level AGENTS.md override."""
     return bool(_PACKAGE_OVERRIDE_RE.search(content))
@@ -842,11 +881,13 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
         content = file_path.read_text(encoding="utf-8").lstrip("\ufeff")
         lines = content.splitlines()
 
+        # FIX C-9: demote line-count to WARN — the limit is advisory; structural
+        # failures (missing H1, missing Hard Rules section) should dominate.
         if len(lines) > Config.MAX_AGENTS_MD_LINES:
             issues.append(
                 ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"File is {len(lines)} lines. Must be under {Config.MAX_AGENTS_MD_LINES}.",
+                    level=IssueLevel.WARN,
+                    message=f"File is {len(lines)} lines. Recommended maximum is {Config.MAX_AGENTS_MD_LINES}.",
                 )
             )
 
@@ -1003,116 +1044,150 @@ def validate_hooks_config(hooks_file: Path) -> ValidationResult:
 
     plugin_root = hooks_file.parent.parent
 
-    try:
-        if not isinstance(hooks_data, dict) or not isinstance(
-            hooks_data.get("hooks"), dict
-        ):
-            return ValidationResult(
-                success=False,
-                issues=[
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message="hooks.json must be a JSON object with a 'hooks' dictionary.",
-                    )
-                ],
-            )
-
-        for event, event_hooks in hooks_data.get("hooks", {}).items():
-            if not isinstance(event_hooks, list):
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message=f"Hooks list for event '{event}' must be an array.",
-                    )
-                )
-                continue
-            for hook_entry in event_hooks:
-                if not isinstance(hook_entry, dict):
-                    issues.append(
-                        ValidationIssue(
-                            level=IssueLevel.FAIL,
-                            message=f"Hook entry under event '{event}' must be an object.",
-                        )
-                    )
-                    continue
-                for hook in hook_entry.get("hooks", []):
-                    if not isinstance(hook, dict):
-                        issues.append(
-                            ValidationIssue(
-                                level=IssueLevel.FAIL,
-                                message=f"Hook details under event '{event}' must be an object.",
-                            )
-                        )
-                        continue
-                    cmd = hook.get("command", "")
-                    if not cmd or not isinstance(cmd, str):
-                        continue
-
-                    parts = shlex.split(cmd, posix=True)
-
-                    if "runner.mjs" in cmd:
-                        domain_idx_match = next(
-                            (i for i, p in enumerate(parts) if "runner.mjs" in p), None
-                        )
-                        if domain_idx_match is None or domain_idx_match + 1 >= len(
-                            parts
-                        ):
-                            issues.append(
-                                ValidationIssue(
-                                    level=IssueLevel.WARN,
-                                    message=f"Could not determine handler for hook '{event}': {cmd!r}",
-                                )
-                            )
-                            continue
-                        domain = parts[domain_idx_match + 1]
-                        handler_path = (
-                            plugin_root / "hooks" / "handlers" / f"{domain}.mjs"
-                        )
-                        if not handler_path.exists():
-                            issues.append(
-                                ValidationIssue(
-                                    level=IssueLevel.FAIL,
-                                    message=f"Missing handler for hook '{event}': {handler_path}",
-                                )
-                            )
-
-                    elif (
-                        "scripts" in cmd
-                        or "hooks/handlers" in cmd
-                        or "${CLAUDE_PLUGIN_ROOT}" in cmd
-                        or "$CLAUDE_PLUGIN_ROOT" in cmd
-                    ):
-                        script_part = next(
-                            (
-                                p
-                                for p in parts
-                                if "${CLAUDE_PLUGIN_ROOT}" in p
-                                or "$CLAUDE_PLUGIN_ROOT" in p
-                                or "hooks/" in p
-                                or "scripts" in p
-                            ),
-                            parts[-1] if parts else "",
-                        )
-                        script_path_str = script_part.replace(
-                            "${CLAUDE_PLUGIN_ROOT}", str(plugin_root)
-                        ).replace("$CLAUDE_PLUGIN_ROOT", str(plugin_root))
-                        if not Path(script_path_str).exists():
-                            issues.append(
-                                ValidationIssue(
-                                    level=IssueLevel.FAIL,
-                                    message=f"Missing script for hook '{event}': {script_path_str}",
-                                )
-                            )
-    except Exception as e:
+    # FIX B-2: the previous code wrapped all validation logic in a broad
+    # `except Exception` block that silently swallowed programming bugs
+    # (AttributeError, IndexError, etc.) and returned them as synthetic FAIL
+    # results indistinguishable from bad hooks.json content.  The outer
+    # try/except has been removed entirely.  Only ValueError from shlex.split
+    # is caught narrowly, directly around the call site.
+    if not isinstance(hooks_data, dict) or not isinstance(
+        hooks_data.get("hooks"), dict
+    ):
         return ValidationResult(
             success=False,
             issues=[
                 ValidationIssue(
                     level=IssueLevel.FAIL,
-                    message=f"Error validating hooks.json: {e}",
+                    message="hooks.json must be a JSON object with a 'hooks' dictionary.",
                 )
             ],
         )
+
+    for event, event_hooks in hooks_data.get("hooks", {}).items():
+        if not isinstance(event_hooks, list):
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"Hooks list for event '{event}' must be an array.",
+                )
+            )
+            continue
+        for hook_entry in event_hooks:
+            if not isinstance(hook_entry, dict):
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message=f"Hook entry under event '{event}' must be an object.",
+                    )
+                )
+                continue
+            for hook in hook_entry.get("hooks", []):
+                if not isinstance(hook, dict):
+                    issues.append(
+                        ValidationIssue(
+                            level=IssueLevel.FAIL,
+                            message=f"Hook details under event '{event}' must be an object.",
+                        )
+                    )
+                    continue
+                cmd = hook.get("command", "")
+                if not cmd or not isinstance(cmd, str):
+                    continue
+
+                # FIX S-1: use POSIX tokenisation only on non-Windows systems.
+                # In POSIX mode, shlex treats `\` as an escape character, which
+                # silently corrupts Windows backslash paths (C:\hooks\...)
+                # before they reach the Path.exists() check, potentially
+                # causing a dangerously missing handler to go undetected.
+                # On Windows, we strip outer quotes from tokens returned under
+                # non-POSIX mode so path validation resolves successfully.
+                # FIX B-2 (narrow): catch only ValueError (malformed shell
+                # syntax) so programming bugs in surrounding logic still
+                # propagate normally.
+                try:
+                    is_windows = platform.system() == "Windows"
+                    parts = shlex.split(cmd, posix=not is_windows)
+                    if is_windows:
+                        parts = [p.strip("\"'") for p in parts]
+                except ValueError:
+                    issues.append(
+                        ValidationIssue(
+                            level=IssueLevel.WARN,
+                            message=f"Malformed shell command for hook '{event}': {cmd!r}",
+                        )
+                    )
+                    continue
+
+                if "runner.mjs" in cmd:
+                    domain_idx_match = next(
+                        (i for i, p in enumerate(parts) if "runner.mjs" in p), None
+                    )
+                    if domain_idx_match is None or domain_idx_match + 1 >= len(parts):
+                        issues.append(
+                            ValidationIssue(
+                                level=IssueLevel.WARN,
+                                message=f"Could not determine handler for hook '{event}': {cmd!r}",
+                            )
+                        )
+                        continue
+                    domain = parts[domain_idx_match + 1]
+                    try:
+                        handler_path = (
+                            plugin_root / "hooks" / "handlers" / f"{domain}.mjs"
+                        ).resolve()
+                        is_relative = handler_path.is_relative_to(plugin_root)
+                    except (ValueError, OSError):
+                        is_relative = False
+
+                    if not is_relative:
+                        issues.append(
+                            ValidationIssue(
+                                level=IssueLevel.FAIL,
+                                message=f"Handler for hook '{event}' resolves outside the plugin root: {domain}",
+                            )
+                        )
+                        continue
+
+                    if not handler_path.exists():
+                        # FIX S-4: report path relative to plugin_root rather
+                        # than a full absolute path that leaks filesystem layout.
+                        rel = handler_path.relative_to(plugin_root)
+                        issues.append(
+                            ValidationIssue(
+                                level=IssueLevel.FAIL,
+                                message=f"Missing handler for hook '{event}': {rel}",
+                            )
+                        )
+
+                elif (
+                    "scripts" in cmd
+                    or "hooks/handlers" in cmd
+                    or "${CLAUDE_PLUGIN_ROOT}" in cmd
+                    or "$CLAUDE_PLUGIN_ROOT" in cmd
+                ):
+                    script_part = next(
+                        (
+                            p
+                            for p in parts
+                            if "${CLAUDE_PLUGIN_ROOT}" in p
+                            or "$CLAUDE_PLUGIN_ROOT" in p
+                            or "hooks/" in p
+                            or "scripts" in p
+                        ),
+                        parts[-1] if parts else "",
+                    )
+                    script_path_str = script_part.replace(
+                        "${CLAUDE_PLUGIN_ROOT}", str(plugin_root)
+                    ).replace("$CLAUDE_PLUGIN_ROOT", str(plugin_root))
+                    if not Path(script_path_str).exists():
+                        # FIX S-4: report basename only to avoid leaking full
+                        # server-side filesystem paths in CI logs.
+                        issues.append(
+                            ValidationIssue(
+                                level=IssueLevel.FAIL,
+                                message=f"Missing script for hook '{event}': {Path(script_path_str).name}",
+                            )
+                        )
 
     return ValidationResult(
         success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
@@ -1166,22 +1241,46 @@ def validate_manifest_file(manifest_file: Path) -> ValidationResult:
 
 
 def wire_agents_files(source: Path, targets: list[Path]) -> int:
-    """Create one‑line redirect stubs in target files that point to *source*.
+    """Create one-line redirect stubs (never full copies) in target files pointing to *source*.
 
     Each *target* file will contain a markdown link to the *source* file
     using a relative POSIX path. Existing files are overwritten. Returns
     ``0`` on success or ``1`` if any target could not be processed.
+
+    Both *source* and all *targets* must reside inside the current working
+    directory. Paths that escape the project root are rejected to prevent
+    write-anywhere exploitation and path-traversal link injection (S-2, S-5).
     """
-    """Write one-line redirect stubs (never full copies) pointing targets at source."""
+    safe_root = Path.cwd().resolve()
     source = source.resolve()
+
+    # FIX S-2/S-5: reject source outside project root to prevent the generated
+    # relative link from containing deep ../../.. traversal sequences.
+    if not source.is_relative_to(safe_root):
+        safe_print(
+            f"FAIL: source is outside the project root: {source.name}",
+            file=sys.stderr,
+        )
+        return 1
     if not source.exists():
-        safe_print(f"FAIL: Source file not found: {source}", file=sys.stderr)
+        safe_print(f"FAIL: Source file not found: {source.name}", file=sys.stderr)
         return 1
 
     exit_code = 0
     for target in targets:
-        target = target.resolve()
-        if target == source:
+        # FIX B-9: use a separate variable for the resolved path to avoid
+        # shadowing the original user-supplied value used in error messages.
+        resolved_target = target.resolve()
+
+        # FIX S-2: reject targets outside the project root.
+        if not resolved_target.is_relative_to(safe_root):
+            safe_print(
+                f"FAIL: target is outside the project root, skipping: {target}",
+                file=sys.stderr,
+            )
+            exit_code = 1
+            continue
+        if resolved_target == source:
             safe_print(
                 f"FAIL: target is the same file as source, skipping: {target}",
                 file=sys.stderr,
@@ -1189,16 +1288,16 @@ def wire_agents_files(source: Path, targets: list[Path]) -> int:
             exit_code = 1
             continue
         try:
-            if target.is_dir():
-                raise IsADirectoryError(f"target is a directory: {target}")
-            if target.exists() or target.is_symlink():
-                target.unlink()
-            rel = os.path.relpath(source, target.parent).replace(os.sep, "/")
-            target.parent.mkdir(parents=True, exist_ok=True)
-            target.write_text(
+            if resolved_target.is_dir():
+                raise IsADirectoryError(f"target is a directory: {resolved_target}")
+            if resolved_target.exists() or resolved_target.is_symlink():
+                resolved_target.unlink()
+            rel = os.path.relpath(source, resolved_target.parent).replace(os.sep, "/")
+            resolved_target.parent.mkdir(parents=True, exist_ok=True)
+            resolved_target.write_text(
                 f"# See [{source.name}]({rel})\n", encoding="utf-8", newline="\n"
             )
-            safe_print(f"Stubbed: {target.name} -> {rel}")
+            safe_print(f"Stubbed: {resolved_target.name} -> {rel}")
         except (OSError, ValueError) as e:
             safe_print(f"FAIL: Could not wire {target}: {e}", file=sys.stderr)
             exit_code = 1
@@ -1288,7 +1387,8 @@ def run_full_audit(root_dir: Path) -> int:
 
     Returns the exit code from :func:`print_audit_report`.
     """
-    """Orchestrate the full audit process."""
+    # FIX B-6: removed the duplicate dead docstring that previously followed
+    # this one; Python only ever exposes the first string literal as __doc__.
     results = AuditResults()
     patterns = load_gitignore(root_dir) | Config.DEFAULT_IGNORE_PATTERNS
 
@@ -1310,13 +1410,117 @@ def _resolve_target(raw: Path | None, fallback: Path) -> Path:
     return (raw or fallback).resolve()
 
 
+# ── Subcommand handlers ────────────────────────────────────────────────────
+# FIX C-3: non-trivial subcommand bodies extracted into named handler
+# functions so they can be unit-tested without constructing a full CLI
+# invocation or using subprocess.
+
+
+def _cmd_scaffold_agents_md(args: argparse.Namespace, root: Path) -> int:
+    """Handler for the ``scaffold-agents-md`` subcommand."""
+    overrides: dict[str, str] = {}
+    for pair in args.set:
+        if "=" not in pair:
+            safe_print(f"FAIL: --set expects KEY=VALUE, got: {pair}", file=sys.stderr)
+            return 1
+        key, _, value = pair.partition("=")
+        overrides[key] = value
+
+    ci = args.ci
+    if ci is None:
+        env = analyze_project_env(root)
+        ci = env.ci_provider
+        if "ci" in Config.HARD_RULES_TEXT and ci not in Config.HARD_RULES_TEXT["ci"]:
+            ci = "local-only"
+
+    try:
+        content = render_agents_md_skeleton(
+            args.language,
+            args.purpose,
+            args.commit,
+            args.maturity,
+            args.testing,
+            ci=ci,
+            pm_override=args.pm,
+            toolchain_overrides=overrides,
+        )
+    except ValueError as e:
+        safe_print(f"FAIL: {e}", file=sys.stderr)
+        return 1
+
+    if args.out:
+        out_path = args.out.resolve()
+        # FIX S-3: reject --out paths outside the project root to prevent
+        # write-anywhere exploitation via the scaffold subcommand.
+        if not out_path.is_relative_to(root):
+            safe_print(
+                f"FAIL: --out path is outside the project root: {args.out}",
+                file=sys.stderr,
+            )
+            return 1
+        try:
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            out_path.write_text(content, encoding="utf-8", newline="\n")
+            # FIX S-4: show path relative to root rather than absolute.
+            safe_print(f"Wrote skeleton to {out_path.relative_to(root)}")
+        except OSError as e:
+            # FIX S-4: report only the filename, not the full resolved path.
+            safe_print(
+                f"FAIL: Could not write skeleton to {args.out.name}: {e}",
+                file=sys.stderr,
+            )
+            return 1
+    else:
+        safe_print(content)
+    return 0
+
+
+def _cmd_analyze_all(args: argparse.Namespace, root: Path) -> int:
+    """Handler for the ``analyze-all`` subcommand."""
+    target = _resolve_target(args.target_dir, root)
+    safe_print("### Environment")
+    env = analyze_project_env(target)
+    safe_print(f"Package Manager: {env.package_manager}")
+    safe_print(f"Test Runner:     {env.test_runner}")
+    safe_print(f"Linter:          {env.linter}")
+    safe_print(f"Monorepo:        {env.is_monorepo}")
+    safe_print(f"CI/CD Automation: {env.ci_provider}")
+    safe_print("")
+    safe_print("### Dependencies")
+    deps = get_dependencies(target)
+    if deps:
+        for dep in deps:
+            prefix = ">" if dep.size_truncated else ""
+            size_str = f"{prefix}{dep.size_mb} MB"
+            safe_print(f"{dep.name} ({dep.type}) -> {dep.path} [{size_str}]")
+    else:
+        safe_print("None found.")
+    safe_print("")
+    safe_print("### Structure")
+    patterns = load_gitignore(target) | Config.DEFAULT_IGNORE_PATTERNS
+    lines = get_tree_lines(target, patterns, args.max_depth)
+    for line in lines:
+        safe_print(line)
+    return 0
+
+
 def _setup_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         description="Consolidated plugin maintenance utilities."
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    subparsers.add_parser("check-all", help="Run all health checks.")
+    # FIX C-7: add optional target_dir to check-all so callers need not `cd`
+    # into the project before running the full audit.
+    check_all_parser = subparsers.add_parser("check-all", help="Run all health checks.")
+    check_all_parser.add_argument(
+        "target_dir",
+        type=Path,
+        nargs="?",
+        default=None,
+        help="Directory to audit (default: current directory).",
+    )
+
     subparsers.add_parser(
         "check-hooks", help="Validate hook configuration and handlers."
     )
@@ -1444,7 +1648,7 @@ def main() -> int:
     """Entry point for the CLI.
 
     Parses arguments, resolves the root directory and dispatches to the
-    appropriate sub‑command. Returns an appropriate exit status.
+    appropriate sub-command. Returns an appropriate exit status.
     """
     parser = _setup_parser()
 
@@ -1453,7 +1657,9 @@ def main() -> int:
 
     match args.command:
         case "check-all":
-            return run_full_audit(root)
+            # FIX C-7: honour optional target_dir — no forced `cd` required.
+            target = _resolve_target(args.target_dir, root)
+            return run_full_audit(target)
         case "check-hooks":
             result = validate_hooks_config(root / "hooks" / "hooks.json")
             print_validation_issues(result)
@@ -1506,84 +1712,16 @@ def main() -> int:
                 safe_print(line)
             return 0
         case "analyze-all":
-            target = _resolve_target(args.target_dir, root)
-            safe_print("### Environment")
-            env = analyze_project_env(target)
-            safe_print(f"Package Manager: {env.package_manager}")
-            safe_print(f"Test Runner:     {env.test_runner}")
-            safe_print(f"Linter:          {env.linter}")
-            safe_print(f"Monorepo:        {env.is_monorepo}")
-            safe_print(f"CI/CD Automation: {env.ci_provider}")
-            safe_print("")
-            safe_print("### Dependencies")
-            deps = get_dependencies(target)
-            if deps:
-                for dep in deps:
-                    prefix = ">" if dep.size_truncated else ""
-                    size_str = f"{prefix}{dep.size_mb} MB"
-                    safe_print(f"{dep.name} ({dep.type}) -> {dep.path} [{size_str}]")
-            else:
-                safe_print("None found.")
-            safe_print("")
-            safe_print("### Structure")
-            patterns = load_gitignore(target) | Config.DEFAULT_IGNORE_PATTERNS
-            lines = get_tree_lines(target, patterns, args.max_depth)
-            for line in lines:
-                safe_print(line)
-            return 0
+            return _cmd_analyze_all(args, root)
         case "wire-agents":
             return wire_agents_files(args.source, args.targets)
         case "scaffold-agents-md":
-            overrides: dict[str, str] = {}
-            for pair in args.set:
-                if "=" not in pair:
-                    safe_print(
-                        f"FAIL: --set expects KEY=VALUE, got: {pair}", file=sys.stderr
-                    )
-                    return 1
-                key, _, value = pair.partition("=")
-                overrides[key] = value
-
-            ci = args.ci
-            if ci is None:
-                env = analyze_project_env(root)
-                ci = env.ci_provider
-                if (
-                    "ci" in Config.HARD_RULES_TEXT
-                    and ci not in Config.HARD_RULES_TEXT["ci"]
-                ):
-                    ci = "local-only"
-
-            try:
-                content = render_agents_md_skeleton(
-                    args.language,
-                    args.purpose,
-                    args.commit,
-                    args.maturity,
-                    args.testing,
-                    ci=ci,
-                    pm_override=args.pm,
-                    toolchain_overrides=overrides,
-                )
-            except ValueError as e:
-                safe_print(f"FAIL: {e}", file=sys.stderr)
-                return 1
-            if args.out:
-                try:
-                    args.out.parent.mkdir(parents=True, exist_ok=True)
-                    args.out.write_text(content, encoding="utf-8", newline="\n")
-                    safe_print(f"Wrote skeleton to {args.out}")
-                except OSError as e:
-                    safe_print(
-                        f"FAIL: Could not write skeleton to {args.out}: {e}",
-                        file=sys.stderr,
-                    )
-                    return 1
-            else:
-                safe_print(content)
-            return 0
+            return _cmd_scaffold_agents_md(args, root)
         case _:
-            return 1
+            # FIX B-8: argparse with required=True exits before reaching this
+            # branch; assert makes the invariant explicit instead of silently
+            # returning 1 as unreachable dead code.
+            assert False, f"unhandled command: {args.command}"  # pragma: no cover
 
 
 if __name__ == "__main__":
