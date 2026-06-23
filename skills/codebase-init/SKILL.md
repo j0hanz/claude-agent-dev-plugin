@@ -67,6 +67,7 @@ Before any analysis or drafting, determine whether the repo already contains ins
 
 **1. Mode Selection Gate**
 Check if a root `AGENTS.md` already exists.
+
 - **If `AGENTS.md` does not exist:** Proceed directly to step **3. Policy Survey**.
 - **If `AGENTS.md` exists:** Ask the user how they want to proceed via a single `AskUserQuestion` call:
   - **Prompt Options:**
@@ -75,6 +76,7 @@ Check if a root `AGENTS.md` already exists.
 
 **2. Path Branching**
 Based on the user's choice:
+
 - **If "Generate fresh new skeleton" is selected:** Prompt the user for explicit confirmation via a separate `AskUserQuestion` call before overwriting:
   - **Prompt Wording:** "Are you sure you want to overwrite the existing AGENTS.md file with a fresh skeleton?"
   - **Options:** "Yes, overwrite" / "Cancel"
@@ -121,6 +123,8 @@ Run all analysis subcommands to ground instructions in project reality:
 python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" analyze-all . --max-depth 2
 ```
 
+**MANDATORY - Environment Resolution:** If the `$CLAUDE_PLUGIN_ROOT` environment variable is undefined or empty, fallback to the path of this skill folder relative to the workspace (e.g., `skills/codebase-init`).
+
 This sequentially runs `analyze-env` (package manager, test runner, linter, monorepo structure), `find-dependencies` (installed dependency directories), and `scan-structure` (directory tree, respecting `.gitignore`).
 
 **Manual Fallback:** If the script fails, you MUST manually perform the discovery:
@@ -160,15 +164,15 @@ Every drafted `AGENTS.md` must satisfy the Required Sections below, in order —
 
 ### Required Sections (top-to-bottom order)
 
-| Order | Section                  | Requirement                                                                                                                                   |
-| ----: | :----------------------- | :-------------------------------------------------------------------------------------------------------------------------------------------- |
-|     1 | **H1 Header**            | `# Agent Instructions` or `# <Project> Agent Instructions`                                                                                    |
-|     2 | **Description**          | Single `kv` line: `purpose: <one sentence>`.                                                                                                  |
+| Order | Section                  | Requirement                                                                                                                                          |
+| ----: | :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------- |
+|     1 | **H1 Header**            | `# Agent Instructions` or `# <Project> Agent Instructions`                                                                                           |
+|     2 | **Description**          | Single `kv` line: `purpose: <one sentence>`.                                                                                                         |
 |     3 | **Hard Rules**           | Exactly 4 `kv` lines — `commit:`, `maturity:`, `testing:`, `ci:` — derived from the Phase 0 survey, followed by the hard-rules marker comment above. |
-|     4 | **Toolchain**            | Package manager and critical environment commands, as `kv` lines.                                                                             |
-|     5 | **File-Scoped Commands** | Table of file-targeted typecheck/lint/test commands.                                                                                          |
-|     6 | **Conventions**          | 3-7 specific, actionable `kv` lines (e.g., `errors: extend AppError, never throw raw Error`).                                                 |
-|     7 | **Attribution**          | `Co-Authored-By: <Model Name>` at end of file.                                                                                                |
+|     4 | **Toolchain**            | Package manager and critical environment commands, as `kv` lines.                                                                                    |
+|     5 | **File-Scoped Commands** | Table of file-targeted typecheck/lint/test commands.                                                                                                 |
+|     6 | **Conventions**          | 3-7 specific, actionable `kv` lines (e.g., `errors: extend AppError, never throw raw Error`).                                                        |
+|     7 | **Attribution**          | `Co-Authored-By: <Model Name>` at end of file.                                                                                                       |
 
 ## Phase 3: Write, Wire, Validate
 
@@ -185,6 +189,8 @@ Every drafted `AGENTS.md` must satisfy the Required Sections below, in order —
 ## Audit Mode
 
 If the user only wants to validate an existing `AGENTS.md` (no regeneration), skip Phases 0/1/1.5/2 entirely: run `python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" lint-agents-md AGENTS.md` and report the issues found.
+
+**MANDATORY - DO NOT LOAD** `references/hard-rules.md` or `references/phase-1.5-architecting.md` during Audit Mode to avoid wasting context tokens.
 
 ## Failure Recovery
 

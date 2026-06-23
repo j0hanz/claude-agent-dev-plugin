@@ -21,7 +21,7 @@ python scripts/run.py scaffold-agents-md \
   [--out AGENTS.md]
 ```
 
-Output: H1, `purpose:`, `## Hard Rules` (full sentences + marker), `## Package Manager`, `## Dependency Locations`, `## File-Scoped Commands` table, language-appropriate defaults under `## Key Conventions`, `## Commit Attribution`.
+Output: H1, `purpose:`, `## Hard Rules` (full sentences + marker), `## Package Manager`, `## Dependency Locations`, `## File-Scoped Commands` table, language-appropriate defaults under `## Key Conventions`, `## Commit Attribution` (substitute `<Model Name>` dynamically with the active model, e.g., `Gemini 3.5 Flash` or `Claude 3.5 Sonnet`).
 
 After running it:
 
