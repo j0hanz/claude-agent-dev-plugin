@@ -419,13 +419,20 @@ def should_ignore(path: Path, patterns: set[str], root: Path) -> bool:
 
     rel_str = str(rel_path).replace("\\", "/")
     for pattern in patterns:
-        if "/" not in pattern and path.name == pattern.rstrip("/"):
+        is_anchored = pattern.startswith("/")
+        pat_clean = pattern[1:] if is_anchored else pattern
+
+        if (
+            not is_anchored
+            and "/" not in pat_clean.rstrip("/")
+            and path.name == pat_clean.rstrip("/")
+        ):
             return True
-        if rel_str == pattern or rel_str.startswith(pattern + "/"):
+        if rel_str == pat_clean or rel_str.startswith(pat_clean + "/"):
             return True
-        if "*" in pattern:
-            if fnmatch.fnmatch(rel_str, pattern) or fnmatch.fnmatch(
-                rel_str, pattern + "/*"
+        if "*" in pat_clean:
+            if fnmatch.fnmatch(rel_str, pat_clean) or fnmatch.fnmatch(
+                rel_str, pat_clean + "/*"
             ):
                 return True
 
@@ -434,6 +441,7 @@ def should_ignore(path: Path, patterns: set[str], root: Path) -> bool:
 
 def _parse_frontmatter(content: str) -> dict[str, str]:
     """Simple parser for YAML frontmatter."""
+    content = content.lstrip("\ufeff").lstrip()
     if not content.startswith("---"):
         return {}
     end = content.find("\n---", 3)
@@ -466,7 +474,7 @@ def get_tree_lines(
     spacer_mid = "│   " if use_unicode else "|   "
 
     def build_tree(path: Path, prefix: str = "", depth: int = 0) -> None:
-        if depth > max_depth:
+        if depth >= max_depth:
             return
 
         try:
@@ -529,10 +537,11 @@ def analyze_project_env(target_dir: Path) -> ProjectEnvironment:
         try:
             pkg: dict[str, Any] = json.loads(package_json.read_text(encoding="utf-8"))
             scripts = pkg.get("scripts", {})
-            if env.test_runner == "Unknown" and scripts.get("test"):
-                env.test_runner = "See package.json test script"
-            if env.linter == "Unknown" and scripts.get("lint"):
-                env.linter = "See package.json lint script"
+            if isinstance(scripts, dict):
+                if env.test_runner == "Unknown" and scripts.get("test"):
+                    env.test_runner = "See package.json test script"
+                if env.linter == "Unknown" and scripts.get("lint"):
+                    env.linter = "See package.json lint script"
         except (json.JSONDecodeError, OSError):
             pass
 
@@ -563,24 +572,39 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
 
     for entry in dirs:
         if entry.name in Config.DEPENDENCY_DIRS:
+            size_mb = 0.0
+            count = 0
+            truncated = False
             try:
-                size_mb = 0.0
-                count = 0
-                for f in entry.rglob("*"):
-                    if f.is_file():
-                        size_mb += f.stat().st_size
-                        count += 1
-                        if count > Config.MAX_DIR_SCAN_COUNT:
-                            break
-                size_mb /= 1024 * 1024
+                iterator = entry.rglob("*")
+                while True:
+                    try:
+                        f = next(iterator)
+                    except StopIteration:
+                        break
+                    except (PermissionError, OSError):
+                        truncated = True
+                        continue
 
+                    try:
+                        if f.is_file():
+                            size_mb += f.stat().st_size
+                            count += 1
+                            if count > Config.MAX_DIR_SCAN_COUNT:
+                                truncated = True
+                                break
+                    except (PermissionError, OSError):
+                        truncated = True
+                        continue
+
+                size_mb /= 1024 * 1024
                 found.append(
                     DependencyInfo(
                         name=entry.name,
                         type=Config.DEPENDENCY_DIRS[entry.name],
                         path=str(entry.relative_to(target_dir)),
                         size_mb=round(size_mb, 1),
-                        size_truncated=count > Config.MAX_DIR_SCAN_COUNT,
+                        size_truncated=truncated,
                     )
                 )
             except (PermissionError, OSError):
@@ -613,7 +637,12 @@ def validate_skill_files(skills_dir: Path) -> ValidationResult:
     issues: list[ValidationIssue] = []
 
     try:
-        skill_dirs = sorted(d for d in skills_dir.iterdir() if d.is_dir())
+        patterns = load_gitignore(skills_dir.parent) | Config.DEFAULT_IGNORE_PATTERNS
+        skill_dirs = sorted(
+            d
+            for d in skills_dir.iterdir()
+            if d.is_dir() and not should_ignore(d, patterns, skills_dir.parent)
+        )
     except (PermissionError, OSError) as e:
         return ValidationResult(
             success=False,
@@ -810,7 +839,7 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
 
     issues: list[ValidationIssue] = []
     try:
-        content = file_path.read_text(encoding="utf-8")
+        content = file_path.read_text(encoding="utf-8").lstrip("\ufeff")
         lines = content.splitlines()
 
         if len(lines) > Config.MAX_AGENTS_MD_LINES:
@@ -829,35 +858,45 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
             )
 
         in_code_block = False
+        in_html_comment = False
         for index, line in enumerate(lines):
             line_num = index + 1
-            if line.strip().startswith("```"):
+            line_strip = line.strip()
+
+            if line_strip.startswith("```"):
                 in_code_block = not in_code_block
                 continue
             if in_code_block:
+                continue
+
+            # Check for unresolved TODO (always run on non-code-block lines, even comments)
+            if _TODO_RE.search(line):
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message=f'Unresolved TODO detected: "{line_strip}"',
+                        line_number=line_num,
+                    )
+                )
+
+            if in_html_comment:
+                if "-->" in line:
+                    in_html_comment = False
+                continue
+            if line_strip.startswith("<!--"):
+                if not line_strip.endswith("-->"):
+                    in_html_comment = True
                 continue
 
             # Skip the marker comment itself
             if _HARD_RULES_MARKER_RE.search(line):
                 continue
 
-            # Check for unresolved TODO
-            if _TODO_RE.search(line):
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message=f'Unresolved TODO detected: "{line.strip()}"',
-                        line_number=line_num,
-                    )
-                )
-
-            if line.strip().startswith("<!--") and line.strip().endswith("-->"):
-                continue
             if _FILLER_RE.search(line):
                 issues.append(
                     ValidationIssue(
                         level=IssueLevel.FAIL,
-                        message=f'Filler text detected: "{line.strip()}"',
+                        message=f'Filler text detected: "{line_strip}"',
                         line_number=line_num,
                     )
                 )
@@ -865,7 +904,7 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
                 issues.append(
                     ValidationIssue(
                         level=IssueLevel.FAIL,
-                        message=f'Auto-discovered list detected: "{line.strip()}"',
+                        message=f'Auto-discovered list detected: "{line_strip}"',
                         line_number=line_num,
                     )
                 )
@@ -873,7 +912,7 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
                 issues.append(
                     ValidationIssue(
                         level=IssueLevel.WARN,
-                        message=f'Generic advice detected: "{line.strip()}"',
+                        message=f'Generic advice detected: "{line_strip}"',
                         line_number=line_num,
                     )
                 )
@@ -964,52 +1003,116 @@ def validate_hooks_config(hooks_file: Path) -> ValidationResult:
 
     plugin_root = hooks_file.parent.parent
 
-    for event, event_hooks in hooks_data.get("hooks", {}).items():
-        for hook_entry in event_hooks:
-            for hook in hook_entry.get("hooks", []):
-                cmd = hook.get("command", "")
-                if not cmd:
-                    continue
-
-                parts = shlex.split(cmd, posix=(os.name != "nt"))
-
-                if "runner.mjs" in cmd:
-                    domain_idx_match = next(
-                        (i for i, p in enumerate(parts) if "runner.mjs" in p), None
+    try:
+        if not isinstance(hooks_data, dict) or not isinstance(
+            hooks_data.get("hooks"), dict
+        ):
+            return ValidationResult(
+                success=False,
+                issues=[
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message="hooks.json must be a JSON object with a 'hooks' dictionary.",
                     )
-                    if domain_idx_match is None or domain_idx_match + 1 >= len(parts):
+                ],
+            )
+
+        for event, event_hooks in hooks_data.get("hooks", {}).items():
+            if not isinstance(event_hooks, list):
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message=f"Hooks list for event '{event}' must be an array.",
+                    )
+                )
+                continue
+            for hook_entry in event_hooks:
+                if not isinstance(hook_entry, dict):
+                    issues.append(
+                        ValidationIssue(
+                            level=IssueLevel.FAIL,
+                            message=f"Hook entry under event '{event}' must be an object.",
+                        )
+                    )
+                    continue
+                for hook in hook_entry.get("hooks", []):
+                    if not isinstance(hook, dict):
                         issues.append(
                             ValidationIssue(
-                                level=IssueLevel.WARN,
-                                message=f"Could not determine handler for hook '{event}': {cmd!r}",
+                                level=IssueLevel.FAIL,
+                                message=f"Hook details under event '{event}' must be an object.",
                             )
                         )
                         continue
-                    domain = parts[domain_idx_match + 1]
-                    handler_path = plugin_root / "hooks" / "handlers" / f"{domain}.mjs"
-                    if not handler_path.exists():
-                        issues.append(
-                            ValidationIssue(
-                                level=IssueLevel.FAIL,
-                                message=f"Missing handler for hook '{event}': {handler_path}",
-                            )
-                        )
+                    cmd = hook.get("command", "")
+                    if not cmd or not isinstance(cmd, str):
+                        continue
 
-                elif (
-                    "scripts" in cmd
-                    or "hooks/handlers" in cmd
-                    or "${CLAUDE_PLUGIN_ROOT}" in cmd
-                ):
-                    script_path_str = parts[-1].replace(
-                        "${CLAUDE_PLUGIN_ROOT}", str(plugin_root)
-                    )
-                    if not Path(script_path_str).exists():
-                        issues.append(
-                            ValidationIssue(
-                                level=IssueLevel.FAIL,
-                                message=f"Missing script for hook '{event}': {script_path_str}",
-                            )
+                    parts = shlex.split(cmd, posix=True)
+
+                    if "runner.mjs" in cmd:
+                        domain_idx_match = next(
+                            (i for i, p in enumerate(parts) if "runner.mjs" in p), None
                         )
+                        if domain_idx_match is None or domain_idx_match + 1 >= len(
+                            parts
+                        ):
+                            issues.append(
+                                ValidationIssue(
+                                    level=IssueLevel.WARN,
+                                    message=f"Could not determine handler for hook '{event}': {cmd!r}",
+                                )
+                            )
+                            continue
+                        domain = parts[domain_idx_match + 1]
+                        handler_path = (
+                            plugin_root / "hooks" / "handlers" / f"{domain}.mjs"
+                        )
+                        if not handler_path.exists():
+                            issues.append(
+                                ValidationIssue(
+                                    level=IssueLevel.FAIL,
+                                    message=f"Missing handler for hook '{event}': {handler_path}",
+                                )
+                            )
+
+                    elif (
+                        "scripts" in cmd
+                        or "hooks/handlers" in cmd
+                        or "${CLAUDE_PLUGIN_ROOT}" in cmd
+                        or "$CLAUDE_PLUGIN_ROOT" in cmd
+                    ):
+                        script_part = next(
+                            (
+                                p
+                                for p in parts
+                                if "${CLAUDE_PLUGIN_ROOT}" in p
+                                or "$CLAUDE_PLUGIN_ROOT" in p
+                                or "hooks/" in p
+                                or "scripts" in p
+                            ),
+                            parts[-1] if parts else "",
+                        )
+                        script_path_str = script_part.replace(
+                            "${CLAUDE_PLUGIN_ROOT}", str(plugin_root)
+                        ).replace("$CLAUDE_PLUGIN_ROOT", str(plugin_root))
+                        if not Path(script_path_str).exists():
+                            issues.append(
+                                ValidationIssue(
+                                    level=IssueLevel.FAIL,
+                                    message=f"Missing script for hook '{event}': {script_path_str}",
+                                )
+                            )
+    except Exception as e:
+        return ValidationResult(
+            success=False,
+            issues=[
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"Error validating hooks.json: {e}",
+                )
+            ],
+        )
 
     return ValidationResult(
         success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
@@ -1032,6 +1135,16 @@ def validate_manifest_file(manifest_file: Path) -> ValidationResult:
     issues: list[ValidationIssue] = []
     try:
         data = json.loads(manifest_file.read_text(encoding="utf-8"))
+        if not isinstance(data, dict):
+            return ValidationResult(
+                success=False,
+                issues=[
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message="Manifest must be a JSON object.",
+                    )
+                ],
+            )
         for key in ("name", "version", "description"):
             if key not in data:
                 issues.append(
@@ -1075,11 +1188,12 @@ def wire_agents_files(source: Path, targets: list[Path]) -> int:
             if target.exists() or target.is_symlink():
                 target.unlink()
             rel = os.path.relpath(source, target.parent).replace(os.sep, "/")
+            target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(
                 f"# See [{source.name}]({rel})\n", encoding="utf-8", newline="\n"
             )
             safe_print(f"Stubbed: {target.name} -> {rel}")
-        except OSError as e:
+        except (OSError, ValueError) as e:
             safe_print(f"FAIL: Could not wire {target}: {e}", file=sys.stderr)
             exit_code = 1
 
@@ -1089,7 +1203,12 @@ def wire_agents_files(source: Path, targets: list[Path]) -> int:
 def print_validation_issues(result: ValidationResult) -> None:
     """Print validation issues with appropriate levels."""
     for issue in result.issues:
-        prefix = "FAIL" if issue.level == IssueLevel.FAIL else "WARN"
+        if issue.level == IssueLevel.FAIL:
+            prefix = "FAIL"
+        elif issue.level == IssueLevel.WARN:
+            prefix = "WARN"
+        else:
+            prefix = "INFO"
         safe_print(f"{prefix}: {issue}", file=sys.stderr)
 
 
@@ -1435,8 +1554,16 @@ def main() -> int:
                 safe_print(f"FAIL: {e}", file=sys.stderr)
                 return 1
             if args.out:
-                args.out.write_text(content, encoding="utf-8", newline="\n")
-                safe_print(f"Wrote skeleton to {args.out}")
+                try:
+                    args.out.parent.mkdir(parents=True, exist_ok=True)
+                    args.out.write_text(content, encoding="utf-8", newline="\n")
+                    safe_print(f"Wrote skeleton to {args.out}")
+                except OSError as e:
+                    safe_print(
+                        f"FAIL: Could not write skeleton to {args.out}: {e}",
+                        file=sys.stderr,
+                    )
+                    return 1
             else:
                 safe_print(content)
             return 0

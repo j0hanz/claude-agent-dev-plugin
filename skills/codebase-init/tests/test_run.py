@@ -5,7 +5,14 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "scripts"))
 
-from run import render_agents_md_skeleton, validate_agents_md_file, analyze_project_env  # noqa: E402
+from run import (  # noqa: E402
+    render_agents_md_skeleton,
+    validate_agents_md_file,
+    analyze_project_env,
+    validate_hooks_config,
+    validate_manifest_file,
+    should_ignore,
+)
 
 
 def _write_agents_md(tmp_path: Path, body: str) -> Path:
@@ -291,7 +298,98 @@ def test_automated_ci_detection(tmp_path: Path) -> None:
     env = analyze_project_env(tmp_path)
     assert env.ci_provider == "local-only"  # empty workflows folder is local-only
 
-    # 4. GitHub Actions detection (workflows folder with files)
     (workflows_dir / "ci.yml").write_text("name: CI", encoding="utf-8")
     env = analyze_project_env(tmp_path)
     assert env.ci_provider == "github-actions"
+
+
+def test_hooks_config_with_arguments(tmp_path: Path) -> None:
+    # Set up dummy hooks.json and handler script in tmp_path
+    hooks_file = tmp_path / "hooks" / "hooks.json"
+    hooks_file.parent.mkdir(parents=True, exist_ok=True)
+
+    # Create the script file so it exists
+    script_file = tmp_path / "hooks" / "shell-safety.sh"
+    script_file.write_text("echo 'hello'", encoding="utf-8")
+
+    # Command containing trailing arguments/flags
+    hooks_content = """{
+        "hooks": {
+            "PreToolUse": [
+                {
+                    "hooks": [
+                        {
+                            "command": "bash \\"${CLAUDE_PLUGIN_ROOT}/hooks/shell-safety.sh\\" --verbose"
+                        }
+                    ]
+                }
+            ]
+        }
+    }"""
+    hooks_file.write_text(hooks_content, encoding="utf-8")
+
+    result = validate_hooks_config(hooks_file)
+    assert result.success is True
+    assert len(result.issues) == 0
+
+
+def test_manifest_file_type_safety(tmp_path: Path) -> None:
+    manifest_file = tmp_path / "plugin.json"
+
+    # Write invalid manifest containing an array instead of a dict object
+    manifest_file.write_text("[1, 2, 3]", encoding="utf-8")
+    result = validate_manifest_file(manifest_file)
+    assert result.success is False
+    assert any(
+        "Manifest must be a JSON object" in str(issue) for issue in result.issues
+    )
+
+
+def test_agents_md_utf8_bom(tmp_path: Path) -> None:
+    body = "\ufeff" + _BASE_BODY.replace(
+        "## Commit Attribution",
+        "## Hard Rules\n\n"
+        "- **Commit policy:** placeholder\n"
+        "- **Project maturity:** placeholder\n"
+        "- **Testing rigor:** placeholder\n\n"
+        "<!-- codebase-init:hard-rules v1 commit=strict maturity=production testing=always ci=github-actions -->\n\n"
+        "## Commit Attribution",
+    )
+    path = _write_agents_md(tmp_path, body)
+    result = validate_agents_md_file(path)
+    assert result.success is True
+    assert not any("H1 header" in str(issue) for issue in result.issues)
+
+
+def test_should_ignore_leading_slash() -> None:
+    root = Path("C:/my_project")
+    # Anchored path
+    assert should_ignore(Path("C:/my_project/dist"), {"/dist"}, root) is True
+    assert should_ignore(Path("C:/my_project/subdir/dist"), {"/dist"}, root) is False
+
+    # Non-anchored path
+    assert should_ignore(Path("C:/my_project/dist"), {"dist"}, root) is True
+    assert should_ignore(Path("C:/my_project/subdir/dist"), {"dist"}, root) is True
+
+
+def test_agents_md_multiline_comment_handling(tmp_path: Path) -> None:
+    body = _BASE_BODY.replace(
+        "## Commit Attribution",
+        "## Hard Rules\n\n"
+        "- **Commit policy:** placeholder\n"
+        "- **Project maturity:** placeholder\n"
+        "- **Testing rigor:** placeholder\n\n"
+        "<!-- codebase-init:hard-rules v1 commit=strict maturity=production testing=always ci=github-actions -->\n\n"
+        "<!--\n"
+        "filler words welcome to this doc\n"
+        "unresolved todo check should still trigger:\n"
+        "TODO: this should fail\n"
+        "-->\n\n"
+        "## Commit Attribution",
+    )
+    path = _write_agents_md(tmp_path, body)
+    result = validate_agents_md_file(path)
+    assert result.success is False
+    # Check that it detected the TODO but NOT the filler words inside the multiline comment
+    assert any("Unresolved TODO detected" in str(issue) for issue in result.issues)
+    assert not any("Filler text detected" in str(issue) for issue in result.issues)
