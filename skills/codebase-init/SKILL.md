@@ -147,10 +147,15 @@ python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" scaffold-agents
 - Production / Development -> `production` / `development`
 - Always required / Touched-files only / Not enforced -> `always` / `touched-files` / `not-enforced`
 
+**manual-fallback:** If scaffolding command fails/fails to run due to environment issues, manually write/construct `AGENTS.md` following the required sections and markdown-kv format guidelines.
+
 **post-generation actions:**
 
 1. Fix incorrect Toolchain/Dependency/Command defaults.
-2. Replace the Key Conventions TODO with 3-7 real `key: value` lines (see `references/guide.md` §2.5).
+2. Replace the Key Conventions TODO with 3-7 real `key: value` lines (see `references/guide.md` §2.5). Verify:
+   - *Is this verifiable by reading code?* (no vague "write clean code" guidelines)
+   - *Is this a rule the linter could enforce instead?* (linters enforce formatting/spacing; conventions should cover design patterns/architecture)
+   - *Are we keeping conventions between 3 and 7 bullets?*
 
 **required-sections:** Must follow this order top-to-bottom:
 
@@ -178,6 +183,10 @@ python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" scaffold-agents
    python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" lint-agents-md AGENTS.md
    ```
 4. Fix all linting errors.
+
+**manual-fallback:**
+- If wiring script fails, manually wire `CLAUDE.md` and `GEMINI.md` as one-line redirect stubs containing exactly `# See [AGENTS.md](AGENTS.md)`.
+- If linting script fails, ensure `AGENTS.md` has no prose/paragraphs in lists, uses markdown-kv format, is under 100 lines, contains no placeholder TODOs, and concludes with `Co-Authored-By: <Model Name>`.
 
 **next-skills:**
 

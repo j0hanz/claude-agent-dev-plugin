@@ -39,18 +39,16 @@ Document these findings concisely (not as prose):
 
 ### Decision 2: What's the primary language?
 
-This picks the `--language` value for Phase 2's `scaffold-agents-md` command (see `guide.md` §1):
+This maps standard marker files to `--language` values for `scaffold-agents-md` (see `guide.md` §1):
 
-| Language              | Marker Files                                         | `--language` value                                                           |
-| --------------------- | ---------------------------------------------------- | ---------------------------------------------------------------------------- |
-| JavaScript/TypeScript | `package.json` (Node env)                            | `node`                                                                       |
-| Python                | `pyproject.toml`, `.venv/`, `poetry.lock`, `uv.lock` | `python`                                                                     |
-| Go                    | `go.mod`, `go.sum`                                   | `go`                                                                         |
-| Rust                  | `Cargo.toml`, `Cargo.lock`                           | `rust`                                                                       |
-| Java                  | `pom.xml`, `build.gradle`                            | `java`                                                                       |
-| C# / .NET             | `.csproj`, `.sln`                                    | `dotnet`                                                                     |
-| JavaScript (Bun)      | `bun.lockb`                                          | `bun`                                                                        |
-| Multiple languages    | Various (2+ languages)                               | not a single value — assemble by hand using `guide.md` §1 "Polyglot" pattern |
+- `node`: `package.json`
+- `bun`: `bun.lockb`
+- `python`: `pyproject.toml`, `poetry.lock`, `uv.lock`
+- `go`: `go.mod`
+- `rust`: `Cargo.toml`
+- `java`: `pom.xml`, `build.gradle`
+- `dotnet`: `.csproj`, `.sln`
+- Polyglot (2+ languages): Assemble by hand (see `guide.md` §1)
 
 ### Decision 3: Customize for Your Project
 
