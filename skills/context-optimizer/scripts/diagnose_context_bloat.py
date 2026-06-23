@@ -5,6 +5,7 @@ Checks file lengths, unignored heavy directories, lockfiles, and instruction stu
 """
 
 import os
+import sys
 from pathlib import Path
 
 BLOAT_LINE_LIMIT = 500
@@ -18,13 +19,31 @@ LOCKFILES = {
     "poetry.lock",
     "go.sum",
 }
+TEXT_EXTENSIONS = {
+    ".py",
+    ".ts",
+    ".js",
+    ".tsx",
+    ".jsx",
+    ".go",
+    ".rs",
+    ".java",
+    ".cpp",
+    ".h",
+    ".cs",
+}
 
 
 def parse_gitignore(root: Path) -> set[str]:
+    # ponytail: heuristic line-based matcher, not full gitignore glob semantics
     ignore_patterns = set()
     gitignore_path = root / ".gitignore"
     if gitignore_path.exists():
-        for line in gitignore_path.read_text(encoding="utf-8").splitlines():
+        try:
+            text = gitignore_path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            return ignore_patterns
+        for line in text.splitlines():
             line = line.strip()
             if line and not line.startswith("#"):
                 # Strip leading and trailing slashes to handle dir patterns correctly
@@ -46,9 +65,11 @@ def scan_files(
 
     # Recursive file walk with size/LOC checks
     for dirpath, dirnames, filenames in os.walk(root):
-        # Exclude dot folders and heavy dirs in-place
+        # Exclude dot folders, heavy dirs, and gitignored dirs in-place
         dirnames[:] = [
-            d for d in dirnames if d not in HEAVY_DIRS and not d.startswith(".")
+            d
+            for d in dirnames
+            if d not in HEAVY_DIRS and d not in ignores and not d.startswith(".")
         ]
 
         for f in filenames:
@@ -68,25 +89,14 @@ def scan_files(
                     continue
 
                 # LOC check for text files
-                if file_path.suffix in {
-                    ".py",
-                    ".ts",
-                    ".js",
-                    ".tsx",
-                    ".jsx",
-                    ".go",
-                    ".rs",
-                    ".java",
-                    ".cpp",
-                    ".h",
-                    ".cs",
-                }:
+                if file_path.suffix in TEXT_EXTENSIONS:
                     # Read line by line using a generator to avoid loading large files fully into memory
                     with file_path.open(encoding="utf-8", errors="ignore") as fp:
                         lines_count = sum(1 for _ in fp)
                     if lines_count > BLOAT_LINE_LIMIT:
                         large_files.append((file_path, f"{lines_count} lines", size))
-            except OSError:
+            except OSError as exc:
+                print(f"warning: skipped {file_path}: {exc}", file=sys.stderr)
                 continue
 
     return large_files, unignored_heavy_dirs
@@ -98,7 +108,10 @@ def check_instruction_stubs(root: Path) -> list[str]:
     for stub in stub_files:
         path = root / stub
         if path.exists():
-            content = path.read_text(encoding="utf-8").strip()
+            try:
+                content = path.read_text(encoding="utf-8", errors="ignore").strip()
+            except OSError:
+                continue
             # If the stub contains more than a redirect line AND does not contain AGENTS.md, raise warning
             if len(content.splitlines()) > 5 and "AGENTS.md" not in content:
                 warnings.append(

@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-# Context pruning and formatting tool.
-# Compresses log files, filters stack traces, converts JSON to markdown-kv,
-# and maintains rolling context summaries.
-# """
+"""Context pruning and formatting tool.
+
+Compresses log files, filters stack traces, converts JSON to markdown-kv,
+and maintains rolling context summaries.
+"""
 
 from __future__ import annotations
 
@@ -29,6 +30,15 @@ def to_markdown_kv(data: Any, prefix: str = "", depth: int = 0) -> list[str]:
     """Recursively converts dictionaries and lists into a flat, compact markdown-kv string."""
     if depth > 50:
         raise ValueError("Exceeded maximum nesting depth of 50 in JSON object")
+    if depth == 0:
+        if isinstance(data, dict) and not data:
+            return ["(empty object)"]
+        if isinstance(data, list) and not data:
+            return ["(empty array)"]
+        if not isinstance(data, (dict, list)):
+            raise ValueError(
+                f"top-level JSON must be an object or array, got {type(data).__name__}"
+            )
 
     lines = []
     if isinstance(data, dict):
@@ -62,12 +72,13 @@ def filter_logs(logs_text: str) -> str:
             error_indices.append(idx)
 
     if not error_indices:
-        if len(lines) <= 10:
+        head, tail = 5, 5
+        if len(lines) <= head + tail:
             return "\n".join(lines)
         return (
-            "\n".join(lines[:5])
-            + f"\n... [omitted {len(lines) - 10} lines of passing logs] ...\n"
-            + "\n".join(lines[-5:])
+            "\n".join(lines[:head])
+            + f"\n... [omitted {len(lines) - head - tail} lines of passing logs] ...\n"
+            + "\n".join(lines[-tail:])
         )
 
     keep_indices = set()
@@ -89,12 +100,12 @@ def filter_logs(logs_text: str) -> str:
 
     result = "\n".join(output_parts)
     result_lines = result.splitlines()
-    # Corrected truncation guard threshold to match exact output window limits (50 lines total)
-    if len(result_lines) > 50:
+    head, tail = 40, 10
+    if len(result_lines) > head + tail:
         return (
-            "\n".join(result_lines[:40])
-            + f"\n... [omitted {len(result_lines) - 50} lines of error details] ...\n"
-            + "\n".join(result_lines[-10:])
+            "\n".join(result_lines[:head])
+            + f"\n... [omitted {len(result_lines) - head - tail} lines of error details] ...\n"
+            + "\n".join(result_lines[-tail:])
         )
     return result
 
@@ -110,7 +121,10 @@ def update_rolling_summary(
     """Updates the rolling summary file, archiving previous sessions."""
     existing_entries: list[str] = []
     if summary_path.exists():
-        content = summary_path.read_text(encoding="utf-8")
+        try:
+            content = summary_path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            content = ""
         # Split on markdown section headers for Session
         parts = re.split(r"^## Session:\s*", content, flags=re.M)
         for part in parts[1:]:
@@ -179,8 +193,8 @@ def main() -> None:
     parser.add_argument(
         "--path",
         type=Path,
-        default=Path(".claude/rolling_summary.md"),
-        help="Summary path",
+        default=None,
+        help="Summary path (default: <cwd>/.claude/rolling_summary.md)",
     )
     parser.add_argument("--timestamp", default="", help="Timestamp of current session")
     parser.add_argument("--done", default="None", help="Completed tasks")
@@ -189,6 +203,8 @@ def main() -> None:
     parser.add_argument("--decisions", default="None", help="Key decisions made")
 
     args = parser.parse_args()
+    if args.path is None:
+        args.path = Path.cwd() / ".claude" / "rolling_summary.md"
 
     if args.logs:
         text = sys.stdin.read()
@@ -200,6 +216,9 @@ def main() -> None:
             print("\n".join(kv_lines))
         except json.JSONDecodeError as exc:
             sys.stderr.write(f"error: invalid JSON input - {exc}\n")
+            sys.exit(1)
+        except ValueError as exc:
+            sys.stderr.write(f"error: {exc}\n")
             sys.exit(1)
     elif args.summary:
         if not args.timestamp or not args.timestamp.strip():
