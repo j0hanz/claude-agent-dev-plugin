@@ -23,7 +23,7 @@ running the validator.
 
 - Every `references/...`, `scripts/...`, or `evals/...` path linked from the body (in a markdown link or backtick-wrapped path) must point at a file that actually exists. A typo or rename here is always an error.
 - A top-level file directly inside `scripts/` or `references/` whose filename never appears anywhere in the body is a warning — it may be invoked indirectly (e.g. via a `$CLAUDE_PLUGIN_ROOT`-prefixed path in a code fence) or genuinely orphaned. Use judgment; this check is intentionally scoped to top-level files only, not nested test/helper/fixture files, since those are usually implementation details.
-- `evals/evals.json`, if present, must be valid JSON. Two top-level shapes are both accepted: a bare array of cases, or `{"skill_name": ..., "evals": [...]}`. Each case needs a `prompt` field at minimum; `assertions` or `expectations` should be present too, but the field name isn't enforced strictly, so a missing one is a warning, not an error.
+- `evals/evals.json`, if present, must be valid JSON. Two top-level shapes are both accepted: a bare array of cases, or `{"skill_name": ..., "evals": [...]}`. New files SHOULD use the bare top-level array with `id`/`prompt`/`expectations` per case (the wrapped `{"skill_name": ..., "evals": [...]}`/`assertions` shape remains accepted for files already in that form, not required for new ones). Each case needs a `prompt` field at minimum; `assertions` or `expectations` should be present too, but the field name isn't enforced strictly, so a missing one is a warning, not an error.
 
 ## Description (write it last)
 
