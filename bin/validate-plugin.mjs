@@ -140,6 +140,55 @@ function validateHooks() {
   }
 }
 
+// Validate cross-skill routing references (see docs/adr/0001-routing-graph-duplication.md).
+// Routing knowledge is intentionally duplicated between the central router and each skill;
+// this guards the duplication against drift instead of deduplicating it.
+const ROUTER_SKILL = 'using-agent-dev-skills';
+function validateRouting(skillsDir) {
+  let skillNames;
+  try {
+    skillNames = fs
+      .readdirSync(skillsDir)
+      .filter((d) => fs.existsSync(path.join(skillsDir, d, 'SKILL.md')));
+  } catch {
+    return; // skills-dir read failure is already reported by main()
+  }
+  const known = new Set(skillNames);
+
+  // ERROR: every `../<sibling>/` cross-skill reference must resolve to a real skill dir.
+  // Catches dangling links left by a rename/removal, including the shared
+  // multi-agent-development/references/subagent-contract.md path.
+  for (const name of skillNames) {
+    const content = fs.readFileSync(path.join(skillsDir, name, 'SKILL.md'), 'utf-8');
+    const seen = new Set();
+    for (const m of content.matchAll(/\.\.\/([a-z0-9-]+)\//g)) {
+      const target = m[1];
+      if (seen.has(target)) continue;
+      seen.add(target);
+      if (!known.has(target)) {
+        errors.push(
+          `[Routing] skills/${name}/SKILL.md: dangling cross-skill reference '../${target}/' — no such skill`,
+        );
+      }
+    }
+  }
+
+  // WARNING: every skill should be wired into the router graph by name.
+  // Catches a skill added but never routed to from any gate.
+  const routerMd = path.join(skillsDir, ROUTER_SKILL, 'SKILL.md');
+  if (fs.existsSync(routerMd)) {
+    const routerContent = fs.readFileSync(routerMd, 'utf-8');
+    for (const name of skillNames) {
+      if (name === ROUTER_SKILL) continue;
+      if (!new RegExp(`\\b${name}\\b`).test(routerContent)) {
+        warnings.push(
+          `[Routing] Skill '${name}' is not referenced in the router (${ROUTER_SKILL}) graph — wire it into a gate`,
+        );
+      }
+    }
+  }
+}
+
 // Main validation
 function main() {
   console.log('🔍 Validating agent-dev plugin structure...\n');
@@ -161,6 +210,7 @@ function main() {
     } catch (e) {
       errors.push(`[Skills] Failed to read skills directory: ${e.message}`);
     }
+    validateRouting(skillsDir);
   }
 
   // Validate hooks

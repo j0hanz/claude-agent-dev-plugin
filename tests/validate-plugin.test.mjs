@@ -51,3 +51,42 @@ Some instructions.
     }
   }
 });
+
+test('validate-plugin detects a dangling cross-skill routing reference', () => {
+  const tempSkillDir = path.join(projectRoot, 'skills', 'temp-routing-skill');
+  if (!fs.existsSync(tempSkillDir)) {
+    fs.mkdirSync(tempSkillDir);
+  }
+  const skillMdPath = path.join(tempSkillDir, 'SKILL.md');
+  // Valid frontmatter, but the body points at a skill that does not exist.
+  const content = `---
+name: temp-routing-skill
+description: "Temp skill for routing validation. Trigger on: 'temp routing'."
+---
+
+See \`../no-such-skill/references/thing.md\` for details.
+`;
+  fs.writeFileSync(skillMdPath, content, 'utf-8');
+
+  try {
+    let errorOccurred = false;
+    try {
+      execSync(`node bin/validate-plugin.mjs`, { cwd: projectRoot, stdio: 'pipe' });
+    } catch (err) {
+      errorOccurred = true;
+      const output = err.stdout.toString() + err.stderr.toString();
+      assert.ok(
+        output.includes('dangling cross-skill reference') && output.includes('no-such-skill'),
+        'Output should flag the dangling cross-skill reference',
+      );
+    }
+    assert.ok(errorOccurred, 'Validator should fail on a dangling cross-skill reference');
+  } finally {
+    if (fs.existsSync(skillMdPath)) {
+      fs.unlinkSync(skillMdPath);
+    }
+    if (fs.existsSync(tempSkillDir)) {
+      fs.rmdirSync(tempSkillDir);
+    }
+  }
+});

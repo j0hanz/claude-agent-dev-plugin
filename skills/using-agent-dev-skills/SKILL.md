@@ -118,7 +118,7 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 - **NEVER** allow infinite TDD retries (strictly capped at 3).
 - **NEVER** skip `request-code-review` after multi-agent development.
 - **NEVER** auto-invoke `codebase-init` or `github-automation`.
-- **NEVER** route skill authoring or validation outside of `make-a-skill`.
+- **NEVER** route skill authoring or structural validation outside of `make-a-skill`, or skill behavior-testing (triggering / output evals) outside of `eval-skill`.
 - **NEVER** dispatch subagents (Gate 3) for trivial inline edits.
 
 ---
