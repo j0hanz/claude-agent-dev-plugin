@@ -864,6 +864,120 @@ def is_package_level_override(content: str) -> bool:
     return bool(_PACKAGE_OVERRIDE_RE.search(content))
 
 
+def _lint_agents_md_lines(lines: list[str], issues: list[ValidationIssue]) -> None:
+    """Scan AGENTS.md lines to flag TODOs, filler words, auto-discovered lists, and generic advice."""
+    in_code_block = False
+    in_html_comment = False
+    for index, line in enumerate(lines):
+        line_num = index + 1
+        line_strip = line.strip()
+
+        if line_strip.startswith("```"):
+            in_code_block = not in_code_block
+            continue
+        if in_code_block:
+            continue
+
+        # Check for unresolved TODO (always run on non-code-block lines, even comments)
+        if _TODO_RE.search(line):
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f'Unresolved TODO detected: "{line_strip}"',
+                    line_number=line_num,
+                )
+            )
+
+        if in_html_comment:
+            if "-->" in line:
+                in_html_comment = False
+            continue
+        if line_strip.startswith("<!--"):
+            if not line_strip.endswith("-->"):
+                in_html_comment = True
+            continue
+
+        # Skip the marker comment itself
+        if _HARD_RULES_MARKER_RE.search(line):
+            continue
+
+        if _FILLER_RE.search(line):
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f'Filler text detected: "{line_strip}"',
+                    line_number=line_num,
+                )
+            )
+        if _AUTO_DISCOVERY_RE.search(line):
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f'Auto-discovered list detected: "{line_strip}"',
+                    line_number=line_num,
+                )
+            )
+        if _GENERIC_ADVICE_RE.search(line):
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.WARN,
+                    message=f'Generic advice detected: "{line_strip}"',
+                    line_number=line_num,
+                )
+            )
+
+
+def _validate_agents_md_structure(
+    content: str, has_hard_rules_section: bool, issues: list[ValidationIssue]
+) -> None:
+    """Verify presence of Co-Authored-By, File-scoped commands, and Hard Rules section/marker."""
+    if "Co-Authored-By:" not in content:
+        issues.append(
+            ValidationIssue(
+                level=IssueLevel.FAIL,
+                message='Missing "Co-Authored-By:" attribution.',
+            )
+        )
+
+    if (
+        not _FILE_SCOPED_COMMANDS_RE.search(content)
+        and "| Tool | File | Command |" not in content
+    ):
+        issues.append(
+            ValidationIssue(
+                level=IssueLevel.FAIL,
+                message='Missing mandatory "File-scoped commands" table.',
+            )
+        )
+
+    if not has_hard_rules_section and not is_package_level_override(content):
+        issues.append(
+            ValidationIssue(
+                level=IssueLevel.FAIL,
+                message='Missing mandatory "## Hard Rules" section.',
+            )
+        )
+    elif has_hard_rules_section:
+        if not has_hard_rules_marker(content):
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.WARN,
+                    message='"## Hard Rules" section present but missing/malformed '
+                    "codebase-init:hard-rules v1 marker comment.",
+                )
+            )
+        else:
+            marker_match = _HARD_RULES_MARKER_RE.search(content)
+            if marker_match:
+                if "ci=" not in marker_match.group(0):
+                    issues.append(
+                        ValidationIssue(
+                            level=IssueLevel.WARN,
+                            message="Hard-rules marker comment is missing the 'ci' parameter.",
+                        )
+                    )
+
+
 def validate_agents_md_file(file_path: Path) -> ValidationResult:
     """Validate the AGENTS.md file."""
     if not file_path.exists():
@@ -898,112 +1012,11 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
                 )
             )
 
-        in_code_block = False
-        in_html_comment = False
-        for index, line in enumerate(lines):
-            line_num = index + 1
-            line_strip = line.strip()
-
-            if line_strip.startswith("```"):
-                in_code_block = not in_code_block
-                continue
-            if in_code_block:
-                continue
-
-            # Check for unresolved TODO (always run on non-code-block lines, even comments)
-            if _TODO_RE.search(line):
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message=f'Unresolved TODO detected: "{line_strip}"',
-                        line_number=line_num,
-                    )
-                )
-
-            if in_html_comment:
-                if "-->" in line:
-                    in_html_comment = False
-                continue
-            if line_strip.startswith("<!--"):
-                if not line_strip.endswith("-->"):
-                    in_html_comment = True
-                continue
-
-            # Skip the marker comment itself
-            if _HARD_RULES_MARKER_RE.search(line):
-                continue
-
-            if _FILLER_RE.search(line):
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message=f'Filler text detected: "{line_strip}"',
-                        line_number=line_num,
-                    )
-                )
-            if _AUTO_DISCOVERY_RE.search(line):
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message=f'Auto-discovered list detected: "{line_strip}"',
-                        line_number=line_num,
-                    )
-                )
-            if _GENERIC_ADVICE_RE.search(line):
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.WARN,
-                        message=f'Generic advice detected: "{line_strip}"',
-                        line_number=line_num,
-                    )
-                )
-
-        if "Co-Authored-By:" not in content:
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message='Missing "Co-Authored-By:" attribution.',
-                )
-            )
-
-        if (
-            not _FILE_SCOPED_COMMANDS_RE.search(content)
-            and "| Tool | File | Command |" not in content
-        ):
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message='Missing mandatory "File-scoped commands" table.',
-                )
-            )
+        _lint_agents_md_lines(lines, issues)
 
         has_hard_rules_section = bool(_HARD_RULES_SECTION_RE.search(content))
-        if not has_hard_rules_section and not is_package_level_override(content):
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message='Missing mandatory "## Hard Rules" section.',
-                )
-            )
-        elif has_hard_rules_section:
-            if not has_hard_rules_marker(content):
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.WARN,
-                        message='"## Hard Rules" section present but missing/malformed '
-                        "codebase-init:hard-rules v1 marker comment.",
-                    )
-                )
-            else:
-                marker_match = _HARD_RULES_MARKER_RE.search(content)
-                if marker_match:
-                    if "ci=" not in marker_match.group(0):
-                        issues.append(
-                            ValidationIssue(
-                                level=IssueLevel.WARN,
-                                message="Hard-rules marker comment is missing the 'ci' parameter.",
-                            )
-                        )
+        _validate_agents_md_structure(content, has_hard_rules_section, issues)
+
     except (OSError, UnicodeDecodeError) as e:
         issues.append(
             ValidationIssue(
@@ -1014,6 +1027,156 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
     return ValidationResult(
         success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
     )
+
+
+def _validate_hook_cmd(
+    event: str, cmd: str, plugin_root: Path, issues: list[ValidationIssue]
+) -> None:
+    """Validate a single hook command and check handler/script existence."""
+    # FIX S-1: use POSIX tokenisation only on non-Windows systems.
+    # In POSIX mode, shlex treats `\` as an escape character, which
+    # silently corrupts Windows backslash paths (C:\hooks\...)
+    # before they reach the Path.exists() check, potentially
+    # causing a dangerously missing handler to go undetected.
+    # On Windows, we strip outer quotes from tokens returned under
+    # non-POSIX mode so path validation resolves successfully.
+    # FIX B-2 (narrow): catch only ValueError (malformed shell
+    # syntax) so programming bugs in surrounding logic still
+    # propagate normally.
+    try:
+        is_windows = platform.system() == "Windows"
+        parts = shlex.split(cmd, posix=not is_windows)
+        if is_windows:
+            parts = [p.strip("\"'") for p in parts]
+    except ValueError:
+        issues.append(
+            ValidationIssue(
+                level=IssueLevel.WARN,
+                message=f"Malformed shell command for hook '{event}': {cmd!r}",
+            )
+        )
+        return
+
+    if "runner.mjs" in cmd:
+        domain_idx_match = next(
+            (i for i, p in enumerate(parts) if "runner.mjs" in p), None
+        )
+        if domain_idx_match is None or domain_idx_match + 1 >= len(parts):
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.WARN,
+                    message=f"Could not determine handler for hook '{event}': {cmd!r}",
+                )
+            )
+            return
+        domain = parts[domain_idx_match + 1]
+        try:
+            handler_path = (
+                plugin_root / "hooks" / "handlers" / f"{domain}.mjs"
+            ).resolve()
+            is_relative = handler_path.is_relative_to(plugin_root)
+        except (ValueError, OSError):
+            is_relative = False
+
+        if not is_relative:
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"Handler for hook '{event}' resolves outside the plugin root: {domain}",
+                )
+            )
+            return
+
+        if not handler_path.exists():
+            # FIX S-4: report path relative to plugin_root rather
+            # than a full absolute path that leaks filesystem layout.
+            rel = handler_path.relative_to(plugin_root)
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"Missing handler for hook '{event}': {rel}",
+                )
+            )
+
+    elif (
+        "scripts" in cmd
+        or "hooks/handlers" in cmd
+        or "${CLAUDE_PLUGIN_ROOT}" in cmd
+        or "$CLAUDE_PLUGIN_ROOT" in cmd
+    ):
+        script_part = next(
+            (
+                p
+                for p in parts
+                if "${CLAUDE_PLUGIN_ROOT}" in p
+                or "$CLAUDE_PLUGIN_ROOT" in p
+                or "hooks/" in p
+                or "scripts" in p
+            ),
+            parts[-1] if parts else "",
+        )
+        script_path_str = script_part.replace(
+            "${CLAUDE_PLUGIN_ROOT}", str(plugin_root)
+        ).replace("$CLAUDE_PLUGIN_ROOT", str(plugin_root))
+        if not Path(script_path_str).exists():
+            # FIX S-4: report basename only to avoid leaking full
+            # server-side filesystem paths in CI logs.
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"Missing script for hook '{event}': {Path(script_path_str).name}",
+                )
+            )
+
+
+def _validate_event_hooks(
+    event: str, event_hooks: list[Any], plugin_root: Path, issues: list[ValidationIssue]
+) -> None:
+    """Validate list of hook entries for a specific event."""
+    for hook_entry in event_hooks:
+        if not isinstance(hook_entry, dict):
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"Hook entry under event '{event}' must be an object.",
+                )
+            )
+        hooks_val = hook_entry.get("hooks")
+        if hooks_val is None:
+            if "hooks" in hook_entry:
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message=f"Hooks list under event '{event}' must be an array.",
+                    )
+                )
+                continue
+            hooks_list = []
+        elif not isinstance(hooks_val, list):
+            issues.append(
+                ValidationIssue(
+                    level=IssueLevel.FAIL,
+                    message=f"Hooks list under event '{event}' must be an array.",
+                )
+            )
+            continue
+        else:
+            hooks_list = hooks_val
+
+        for hook in hooks_list:
+            if not isinstance(hook, dict):
+                issues.append(
+                    ValidationIssue(
+                        level=IssueLevel.FAIL,
+                        message=f"Hook details under event '{event}' must be an object.",
+                    )
+                )
+                continue
+            cmd = hook.get("command", "")
+            if not cmd or not isinstance(cmd, str):
+                continue
+
+            _validate_hook_cmd(event, cmd, plugin_root, issues)
 
 
 def validate_hooks_config(hooks_file: Path) -> ValidationResult:
@@ -1072,143 +1235,7 @@ def validate_hooks_config(hooks_file: Path) -> ValidationResult:
                 )
             )
             continue
-        for hook_entry in event_hooks:
-            if not isinstance(hook_entry, dict):
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message=f"Hook entry under event '{event}' must be an object.",
-                    )
-                )
-            hooks_val = hook_entry.get("hooks")
-            if hooks_val is None:
-                if "hooks" in hook_entry:
-                    issues.append(
-                        ValidationIssue(
-                            level=IssueLevel.FAIL,
-                            message=f"Hooks list under event '{event}' must be an array.",
-                        )
-                    )
-                    continue
-                hooks_list = []
-            elif not isinstance(hooks_val, list):
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message=f"Hooks list under event '{event}' must be an array.",
-                    )
-                )
-                continue
-            else:
-                hooks_list = hooks_val
-
-            for hook in hooks_list:
-                if not isinstance(hook, dict):
-                    issues.append(
-                        ValidationIssue(
-                            level=IssueLevel.FAIL,
-                            message=f"Hook details under event '{event}' must be an object.",
-                        )
-                    )
-                    continue
-                cmd = hook.get("command", "")
-                if not cmd or not isinstance(cmd, str):
-                    continue
-
-                # FIX S-1: use POSIX tokenisation only on non-Windows systems.
-                # In POSIX mode, shlex treats `\` as an escape character, which
-                # silently corrupts Windows backslash paths (C:\hooks\...)
-                # before they reach the Path.exists() check, potentially
-                # causing a dangerously missing handler to go undetected.
-                # On Windows, we strip outer quotes from tokens returned under
-                # non-POSIX mode so path validation resolves successfully.
-                # FIX B-2 (narrow): catch only ValueError (malformed shell
-                # syntax) so programming bugs in surrounding logic still
-                # propagate normally.
-                try:
-                    is_windows = platform.system() == "Windows"
-                    parts = shlex.split(cmd, posix=not is_windows)
-                    if is_windows:
-                        parts = [p.strip("\"'") for p in parts]
-                except ValueError:
-                    issues.append(
-                        ValidationIssue(
-                            level=IssueLevel.WARN,
-                            message=f"Malformed shell command for hook '{event}': {cmd!r}",
-                        )
-                    )
-                    continue
-
-                if "runner.mjs" in cmd:
-                    domain_idx_match = next(
-                        (i for i, p in enumerate(parts) if "runner.mjs" in p), None
-                    )
-                    if domain_idx_match is None or domain_idx_match + 1 >= len(parts):
-                        issues.append(
-                            ValidationIssue(
-                                level=IssueLevel.WARN,
-                                message=f"Could not determine handler for hook '{event}': {cmd!r}",
-                            )
-                        )
-                        continue
-                    domain = parts[domain_idx_match + 1]
-                    try:
-                        handler_path = (
-                            plugin_root / "hooks" / "handlers" / f"{domain}.mjs"
-                        ).resolve()
-                        is_relative = handler_path.is_relative_to(plugin_root)
-                    except (ValueError, OSError):
-                        is_relative = False
-
-                    if not is_relative:
-                        issues.append(
-                            ValidationIssue(
-                                level=IssueLevel.FAIL,
-                                message=f"Handler for hook '{event}' resolves outside the plugin root: {domain}",
-                            )
-                        )
-                        continue
-
-                    if not handler_path.exists():
-                        # FIX S-4: report path relative to plugin_root rather
-                        # than a full absolute path that leaks filesystem layout.
-                        rel = handler_path.relative_to(plugin_root)
-                        issues.append(
-                            ValidationIssue(
-                                level=IssueLevel.FAIL,
-                                message=f"Missing handler for hook '{event}': {rel}",
-                            )
-                        )
-
-                elif (
-                    "scripts" in cmd
-                    or "hooks/handlers" in cmd
-                    or "${CLAUDE_PLUGIN_ROOT}" in cmd
-                    or "$CLAUDE_PLUGIN_ROOT" in cmd
-                ):
-                    script_part = next(
-                        (
-                            p
-                            for p in parts
-                            if "${CLAUDE_PLUGIN_ROOT}" in p
-                            or "$CLAUDE_PLUGIN_ROOT" in p
-                            or "hooks/" in p
-                            or "scripts" in p
-                        ),
-                        parts[-1] if parts else "",
-                    )
-                    script_path_str = script_part.replace(
-                        "${CLAUDE_PLUGIN_ROOT}", str(plugin_root)
-                    ).replace("$CLAUDE_PLUGIN_ROOT", str(plugin_root))
-                    if not Path(script_path_str).exists():
-                        # FIX S-4: report basename only to avoid leaking full
-                        # server-side filesystem paths in CI logs.
-                        issues.append(
-                            ValidationIssue(
-                                level=IssueLevel.FAIL,
-                                message=f"Missing script for hook '{event}': {Path(script_path_str).name}",
-                            )
-                        )
+        _validate_event_hooks(event, event_hooks, plugin_root, issues)
 
     return ValidationResult(
         success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
