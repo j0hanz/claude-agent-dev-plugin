@@ -6,11 +6,11 @@ A Claude Code plugin for authoring and maintaining skills and hooks — structur
 
 ## Overview
 
-Agent Dev Plugin extends Claude Code with 13 skills and 3 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on session events to guard against destructive commands, surface relevant skills, and keep a local telemetry trail. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
+Agent Dev Plugin extends Claude Code with 17 skills and 3 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on session events to guard against destructive commands, surface relevant skills, and keep a local telemetry trail. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
 
 | Aspect              | Detail                       |
 | :------------------ | :--------------------------- |
-| **Status**          | Stable — v1.0.0              |
+| **Status**          | Stable — v1.1.0              |
 | **Language**        | JavaScript (ESM) · Python    |
 | **Runtime**         | Node.js ≥ 22 · Python ≥ 3.10 |
 | **Package manager** | npm                          |
@@ -20,7 +20,7 @@ Agent Dev Plugin extends Claude Code with 13 skills and 3 lifecycle hooks coveri
 
 | Feature                  | Description                                                                                                                                    |
 | :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| 13 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                   |
+| 17 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                   |
 | Subagent orchestration   | `multi-agent-dispatch` and `multi-agent-development` drive every `general-purpose` subagent dispatch — no custom agent definitions to maintain |
 | 3 lifecycle hooks        | Bash-only handlers: a shell-safety guard, a skill nudge, and telemetry capture                                                                 |
 | Marketplace install      | One-command install from GitHub — no manual clone required                                                                                     |
@@ -62,18 +62,18 @@ claude --plugin-dir ./claude-agent-dev-plugin
 
 ## Prerequisites
 
-| Requirement     | Version / Notes                        |
-| :-------------- | :------------------------------------- |
-| Node.js         | ≥ 22                                   |
-| Python          | ≥ 3.10                                 |
-| Claude Code     | latest                                 |
-| Python packages | `pip install pytest pyyaml jsonschema` |
+| Requirement     | Version / Notes             |
+| :-------------- | :-------------------------- |
+| Node.js         | ≥ 22                        |
+| Python          | ≥ 3.10                      |
+| Claude Code     | latest                      |
+| Python packages | `pip install pytest pyyaml` |
 
 ## What's Included
 
-### Skills (13)
+### Skills (17)
 
-Skills are invoked automatically by Claude based on task context, or manually with `/skill-name`.
+Skills are invoked automatically by Claude based on task context, or manually with `/skill-name`. 15 are listed below; `multi-agent-dispatch` and `multi-agent-development` are detailed in [Subagent Dispatch](#subagent-dispatch).
 
 | Skill                            | Trigger                                                    | Purpose                                                        |
 | :------------------------------- | :--------------------------------------------------------- | :------------------------------------------------------------- |
@@ -86,10 +86,12 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 | `test-driven-development`        | "TDD", "write tests", "implement this"                     | Red-green-refactor workflow                                    |
 | `architecting`                   | "architecture", "structure", "how is this organized"       | Codebase structural analysis                                   |
 | `github-automation`              | "GitHub Actions", "gh CLI", "automate workflow"            | Actions and `gh` CLI scripting                                 |
+| `context-optimizer`              | "optimize context", "compress context", "reduce tokens"    | Prunes conversation bloat before hitting context limits        |
 | `verification-before-completion` | (automatic before task completion)                         | Verify changes work before marking done                        |
 | `using-agent-dev-skills`         | (meta-routing)                                             | Routes to the right skill based on context                     |
 | `codebase-init`                  | "generate AGENTS.md", "init agents.md"                     | Generating/refreshing AGENTS.md and CLAUDE.md files            |
 | `make-a-skill`                   | "make a skill", "build a skill", "scaffold a skill"        | Scaffold and validate new skills/<name>/SKILL.md               |
+| `eval-skill`                     | "eval this skill", "does my skill fire", "run skill evals" | Runs behavior tests against a local skill's prompts            |
 
 ### Subagent Dispatch
 
@@ -133,17 +135,18 @@ Bash-only handlers (`hooks/*.sh`), wired in `hooks/hooks.json`. `shell-safety` i
 │   └── hooks.json
 ├── monitors/               # Live development watchers (experimental)
 ├── output-styles/          # Output style definitions
-├── skills/                 # Skill SKILL.md files (13 skills)
+├── skills/                 # Skill SKILL.md files (17 skills)
 └── tests/                  # Integration tests
 ```
 
-| Directory   | Purpose                                                          |
-| :---------- | :--------------------------------------------------------------- |
-| `hooks/`    | Bash hook handlers and the hooks manifest                        |
-| `skills/`   | One directory per skill, each containing a `SKILL.md` definition |
-| `monitors/` | Experimental live watchers for tests and telemetry               |
-| `bin/`      | Plugin manifest validator and YAML schema checker                |
-| `tests/`    | Integration tests verifying hooks fire and skills load correctly |
+| Directory        | Purpose                                                          |
+| :--------------- | :--------------------------------------------------------------- |
+| `hooks/`         | Bash hook handlers and the hooks manifest                        |
+| `skills/`        | One directory per skill, each containing a `SKILL.md` definition |
+| `monitors/`      | Experimental live watchers for tests and telemetry               |
+| `output-styles/` | Output style definitions                                         |
+| `bin/`           | Plugin manifest validator and YAML schema checker                |
+| `tests/`         | Integration tests verifying hooks fire and skills load correctly |
 
 ## Scripts
 
@@ -154,6 +157,7 @@ Bash-only handlers (`hooks/*.sh`), wired in `hooks/hooks.json`. `shell-safety` i
 | `npm run test:node`        | Run Node.js unit tests only                     |
 | `npm run test:python`      | Run Python unit tests only                      |
 | `npm run test:integration` | Run integration tests                           |
+| `npm run test:eval`        | Run skill-triggering evals for selected skills  |
 | `npm run lint`             | Lint with ESLint                                |
 | `npm run lint:fix`         | Lint and auto-fix with ESLint                   |
 | `npm run format`           | Format all files with Prettier                  |
