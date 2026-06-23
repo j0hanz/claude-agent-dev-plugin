@@ -1,20 +1,39 @@
-import os
+"""Module to detect infrastructure package leaks/bleeds into domain code."""
+
+import argparse
 import sys
-from typing import List, Dict, Any
+from pathlib import Path
+from typing import TypedDict
 from utils.extractor import extract_imports_with_positions, detect_lang
 from utils.walk import walk_dir, DEFAULT_EXCLUDE
 
 
-def run_bleed_detection(
-    target_dir: str, infra_packages: List[str]
-) -> List[Dict[str, Any]]:
+class Violation(TypedDict):
+    """Schema representing a domain bleed violation."""
+
+    file: str
+    violation: str
+    line: int
+    code: str
+
+
+def run_bleed_detection(target_dir: str, infra_packages: list[str]) -> list[Violation]:
+    """Scan files in target_dir to detect imports of any infra_packages.
+
+    Args:
+        target_dir: The path to the directory to scan.
+        infra_packages: A list of package names that are considered infra.
+
+    Returns:
+        A list of Violation dictionaries detailing the detected leaks.
+    """
     files = walk_dir(target_dir, DEFAULT_EXCLUDE)
-    violations = []
+    violations: list[Violation] = []
 
     for file_path in files:
         try:
-            with open(file_path, "r", encoding="utf-8") as f:
-                content = f.read()
+            with open(file_path, "r", encoding="utf-8") as file_handle:
+                content = file_handle.read()
         except (UnicodeDecodeError, PermissionError):
             continue
 
@@ -22,33 +41,38 @@ def run_bleed_detection(
         lines = content.splitlines()
 
         for match in extract_imports_with_positions(content, lang):
-            imp = match["specifier"]
+            import_specifier = match["specifier"]
             index = match["index"]
 
-            normalized = imp[5:] if imp.startswith("node:") else imp
+            normalized = (
+                import_specifier[5:]
+                if import_specifier.startswith("node:")
+                else import_specifier
+            )
 
-            is_violation = False
-            if normalized in infra_packages:
-                is_violation = True
-            else:
-                for pkg in infra_packages:
-                    if normalized.startswith(f"{pkg}/"):
-                        is_violation = True
-                        break
+            is_violation = any(
+                normalized == package
+                or normalized.startswith(f"{package}/")
+                or normalized.startswith(f"{package}.")
+                for package in infra_packages
+            )
 
             if is_violation:
                 line_no = content.count("\n", 0, index) + 1
                 code = lines[line_no - 1].strip() if line_no <= len(lines) else ""
                 violations.append(
-                    {"file": file_path, "violation": imp, "line": line_no, "code": code}
+                    {
+                        "file": file_path,
+                        "violation": import_specifier,
+                        "line": line_no,
+                        "code": code,
+                    }
                 )
 
     return violations
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser(
         description="Detect infrastructure bleeds into domain code."
     )
@@ -68,10 +92,13 @@ if __name__ == "__main__":
     print(
         f"Checking {args.dir} for infrastructure bleeds ({', '.join(infra_packages)})..."
     )
-    abs_dir = os.path.abspath(args.dir)
 
     try:
-        violations = run_bleed_detection(abs_dir, infra_packages)
+        target_path = Path(args.dir).resolve()
+        if not target_path.is_dir():
+            raise FileNotFoundError(f"Directory not found: {args.dir}")
+
+        violations = run_bleed_detection(str(target_path), infra_packages)
 
         print("\n--- Infrastructure Leaks (Seam Test Failures) ---")
         if not violations:
@@ -80,9 +107,18 @@ if __name__ == "__main__":
             # Simple table formatting
             print(f"{'File':<50} {'Leak':<20} {'Line':<5}")
             print("-" * 77)
-            for v in violations:
-                rel_file = os.path.relpath(v["file"], os.getcwd())
-                print(f"{rel_file:<50} {v['violation']:<20} {v['line']:<5}")
+            for violation in violations:
+                file_path = Path(violation["file"])
+                try:
+                    rel_file = file_path.relative_to(Path.cwd())
+                except ValueError:
+                    try:
+                        rel_file = file_path.relative_to(Path.cwd(), walk_up=True)
+                    except (ValueError, TypeError):
+                        rel_file = file_path
+                print(
+                    f"{str(rel_file):<50} {violation['violation']:<20} {violation['line']:<5}"
+                )
 
     except FileNotFoundError:
         print(f"Directory not found: {args.dir}", file=sys.stderr)

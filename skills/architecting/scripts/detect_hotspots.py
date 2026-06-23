@@ -1,8 +1,18 @@
+"""Architectural hotspot detection script.
+
+Computes architectural debt hotspots by combining code churn, file sizes, fan-out,
+and package boundary violations.
+"""
+
+import argparse
+import logging
 import os
 import subprocess
 import sys
 import traceback
-from typing import List, Optional, Dict, Any
+from collections import Counter
+from typing import Any
+
 from check_locality import run_locality_check
 from detect_bleed import run_bleed_detection
 from git_coupling import run_git_coupling
@@ -16,10 +26,38 @@ SIZE_SCORE_CAP = 5
 HIGH_RISK_THRESHOLD = 15
 MEDIUM_RISK_THRESHOLD = 7
 
+# Set up logging to write to sys.stderr dynamically so that testing capture works correctly.
+logger = logging.getLogger(__name__)
+
+
+class StderrHandler(logging.Handler):
+    def emit(self, record):
+        try:
+            sys.stderr.write(self.format(record) + "\n")
+        except Exception:
+            pass
+
+
+logger.addHandler(StderrHandler())
+
 
 def run_hotspot_detection(
-    dir_path: str, infra_pkgs: Optional[List[str]] = None, since: str = "6 months ago"
-) -> List[Dict[str, Any]]:
+    dir_path: str, infra_pkgs: list[str] | None = None, since: str = "6 months ago"
+) -> list[dict[str, Any]]:
+    """Detect architectural hotspots in the given directory.
+
+    Calculates scores for files based on fan-out, package bleed, git churn, and size,
+    and returns a sorted list of files with their scores and risk levels.
+
+    Args:
+        dir_path: Path to the directory to analyze.
+        infra_pkgs: List of infrastructure packages to check for bleed violations.
+        since: Git window range for measuring coupling and churn (e.g., '6 months ago').
+
+    Returns:
+        A list of dictionaries containing analysis results for each file,
+        sorted in descending order of hotspot score.
+    """
     if infra_pkgs is None:
         infra_pkgs = []
 
@@ -32,10 +70,9 @@ def run_hotspot_detection(
         abs_dir, since=since, min_count=1, top_n=1000000
     )
     if "error" in coupling_results:
-        print(
-            f"Warning: git churn data unavailable ({coupling_results['error']}); "
-            "churn score will be 0 for all files.",
-            file=sys.stderr,
+        logger.warning(
+            "git churn data unavailable (%s); churn score will be 0 for all files.",
+            coupling_results["error"],
         )
     file_churn = coupling_results["fileChurn"]
 
@@ -49,13 +86,12 @@ def run_hotspot_detection(
         pass
 
     def to_abs(git_rel_path: str) -> str:
+        """Convert a git relative path to an absolute path."""
         return os.path.abspath(os.path.join(repo_root, git_rel_path))
 
     # Build lookup maps
     fan_out_map = {f["file"]: f["count"] for f in fan_out}
-    bleed_map = {}
-    for v in violations:
-        bleed_map[v["file"]] = bleed_map.get(v["file"], 0) + 1
+    bleed_map = Counter(v["file"] for v in violations)
 
     churn_map = {to_abs(f["file"]): f["commits"] for f in file_churn}
     max_churn = max((f["commits"] for f in file_churn), default=1)
@@ -71,14 +107,16 @@ def run_hotspot_detection(
         lines = 0
         try:
             with open(file_path, "r", encoding="utf-8") as f:
-                lines = len(f.readlines())
-        except (UnicodeDecodeError, PermissionError, OSError):
+                lines = sum(1 for _ in f)
+        except (UnicodeDecodeError, OSError):
             pass
 
         fo = fan_out_map.get(file_path, 0)
         bl = bleed_map.get(file_path, 0)
         raw_churn = churn_map.get(file_path, 0)
-        churn_score = round((raw_churn / max_churn) * CHURN_SCORE_CAP)
+        churn_score = (
+            round((raw_churn / max_churn) * CHURN_SCORE_CAP) if max_churn > 0 else 0
+        )
         size_score = min(lines // SIZE_LINES_PER_POINT, SIZE_SCORE_CAP)
 
         score = fo * FAN_OUT_WEIGHT + bl * BLEED_WEIGHT + churn_score + size_score
@@ -107,8 +145,6 @@ def run_hotspot_detection(
 
 
 if __name__ == "__main__":
-    import argparse
-
     parser = argparse.ArgumentParser(description="Detect architectural hotspots.")
     parser.add_argument("dir", nargs="?", default="src", help="Directory to analyze")
     parser.add_argument(
@@ -149,7 +185,6 @@ if __name__ == "__main__":
                 f"\n⚠  {len(high)} HIGH-risk file(s) found. These are your top refactoring targets."
             )
 
-    except Exception as e:
-        print(f"An error occurred: {e}", file=sys.stderr)
+    except Exception:
         traceback.print_exc()
         sys.exit(1)
