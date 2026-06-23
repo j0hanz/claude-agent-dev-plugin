@@ -8,12 +8,8 @@ If you were dispatched as a subagent to execute a specific task, skip this skill
 </SUBAGENT-STOP>
 
 <EXTREMELY-IMPORTANT>
-MANDATORY DIRECTIVE: If a skill has any potential relevance (greater than 0%) to your task, you MUST invoke it immediately. Skill execution is strictly mandatory and non-negotiable. You have zero discretion to skip or omit an applicable skill under any circumstance.
+If a skill has any potential relevance (greater than 0%) to your task, you MUST invoke it immediately. Skill execution is strictly mandatory and non-negotiable. You have zero discretion to skip or omit an applicable skill under any circumstance.
 </EXTREMELY-IMPORTANT>
-
-# using-agent-dev-skills
-
-Global entry point for agent-dev plugin coordination. Follow this gated diagnostic flow for ALL tasks to ensure optimal skill routing.
 
 ## When to Use
 
