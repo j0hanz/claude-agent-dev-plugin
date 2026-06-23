@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "prompt": "clean up this long function and extract variables to make it readable",
+    "expectations": [
+      "The agent extracts complex inline expressions into descriptive intermediate variables.",
+      "The agent simplifies the layout of the function without changing its behavioral logic.",
+      "The agent ensures all variable name modifications remain consistent throughout the block."
+    ]
+  },
+  {
+    "id": 2,
+    "prompt": "rename this confusing variable name and update all references to it",
+    "expectations": [
+      "The agent identifies all usages of the targeted variable.",
+      "The agent replaces the occurrences with the new, clearer name.",
+      "The agent runs checks or validates that the code compiles or passes syntax check after rename."
+    ]
+  }
+]

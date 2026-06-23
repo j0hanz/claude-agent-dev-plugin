@@ -1,0 +1,18 @@
+[
+  {
+    "id": 1,
+    "prompt": "I'm ready to merge, let's verify everything works",
+    "expectations": [
+      "The agent executes verification tests or linter commands.",
+      "The agent confirms all checks pass before finalizing the task."
+    ]
+  },
+  {
+    "id": 2,
+    "prompt": "run a smoke test before completion",
+    "expectations": [
+      "The agent invokes the build, test, or lint command to ensure code integrity.",
+      "The agent verifies that output results match the target specifications."
+    ]
+  }
+]

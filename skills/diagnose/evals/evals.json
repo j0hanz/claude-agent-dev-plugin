@@ -1,0 +1,20 @@
+[
+  {
+    "id": 1,
+    "prompt": "why is this function crashing when I call fetch_user_profile(None)?",
+    "expectations": [
+      "The agent identifies the missing None check or boundary condition in the traceback.",
+      "The agent locates the relevant lines in the source file.",
+      "The agent proposes a safe lookup or early exit to prevent a NoneType traceback."
+    ]
+  },
+  {
+    "id": 2,
+    "prompt": "debug the connection timeout error we get when running db connection checks",
+    "expectations": [
+      "The agent inspects connection configuration parameters (host, port, timeout limits).",
+      "The agent isolates network or credentials configuration problems.",
+      "The agent suggests testing connectivity or adjusting the retry/timeout logic."
+    ]
+  }
+]
