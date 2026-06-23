@@ -1,11 +1,14 @@
 ---
 name: brainstorming
-description: "Structured discovery to prevent rework on new features or ambiguous requirements. This skill should be used when the user asks to 'build a new feature', 'add a feature', 'implement a feature involving design decisions', or 'conduct brainstorming/discovery'. Trigger on: 'new feature', 'brainstorming', 'requirements discovery', 'ambiguous design', 'unclear terminology', 'stakeholder probe', 'glossary definition'."
+description: "MANDATORY before initiating any creative work, including building features, adding functionality, or altering behavior. Use this to evaluate user intent, define requirements, and map out the design prior to implementation."
 ---
 
 # brainstorming
 
-Structured discovery to prevent rework. Always run for new features or ambiguous requirements.
+Help translate ideas into complete designs and specifications through focused dialogue.
+
+Begin by reviewing the project context, then ask clarifying questions one at a time to refine the requirements. Once the scope is clear, present a proposed design and secure user approval.
+
 
 <HARD-GATE>
 Do not propose code, file changes, or a concrete implementation plan for a new feature or ambiguous
