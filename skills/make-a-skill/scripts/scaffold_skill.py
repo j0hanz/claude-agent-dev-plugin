@@ -57,7 +57,8 @@ section if the skill is a single linear procedure with no branches.}}}}
 
 ## Step 1: {{{{FILL: short step name}}}}
 
-{{{{FILL: what to do in this step, and which tool/script to invoke.}}}}
+{{{{FILL: what to do in this step, and which tool/script to invoke, e.g. \
+`scripts/{name_snake}.py`.}}}}
 
 ## Step 2: {{{{FILL: short step name}}}}
 
@@ -154,7 +155,10 @@ def scaffold(
     skill_dir.mkdir(parents=True, exist_ok=True)
     created: list[Path] = []
     if not skill_md_exists or force:
-        skill_md.write_text(_SKILL_TEMPLATE.format(name=name), encoding="utf-8")
+        skill_md.write_text(
+            _SKILL_TEMPLATE.format(name=name, name_snake=name.replace("-", "_")),
+            encoding="utf-8",
+        )
         created.append(skill_md)
 
     if with_scripts:

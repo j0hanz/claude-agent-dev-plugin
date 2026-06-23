@@ -178,6 +178,24 @@ def test_dangling_reference_link_is_error(tmp_path: Path) -> None:
     assert any("references/missing.md" in e for e in errors)
 
 
+def test_reference_link_escaping_skill_dir_is_flagged_not_followed(
+    tmp_path: Path,
+) -> None:
+    """A `scripts/../../../etc/passwd`-style link must be reported as a
+    dangling reference, never resolved (and followed) outside skill_dir."""
+    skill_dir = tmp_path / "demo-skill"
+    skill_dir.mkdir()
+    outside_secret = tmp_path / "secret.txt"
+    outside_secret.write_text("hi", encoding="utf-8")
+    (skill_dir / "SKILL.md").write_text(
+        '---\nname: demo-skill\ndescription: "long enough description text padded out to a hundred and twenty characters minimum so the warning does not fire here, ok"\n---\n\n'
+        "# demo-skill\n\nRead `scripts/../../secret.txt` for details.\n",
+        encoding="utf-8",
+    )
+    errors, _ = validate_skill(skill_dir / "SKILL.md")
+    assert any("scripts/../../secret.txt" in e for e in errors)
+
+
 def test_placeholder_mentioned_in_code_span_is_not_an_error(tmp_path: Path) -> None:
     """A skill explaining the {{FILL convention in backticks (like make-a-skill's
     own SKILL.md) must not be flagged as having an unfilled placeholder."""
@@ -470,13 +488,15 @@ def test_resolve_skill_md_finds_bare_name_under_plugin_skills(
     assert _resolve_skill_md("demo-skill") == (skill_dir / "SKILL.md").resolve()
 
 
-def test_resolve_skill_md_bare_name_with_no_match_falls_back_to_cwd(
+def test_resolve_skill_md_bare_name_with_no_match_falls_back_to_dot_claude_skills(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.chdir(tmp_path)
     assert (
         _resolve_skill_md("nonexistent-skill")
-        == (tmp_path / "nonexistent-skill" / "SKILL.md").resolve()
+        == (
+            tmp_path / ".claude" / "skills" / "nonexistent-skill" / "SKILL.md"
+        ).resolve()
     )
 
 

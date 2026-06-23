@@ -206,9 +206,12 @@ def validate_references(skill_dir: Path, body: str) -> tuple[list[str], list[str
     # spans, since a bare backtick-wrapped relative path is exactly what this
     # check is meant to catch (see test_dangling_reference_link_is_error).
     unfenced_body = _FENCED_CODE_RE.sub("", body)
+    skill_dir_resolved = skill_dir.resolve()
     for match in LINKED_DIR_PATH_RE.finditer(unfenced_body):
         rel_path = match.group(1).rstrip(".,;:)")
-        if not (skill_dir / rel_path).exists():
+        target = (skill_dir / rel_path).resolve()
+        # A "../" link that escapes skill_dir is treated as dangling too, not followed.
+        if not target.is_relative_to(skill_dir_resolved) or not target.exists():
             missing.add(rel_path)
     for rel_path in sorted(missing):
         errors.append(
@@ -262,7 +265,10 @@ def validate_evals(skill_dir: Path) -> tuple[list[str], list[str]]:
                 f"[EVALS] evals.json 'skill_name' ({data.get('skill_name')!r}) does not "
                 f"match the skill directory ({skill_dir.name!r})"
             )
-        cases = data.get("evals")
+        if "evals" not in data:
+            errors.append("[EVALS] evals.json object form must have an 'evals' key")
+            return errors, warnings
+        cases = data["evals"]
     else:
         errors.append("[EVALS] evals.json must be a JSON array or object")
         return errors, warnings
@@ -303,8 +309,12 @@ def _resolve_skill_md(name_or_path: str) -> Path:
         return (p / "SKILL.md").resolve()
     if len(p.parts) == 1:
         for skills_dir in (Path(".claude/skills"), Path("skills")):
-            if (skills_dir / p.name / "SKILL.md").exists():
-                return (skills_dir / p.name / "SKILL.md").resolve()
+            candidate = skills_dir / p.name / "SKILL.md"
+            if candidate.exists():
+                return candidate.resolve()
+        # Not found under either root — report against the conventional one
+        # so the "not found" message points somewhere meaningful.
+        return (Path(".claude/skills") / p.name / "SKILL.md").resolve()
     return (p / "SKILL.md").resolve()
 
 
@@ -313,7 +323,7 @@ def validate_skill(skill_md: Path) -> tuple[list[str], list[str]]:
         return [f"SKILL.md not found: {skill_md}"], []
 
     skill_dir = skill_md.parent
-    content = skill_md.read_text(encoding="utf-8")
+    content = skill_md.read_text(encoding="utf-8-sig")  # tolerate a BOM
     parsed = _parse_frontmatter(content)
     fields, body = (parsed[0], parsed[1]) if parsed else (None, content)
 
