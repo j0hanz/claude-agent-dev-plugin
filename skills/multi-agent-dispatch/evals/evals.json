@@ -30,5 +30,16 @@
       "Grep tool is used directly instead",
       "Single-agent problem does not warrant dispatch"
     ]
+  },
+  {
+    "name": "should-not-trigger-on-hidden-coupling",
+    "prompt": "Refactor the User model's serialization format in models/user.py, then in a separate agent update the API tests that assert on that serialized shape",
+    "should_trigger": false,
+    "assertions": [
+      "multi-agent-dispatch does NOT trigger despite disjoint files (models/user.py vs tests/)",
+      "Dispatch Gate's independence check detects the ordering assumption (tests assert on output the refactor changes)",
+      "Routed to multi-agent-development for sequential execution instead",
+      "Disjoint write-paths alone are correctly treated as insufficient for independence"
+    ]
   }
 ]

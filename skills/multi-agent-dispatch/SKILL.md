@@ -7,49 +7,19 @@ argument-hint: '[the independent tasks to parallelize]'
 
 # multi-agent-dispatch
 
-Maximize efficiency through parallel execution across isolated problem domains.
+Maximize efficiency through parallel execution across isolated problem domains. Independent domains (no shared state) → this skill. Shared mutable state or dependencies → `multi-agent-development` instead; see Dispatch Gate below for the exact test.
 
-## When to Use
-
-```dot
-digraph when_to_use {
-    rankdir=TB;
-    node [shape=box, style=rounded, fontname="Helvetica"];
-    edge [fontname="Helvetica", fontsize=10];
-
-    TaskType [label="Task Relationship", shape=diamond];
-
-    TaskType -> "Parallel (this skill)" [label="Independent domains\n(No shared state)"];
-    TaskType -> "Sequential (multi-agent-dev)" [label="Shared mutable state\n/ Dependencies"];
-
-    "Parallel (this skill)" [shape=box];
-    "Sequential (multi-agent-dev)" [shape=box];
-}
 ```
-
-## Process Flow
-
-```dot
-digraph multi_agent_dispatch {
-  rankdir=TB;
-  node [shape=box, style=rounded, fontname="Helvetica"];
-  edge [fontname="Helvetica", fontsize=10];
-
-  Step1 [label="1. GROUP\n(Disjoint Domains)"];
-  Step2 [label="2. SELECT\n(Configure Agents)"];
-  Step3 [label="3. LAUNCH\n(Concurrent Agents)"];
-  Step4 [label="4. INTEGRATE\n(Reconcile & Verify)"];
-
-  Step1 -> Step2 -> Step3 -> Step4;
-  Step4 -> Step3 [label="partial failure:\nretry failed domains", style=dashed];
-}
+GROUP -> SELECT -> LAUNCH -> INTEGRATE
+                      ^         |
+                      └─ retry ─┘ (partial failure)
 ```
 
 ## NEVER Do This
 
 - **NEVER** launch parallel subagents if their write-paths overlap. **WHY:** This causes race conditions and git conflicts. **FIX:** Use `multi-agent-development` for sequential execution.
 - **NEVER** assume a subagent has context from the parent thread. **WHY:** Subagents start cold. **FIX:** Embed every necessary fact verbatim in the prompt.
-- **NEVER** launch more than 5 subagents in a single batch. **WHY:** This risks hitting rate limits and can lead to context window explosion in the main thread.
+- **NEVER** launch more than 3 subagents in a single batch. **WHY:** Each subagent's full report lands in the main thread's context — at 4+ concurrent, the integration step alone can blow the budget before you've reconciled a single finding. **FIX:** Batch in waves of ≤3; integrate each wave before launching the next.
 - **NEVER** accept subagent reports as final truth. **WHY:** Subagents can hallucinate success. **FIX:** You MUST run the project's test suite to verify all claims.
 
 ## Dispatch Gate
@@ -65,19 +35,18 @@ Answer BOTH before spawning:
 
 ## The Four-Step Loop
 
-**action: Group Tasks**
-Analyze the work and confirm the parallel grouping via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually:
+**MANDATORY — before Step 2 (SELECT):** Read [`references/subagent-contract.md`](references/subagent-contract.md) in full. It defines the SCOPE/OBJECTIVE/CONTEXT/CONSTRAINTS/OUTPUT SCHEMA contract and the Investigator/Writer/Researcher role vocabulary used below. Do not configure or launch any agent before reading it.
 
-1. ✅ **Recommended** — [Groups] based on [disjoint files/hypotheses].
-2. **Alternative** — [Alternative Grouping] + justification for the different split.
-
-3. **SELECT:** Configure `general-purpose` agents with specialized roles per the Role Vocabulary in [`references/subagent-contract.md`](references/subagent-contract.md) (Investigator/Writer/Researcher). For read-only roles, explicitly instruct no Write/Edit — and note this is an instruction, not an enforced restriction, unless the harness supports a tool allowlist.
-4. **LAUNCH:**
+1. **GROUP:** Analyze the work and confirm the parallel grouping via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually:
+   - ✅ **Recommended** — [Groups] based on [disjoint files/hypotheses].
+   - **Alternative** — [Alternative Grouping] + justification for the different split.
+2. **SELECT:** Configure `general-purpose` agents with specialized roles per the Role Vocabulary in `subagent-contract.md` (Investigator/Writer/Researcher). For read-only roles, explicitly instruct no Write/Edit — and note this is an instruction, not an enforced restriction, unless the harness supports a tool allowlist. **Writer roles MUST be launched with `isolation: worktree`** — this is the actual mechanism that makes "writes MUST be disjoint" true; without it, two Writers editing the same working tree can stomp each other even with disjoint SCOPE.
+3. **LAUNCH:**
    - Enumerate each subagent's intended write-paths (from its SCOPE).
    - Diff them against every other subagent's write-paths.
-   - **Limit:** Max 5 concurrent agents per batch.
+   - **Limit:** Max 3 concurrent agents per batch.
    - If disjoint, emit ALL `Agent` calls in **ONE message** for true concurrency.
-5. **INTEGRATE:** Reconcile findings/diffs. Run full project validation.
+4. **INTEGRATE:** Reconcile findings/diffs. Run full project validation.
 
 **Partial-failure protocol (INTEGRATE step):** if some agents in a batch return `SUCCESS` and others return `BLOCKED`/crash/timeout:
 
@@ -92,13 +61,9 @@ Analyze the work and confirm the parallel grouping via `AskUserQuestion` — the
 - `multi-agent-development`: If the partial-failure protocol reveals hidden coupling between "independent" domains — re-classify as sequential rather than forcing another dispatch.
 - `diagnose`: If integration reveals a regression or conflict between two agents' changes that needs root-cause analysis rather than a guessed merge.
 
-## Subagent Prompt Contract (Zero-Shot)
-
-**MANDATORY**: Read [`references/subagent-contract.md`](references/subagent-contract.md) — the canonical SCOPE/OBJECTIVE/CONTEXT/CONSTRAINTS/OUTPUT SCHEMA contract and role vocabulary used by every dispatching skill in this ecosystem.
-
 ## Integration Rules
 
-- **Reads are free.** Writes MUST be disjoint to avoid stomping.
+- **Reads are free.** Writes MUST be disjoint (see Step 2/SELECT above).
 - **Validate Claims.** Never trust a report without running the test suite.
 
 ## Success Criteria
