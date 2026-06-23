@@ -163,10 +163,11 @@ def _grep_files(pattern: str, cwd: Path) -> list[str]:
                 "!*.sum",
                 "--",
                 pattern,
-                str(cwd),
+                ".",
             ],
             capture_output=True,
             text=True,
+            cwd=str(cwd),
         )
     except FileNotFoundError:
         return []
@@ -174,10 +175,14 @@ def _grep_files(pattern: str, cwd: Path) -> list[str]:
     paths = [p for p in rg_result.stdout.splitlines() if p]
     normalized: list[str] = []
     for p in paths:
-        try:
-            normalized.append(str(Path(p).relative_to(cwd)))
-        except ValueError:
-            normalized.append(p)
+        p_path = Path(p)
+        if p_path.is_absolute():
+            try:
+                normalized.append(p_path.relative_to(cwd).as_posix())
+            except ValueError:
+                normalized.append(p_path.as_posix())
+        else:
+            normalized.append(p_path.as_posix())
     return normalized[:5]
 
 
@@ -350,23 +355,29 @@ def scan(nouns: list[str], cwd: Path) -> ScanResult:
         for fut in as_completed(constraint_futures):
             try:
                 result.constraints.extend(fut.result())
-            except Exception:
-                pass
+            except Exception as exc:
+                result.unknowns.append(
+                    f"Error scanning constraints for {constraint_futures[fut]}: {exc}"
+                )
 
         for fut in as_completed(shape_futures):
             try:
                 result.interface_shapes.extend(fut.result())
-            except Exception:
-                pass
+            except Exception as exc:
+                result.unknowns.append(
+                    f"Error extracting shapes for {shape_futures[fut]}: {exc}"
+                )
 
         for fut in as_completed(test_futures):
+            file_signal = test_futures[fut]
             try:
-                file_signal = test_futures[fut]
                 test_path = fut.result()
                 file_signal.has_tests = bool(test_path)
                 file_signal.test_file = test_path
-            except Exception:
-                pass
+            except Exception as exc:
+                result.unknowns.append(
+                    f"Error finding test file for {file_signal.path}: {exc}"
+                )
 
     # ── Scope signal ─────────────────────────────────────────────────────────
     modules = {

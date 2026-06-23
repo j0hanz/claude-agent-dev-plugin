@@ -35,3 +35,23 @@ def test_compress_report_with_data():
     assert "Class User" in compressed["interface_shapes"]
     assert "How is auth handled?" in compressed["unknowns"]
     assert "Auth" in compressed["analogous_features"]
+
+
+def test_compress_report_invalid_type():
+    import pytest
+
+    cfg = compress_report.CompressConfig()
+    with pytest.raises(TypeError, match="expected a JSON object"):
+        compress_report.compress([1, 2, 3], cfg)
+
+
+def test_non_negative_int_validation():
+    import pytest
+    import argparse
+
+    assert compress_report._non_negative_int("5") == 5
+    assert compress_report._non_negative_int("0") == 0
+    with pytest.raises(argparse.ArgumentTypeError, match="value must be >= 0"):
+        compress_report._non_negative_int("-1")
+    with pytest.raises(argparse.ArgumentTypeError, match="invalid int value"):
+        compress_report._non_negative_int("not-an-int")

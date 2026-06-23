@@ -63,6 +63,8 @@ def compress(report: dict[str, Any], cfg: CompressConfig) -> dict[str, Any]:
     Deduplicates and truncates each field according to cfg limits.
     Returns a new dict with a ``_compressed`` savings annotation.
     """
+    if not isinstance(report, dict):
+        raise TypeError(f"expected a JSON object (dict), got {type(report).__name__}")
     out: dict[str, Any] = {}
 
     # Always keep — zero token cost to preserve
@@ -123,6 +125,16 @@ def _annotate_savings(original: dict[str, Any], compressed: dict[str, Any]) -> N
     )
 
 
+def _non_negative_int(value: str) -> int:
+    try:
+        val = int(value)
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"invalid int value: {value!r}")
+    if val < 0:
+        raise argparse.ArgumentTypeError(f"value must be >= 0, got {val}")
+    return val
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Compress a Codebase Context Report for Phase 4"
@@ -130,13 +142,13 @@ def main() -> None:
     parser.add_argument(
         "report", nargs="?", help="Path to report JSON (omit to read from stdin)"
     )
-    parser.add_argument("--max-files", type=int, default=5)
-    parser.add_argument("--max-log-lines", type=int, default=3)
-    parser.add_argument("--max-constraints", type=int, default=5)
-    parser.add_argument("--max-interface-shapes", type=int, default=10)
-    parser.add_argument("--max-unknowns", type=int, default=4)
-    parser.add_argument("--max-design-docs", type=int, default=3)
-    parser.add_argument("--max-analogous", type=int, default=2)
+    parser.add_argument("--max-files", type=_non_negative_int, default=5)
+    parser.add_argument("--max-log-lines", type=_non_negative_int, default=3)
+    parser.add_argument("--max-constraints", type=_non_negative_int, default=5)
+    parser.add_argument("--max-interface-shapes", type=_non_negative_int, default=10)
+    parser.add_argument("--max-unknowns", type=_non_negative_int, default=4)
+    parser.add_argument("--max-design-docs", type=_non_negative_int, default=3)
+    parser.add_argument("--max-analogous", type=_non_negative_int, default=2)
     args = parser.parse_args()
 
     try:
@@ -150,6 +162,8 @@ def main() -> None:
         sys.exit(f"error: cannot read report file — {exc}")
     except json.JSONDecodeError as exc:
         sys.exit(f"error: invalid JSON — {exc}")
+    except (OSError, EOFError) as exc:
+        sys.exit(f"error: failed to read input — {exc}")
 
     cfg = CompressConfig(
         max_files=args.max_files,
@@ -160,7 +174,11 @@ def main() -> None:
         max_design_docs=args.max_design_docs,
         max_analogous=args.max_analogous,
     )
-    print(json.dumps(compress(raw, cfg), indent=2))
+    try:
+        compressed = compress(raw, cfg)
+    except TypeError as exc:
+        sys.exit(f"error: {exc}")
+    print(json.dumps(compressed, indent=2))
 
 
 if __name__ == "__main__":
