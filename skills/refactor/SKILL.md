@@ -37,7 +37,7 @@ If vague, ask "What is the hardest part of working with this code?" and confirm 
 1. ✅ **Recommended** — [Diagnosis] based on [the table row whose symptom best matches what you observed: nesting, duplication, coupling, naming].
 2. **Alternative** — [a second table row whose symptom is also plausible] + the reason it might be the better fit.
 
-**MANDATORY**: If the pain point is vague or complex, you MUST read `references/smell-catalog.md` to accurately diagnose the issue.
+**MANDATORY**: If the pain point is vague or complex, you MUST read `references/smell-catalog.md` to accurately diagnose the issue. **Skip it** if the pain point is a single, obvious mechanical change (e.g., a plain rename) — the table below is enough.
 
 | Pain                   | Likely Problem      | Rationale                                 |
 | :--------------------- | :------------------ | :---------------------------------------- |
@@ -47,6 +47,8 @@ If vague, ask "What is the hardest part of working with this code?" and confirm 
 | \"Tests breaking\"     | Hidden Coupling     | Dependency injection, concern separation. |
 
 ## Step 3: Priority & Risk
+
+Risk tier follows directly from the Step 2 diagnosis — a "Missing Abstraction" or "Hidden Coupling" diagnosis is High Risk; "Poor Naming" or simple duplication is Low/Medium.
 
 1. **Low Risk (First):** Rename misnomers, replace magic literals, remove dead code, early returns. **DO NOT load `patterns.md` for these changes.**
 2. **Medium Risk:** Split functions, extract classes, introduce types/interfaces.
@@ -78,7 +80,7 @@ If a bug is discovered during refactoring: **STOP.**
 
 **next skills:**
 
-- `architecting`: If scope creeps beyond a single file/function to a module boundary or 2+ files — this skill's scope is single-file/single-function only.
+- `architecting`: If scope creeps beyond single-file/function (see description for the boundary).
 - `diagnose`: If a pre-existing bug is discovered during the refactor that requires systematic isolation.
 - `verification-before-completion`: Once the structural changes are complete, to ensure behavior is preserved.
 
@@ -88,6 +90,8 @@ If a bug is discovered during refactoring: **STOP.**
 - **NEVER** extract solely on structural similarity (Incidental Duplication).
 - **NEVER** change public signatures without test coverage.
 - **NEVER** refactor an untested critical path. Write characterization tests first.
+- **NEVER** introduce an abstraction (interface, factory, strategy map) before the third real occurrence — two similar blocks is not yet a pattern.
+- **NEVER** rename and change logic in the same edit, even when both touch the same line — split into two diffs so the diff itself proves no behavior changed.
 
 ## Transition
 
