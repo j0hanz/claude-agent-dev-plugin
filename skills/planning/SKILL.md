@@ -1,6 +1,6 @@
 ---
 name: planning
-description: 'This skill should be used when the user asks to "write a spec", "spec and plan this", "create implementation plan", "planning", "blueprint", "technical specification", or "task decomposition". Generates paired specification and implementation planning artifacts. Not for vague/ambiguous requirements that need discovery first (see brainstorming) or for executing an existing plan (see multi-agent-development, test-driven-development).'
+description: 'This skill should be used when the user asks to "write a spec", "spec and plan this", "create implementation plan", "technical specification", "task decomposition", or "production rollout plan". Generates paired specification and implementation planning artifacts. Not for vague/ambiguous requirements that need discovery first (see brainstorming) or for executing an existing plan (see multi-agent-development, test-driven-development).'
 disable-model-invocation: false
 user-invocable: true
 allowed-tools: Bash(python *) Bash(python3 *)
@@ -24,7 +24,7 @@ Step 1: Intake & Mapping (brief/interview) -> Step 2: Artifact Authoring (scaffo
 
 ## NEVER Do This
 
-- **NEVER** execute unsanitized bash commands with user variables. Wrap in single quotes.
+- **NEVER** execute unsanitized bash commands with user variables. **WHY:** Spec/plan content (names, goals) can contain shell metacharacters that get injected into `Validate:` commands. **FIX:** Wrap in single quotes.
 - **NEVER** hand-type spec IDs or file paths for existing files. **WHY:** Manual entry leads to broken traceability and dead links. **FIX:** Use `skills/planning/scripts/scaffold.py` and `skills/planning/scripts/discover.py`.
 - **NEVER** proceed past validation gates without 100% PASS. **WHY:** Hidden errors in the plan compound during implementation.
 - **NEVER** edit `Satisfies:` manually. **FIX:** Use `skills/planning/scripts/sync.py`.

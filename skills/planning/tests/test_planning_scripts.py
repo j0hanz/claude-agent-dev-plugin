@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import shutil
+import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -492,3 +494,45 @@ Expected result: 401 returned on invalid token.
 def test_validate_plan_missing_file(tmp_path: Path) -> None:
     errors, warnings = validate_plan(tmp_path / "plan" / "missing.plan.md")
     assert any("not found" in e.lower() for e in errors)
+
+
+# ---------------------------------------------------------------------------
+# Pipeline tests (execute_plan_pipeline.py)
+# ---------------------------------------------------------------------------
+
+
+def _run_pipeline(name: str, cwd: Path) -> subprocess.CompletedProcess[str]:
+    script = Path(__file__).parent.parent / "scripts" / "execute_plan_pipeline.py"
+    return subprocess.run(
+        [sys.executable, str(script), "--name", name],
+        cwd=cwd,
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_pipeline_succeeds_on_already_authored_artifacts(
+    spec_file: Path, plan_file: Path, tmp_path: Path
+) -> None:
+    plan_dir = tmp_path / "plan"
+    plan_dir.mkdir()
+    shutil.copy(spec_file, plan_dir / spec_file.name)
+    shutil.copy(plan_file, plan_dir / plan_file.name)
+
+    result = _run_pipeline("test-feature", cwd=tmp_path)
+
+    assert result.returncode == 0, result.stdout + result.stderr
+    assert "Pipeline completed successfully" in result.stdout
+
+
+def test_pipeline_fails_cleanly_when_plan_missing(
+    spec_file: Path, tmp_path: Path
+) -> None:
+    plan_dir = tmp_path / "plan"
+    plan_dir.mkdir()
+    shutil.copy(spec_file, plan_dir / spec_file.name)
+
+    result = _run_pipeline("test-feature", cwd=tmp_path)
+
+    assert result.returncode == 1
+    assert "not found" in result.stdout.lower()

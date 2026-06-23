@@ -15,28 +15,15 @@ def main() -> None:
     plan_dir = Path("plan").resolve()
 
     spec_path = plan_dir / f"{name}.specs.md"
+    plan_path = plan_dir / f"{name}.plan.md"
 
-    # Pre-flight: spec must exist before running any subprocess
-    if not spec_path.exists():
-        print(f"[!] Spec file not found: {spec_path}. Create it first or run scaffold.")
-        sys.exit(1)
+    # Pre-flight: both artifacts must already exist (Step 2 scaffolds + authors them)
+    for path_obj in (spec_path, plan_path):
+        if not path_obj.exists():
+            print(f"[!] {path_obj} not found. Run scaffold.py and author it first.")
+            sys.exit(1)
 
-    # 1. Scaffold (fills plan skeleton if plan file is missing)
-    print(f"[*] Scaffolding {name}...")
-    res_scaffold = subprocess.run(
-        [
-            "python",
-            str(scripts_dir / "scaffold.py"),
-            name,
-            "--depth",
-            "contract",
-        ]
-    )
-    if res_scaffold.returncode != 0:
-        print("\n[!] Scaffold failed. Cannot continue.")
-        sys.exit(res_scaffold.returncode)
-
-    # 2. Validate spec
+    # 1. Validate spec
     print("[*] Validating Spec...")
     res_spec = subprocess.run(
         ["python", str(scripts_dir / "validate.py"), name, "--spec"]
@@ -45,14 +32,14 @@ def main() -> None:
         print("\n[!] Spec validation failed. Please fix the spec file and re-run.")
         sys.exit(res_spec.returncode)
 
-    # 3. Sync Satisfies: fields from spec into plan
+    # 2. Sync Satisfies: fields from spec into plan
     print("[*] Syncing...")
     res_sync = subprocess.run(["python", str(scripts_dir / "sync.py"), str(spec_path)])
     if res_sync.returncode != 0:
         print("\n[!] Sync failed. Fix the spec file and re-run.")
         sys.exit(res_sync.returncode)
 
-    # 4. Validate plan
+    # 3. Validate plan
     print("[*] Validating Plan...")
     res_plan = subprocess.run(
         ["python", str(scripts_dir / "validate.py"), name, "--plan"]
@@ -61,7 +48,7 @@ def main() -> None:
         print("\n[!] Plan validation failed. Please fix the plan file and re-run.")
         sys.exit(res_plan.returncode)
 
-    # 5. Cross-validate spec ↔ plan traceability
+    # 4. Cross-validate spec ↔ plan traceability
     print("[*] Cross-Validating...")
     res_cross = subprocess.run(
         ["python", str(scripts_dir / "validate.py"), name, "--cross"]
