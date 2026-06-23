@@ -155,7 +155,7 @@ python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" scaffold-agents
    ```bash
    python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" wire-agents AGENTS.md CLAUDE.md GEMINI.md
    ```
-3. Run linting script:
+3. Run linting script (or wrapper `scripts/run_lint.sh` inside hooks):
    ```bash
    python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" lint-agents-md AGENTS.md
    ```

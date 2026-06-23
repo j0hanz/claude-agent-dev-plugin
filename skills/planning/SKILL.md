@@ -63,7 +63,7 @@ For any missing core field, confirm via `AskUserQuestion` — the tool supplies 
 
 ## Step 2: Artifact Authoring
 
-**MANDATORY**: Read `references/spec-template.md`, `references/plan-template.md`, `references/decomposition.md`, and `references/traceability.md` before authoring. Refer to `references/output-examples.md` for style.
+**MANDATORY**: Read `references/spec-template.md`, `references/plan-template.md`, `references/decomposition.md`, and `references/traceability.md` before authoring. Refer to `references/output-examples.md` and `references/domain-examples.md` for style and examples.
 
 1. **Scaffold:** `python scripts/scaffold.py \"NAME\" --depth [sketch|contract|blueprint]`
 2. **Draft Spec:** Fill requirements and interfaces using `spec-template.md`.
@@ -73,7 +73,7 @@ For any missing core field, confirm via `AskUserQuestion` — the tool supplies 
 
 **MANDATORY**: Read `references/validation.md` for error remediation.
 
-**Gate:** Resolve all ERRORS before proceeding.
+**Gate:** Resolve all ERRORS before proceeding (validation pipeline uses `scripts/spec_parser.py` internally to validate spec/plan structure).
 
 - **Sketch:** `python scripts/validate.py \"NAME\" --spec`
 - **Contract/Blueprint:** `python scripts/execute_plan_pipeline.py --name \"NAME\"`

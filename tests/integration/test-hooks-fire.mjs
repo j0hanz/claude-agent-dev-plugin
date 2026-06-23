@@ -18,9 +18,25 @@ import { cleanupProject } from './helpers.mjs';
 const pluginRoot = process.cwd();
 const hooksDir = join(pluginRoot, 'hooks');
 
+let bashCmd = 'bash';
+if (process.platform === 'win32') {
+  const gitBashPaths = [
+    'C:\\Program Files\\Git\\bin\\bash.exe',
+    'C:\\Program Files\\Git\\usr\\bin\\bash.exe',
+    'C:\\Program Files (x86)\\Git\\bin\\bash.exe',
+    'C:\\Program Files (x86)\\Git\\usr\\bin\\bash.exe',
+  ];
+  for (const p of gitBashPaths) {
+    if (existsSync(p)) {
+      bashCmd = p;
+      break;
+    }
+  }
+}
+
 function runHandler(name, input, env = {}) {
   try {
-    const stdout = execFileSync('bash', [join(hooksDir, name)], {
+    const stdout = execFileSync(bashCmd, [join(hooksDir, name)], {
       input: JSON.stringify(input),
       encoding: 'utf-8',
       env: { ...process.env, ...env },

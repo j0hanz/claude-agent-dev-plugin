@@ -1,6 +1,6 @@
 ---
 name: architecting
-description: "This skill should be used when the user asks to 'conduct an architecture review', 'restructure across modules', 'design this system', 'map dependencies', 'resolve circular dependencies', or troubleshoot a God class or domain boundaries. Not for single-file cleanup (see refactor)."
+description: "Conducts architecture reviews and system design. Not for single-file cleanup (see refactor). Trigger on: 'conduct an architecture review', 'restructure across modules', 'design this system', 'map dependencies', 'resolve circular dependencies', 'troubleshoot a God class', 'domain boundaries'."
 disable-model-invocation: false
 allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion
 ---

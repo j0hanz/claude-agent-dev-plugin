@@ -220,7 +220,12 @@ def validate_references(skill_dir: Path, body: str) -> tuple[list[str], list[str
         if not sub_dir.is_dir():
             continue
         for path in sub_dir.iterdir():
-            if not path.is_file() or path.name.startswith("test_"):
+            if (
+                not path.is_file()
+                or path.name.startswith("test_")
+                or path.name.startswith(".")
+                or path.name == "__init__.py"
+            ):
                 continue
             if path.name not in body:
                 warnings.append(

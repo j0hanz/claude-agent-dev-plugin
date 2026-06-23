@@ -80,6 +80,16 @@ Identify the execution mode and confirm via `AskUserQuestion` — the tool suppl
 - [ ] No long-lived cloud credentials (OIDC only for AWS/GCP/Azure/npm/PyPI).
 - [ ] `pull_request_target` audited for PR head checkout (Forbidden).
 
+## Sibling References
+
+- **Conceptual & General reference:** Read `references/topic-map.md` to map GitHub Actions conceptual docs.
+- **Workflow authoring patterns:** Read `references/workflow-recipes.md` for pre-built recipes.
+- **Security best practices:** Read `references/security-hardening.md` for token scopes, OIDC setup (`references/oidc-cloud.md`), and expression injection prevention.
+- **Headless CLI usage:** Read `references/headless-auth-patterns.md` and `references/api-pagination-and-limits.md` for CLI configuration.
+- **Schema specifications:** Read `references/schemas.md` for workflow and metadata structures.
+- **Debugging workflows:** Read `references/troubleshooting.md` to diagnose CI runner/execution errors.
+- **Verifying PR Statuses:** Use `scripts/inspect_pr_checks.py` to fetch checks/statuses for a PR head commit.
+
 **next skills:**
 
 - `verification-before-completion`: After updating workflows or automation scripts, to verify they pass linting and initial validation before committing.

@@ -73,7 +73,7 @@ Skip this question entirely if the request already names a single unambiguous au
 
 4. **Codebase Scan:**
    - Read `references/codebase-scanner-prompt.md` before dispatching.
-   - Dispatch the subagent with the prompt.
+   - Dispatch the subagent with the prompt (which runs the scan script `scripts/scan_context.py` and pipes it through `scripts/compress_report.py`).
    - **Compress:** Pipe the subagent's raw JSON through `python '<skill-dir>/scripts/compress_report.py'` — this becomes "the compressed scan report" used in Phase 4.
    - **Integration:** Extract "Interface Shapes," "Technical Constraints," "Analogous Features," and "Key Unknowns" from the result. Ground the Understanding Statement in these.
    - **Zero-Code Exit:** If the scan finds an existing feature or config that satisfies the request, present it and offer to exit.
