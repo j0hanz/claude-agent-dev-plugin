@@ -204,7 +204,13 @@ class Config:
             "touched-files": "test/typecheck files you changed; don't require full-suite runs",
             "not-enforced": "no automatic testing requirement, rely on existing CI",
         },
+        "ci": {
+            "github-actions": "automated CI running on GitHub Actions",
+            "gitlab-ci": "automated CI running on GitLab CI",
+            "local-only": "no automated CI, local-only test execution and deployment",
+        },
     }
+
 
 
 class IssueLevel(Enum):
@@ -579,12 +585,14 @@ _GENERIC_ADVICE_RE = re.compile(
 )
 _FILE_SCOPED_COMMANDS_RE = re.compile(r"##\s+file-scoped commands", re.IGNORECASE)
 _HARD_RULES_MARKER_RE = re.compile(
-    r"<!--\s*codebase-init:hard-rules\s+v1\s+commit=\S+\s+maturity=\S+\s+testing=\S+\s*-->"
+    r"<!--\s*codebase-init:hard-rules\s+v1\s+commit=\S+\s+maturity=\S+\s+testing=\S+(?:\s+ci=\S+)?\s*-->"
 )
 
 
-def render_hard_rules_marker(commit: str, maturity: str, testing: str) -> str:
-    """Render the trailing hard-rules marker comment encoding the 3 survey answers."""
+def render_hard_rules_marker(commit: str, maturity: str, testing: str, ci: str | None = None) -> str:
+    """Render the trailing hard-rules marker comment encoding the 3 or 4 survey answers."""
+    if ci is not None:
+        return f"<!-- codebase-init:hard-rules v1 commit={commit} maturity={maturity} testing={testing} ci={ci} -->"
     return f"<!-- codebase-init:hard-rules v1 commit={commit} maturity={maturity} testing={testing} -->"
 
 
@@ -599,6 +607,7 @@ def render_agents_md_skeleton(
     commit: str,
     maturity: str,
     testing: str,
+    ci: str | None = None,
     pm_override: str | None = None,
     toolchain_overrides: dict[str, str] | None = None,
 ) -> str:
@@ -612,11 +621,15 @@ def render_agents_md_skeleton(
         raise ValueError(
             f"Unknown language {language!r}. Choices: {sorted(Config.LANGUAGE_DEFAULTS)}"
         )
-    for category, value in (
+    categories = [
         ("commit", commit),
         ("maturity", maturity),
         ("testing", testing),
-    ):
+    ]
+    if ci is not None:
+        categories.append(("ci", ci))
+
+    for category, value in categories:
         if value not in Config.HARD_RULES_TEXT[category]:
             raise ValueError(
                 f"Unknown {category} {value!r}. Choices: {sorted(Config.HARD_RULES_TEXT[category])}"
@@ -637,8 +650,12 @@ def render_agents_md_skeleton(
         f"commit: {Config.HARD_RULES_TEXT['commit'][commit]}",
         f"maturity: {Config.HARD_RULES_TEXT['maturity'][maturity]}",
         f"testing: {Config.HARD_RULES_TEXT['testing'][testing]}",
+    ]
+    if ci is not None:
+        lines.append(f"ci: {Config.HARD_RULES_TEXT['ci'][ci]}")
+    lines += [
         "",
-        render_hard_rules_marker(commit, maturity, testing),
+        render_hard_rules_marker(commit, maturity, testing, ci),
         "",
         "## Package Manager",
         "",
@@ -1144,6 +1161,12 @@ def _setup_parser() -> argparse.ArgumentParser:
         "--testing", required=True, choices=sorted(Config.HARD_RULES_TEXT["testing"])
     )
     scaffold_parser.add_argument(
+        "--ci",
+        choices=sorted(Config.HARD_RULES_TEXT["ci"]) if "ci" in Config.HARD_RULES_TEXT else ["github-actions", "gitlab-ci", "local-only"],
+        default=None,
+        help="CI/CD Automation provider (default: auto-detected).",
+    )
+    scaffold_parser.add_argument(
         "--pm", default=None, help="Override the default package manager name."
     )
     scaffold_parser.add_argument(
@@ -1257,6 +1280,14 @@ def main() -> int:
                     return 1
                 key, _, value = pair.partition("=")
                 overrides[key] = value
+
+            ci = args.ci
+            if ci is None:
+                env = analyze_project_env(root)
+                ci = env.ci_provider
+                if "ci" in Config.HARD_RULES_TEXT and ci not in Config.HARD_RULES_TEXT["ci"]:
+                    ci = "local-only"
+
             try:
                 content = render_agents_md_skeleton(
                     args.language,
@@ -1264,6 +1295,7 @@ def main() -> int:
                     args.commit,
                     args.maturity,
                     args.testing,
+                    ci=ci,
                     pm_override=args.pm,
                     toolchain_overrides=overrides,
                 )
