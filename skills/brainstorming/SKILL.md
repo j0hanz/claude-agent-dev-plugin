@@ -1,6 +1,13 @@
 ---
 name: brainstorming
-description: "Structured discovery to prevent rework. Designed for new product features or ambiguous requirements. Trigger on: 'let's build a feature', 'new feature', 'I want to implement', 'add X to', 'ambiguous design', 'unclear terminology', 'requirements discovery', 'brainstorming', 'stakeholder probe', 'glossary definition'."
+description: >
+  Structured requirements-discovery workflow to prevent rework on new features.
+  Use when: a user asks to build, add, or implement anything non-trivial; requirements
+  are ambiguous or terminology is unclear; or a stakeholder probe / glossary definition
+  is needed. Do NOT use for bug fixes, typos, or config tweaks with no design space.
+  Trigger keywords: 'new feature', 'let\'s build a feature', 'I want to implement',
+  'add X to', 'ambiguous design', 'unclear terminology', 'requirements discovery',
+  'brainstorming', 'stakeholder probe', 'glossary definition'.
 ---
 
 # brainstorming
@@ -64,7 +71,9 @@ Before Discovery, check for an in-progress session on this topic.
 ## Phase 1: Discovery
 
 **action: Stakeholder Probe**
-Identify the primary users and confirm via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually:
+Identify the primary users and confirm via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually.
+
+> **Tool check:** If `AskUserQuestion` is unavailable, present the options as a numbered markdown list and ask the user to reply with their choice number.
 
 1. ✅ **Recommended** — [Audience] based on [feature context].
 2. **Alternative** — [Secondary Audience] + reason for inclusion.
@@ -72,11 +81,16 @@ Identify the primary users and confirm via `AskUserQuestion` — the tool suppli
 Skip this question entirely if the request already names a single unambiguous audience (e.g. "add an admin-only export button") — confirming the obvious wastes a turn.
 
 4. **Codebase Scan:**
-   - Read `references/codebase-scanner-prompt.md` before dispatching.
+
+   > **MANDATORY — READ FIRST**: Read
+   > [`references/codebase-scanner-prompt.md`](references/codebase-scanner-prompt.md)
+   > in full before dispatching the scan subagent.
+   > **Do NOT load** `design-proposer-prompt.md` or `structured-review-prompt.md` at this step.
    - Dispatch the subagent with the prompt (which runs the scan script `scripts/scan_context.py` and pipes it through `scripts/compress_report.py`).
    - **Compress:** Pipe the subagent's raw JSON through `python '<skill-dir>/scripts/compress_report.py'` — this becomes "the compressed scan report" used in Phase 4.
    - **Integration:** Extract "Interface Shapes," "Technical Constraints," "Analogous Features," and "Key Unknowns" from the result. Ground the Understanding Statement in these.
    - **Zero-Code Exit:** If the scan finds an existing feature or config that satisfies the request, present it and offer to exit.
+
 5. **Understanding Statement:** Summarize findings, constraints, and Key Unknowns. Get user confirmation.
 6. **Adaptive Routing:**
    - **Scope S + No Unknowns:** Skip to Phase 4.
@@ -88,7 +102,9 @@ Skip this question entirely if the request already names a single unambiguous au
 ## Phase 2: Domain Clarity (Term Definition)
 
 **action: Define Term**
-For each ambiguous term, propose a definition via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually. Batch all ambiguous terms from this request into one `AskUserQuestion` call (one question per term, up to 4) instead of one round-trip per term:
+For each ambiguous term, propose a definition via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually. Batch all ambiguous terms from this request into one `AskUserQuestion` call (one question per term, up to 4) instead of one round-trip per term.
+
+> **Tool check:** If `AskUserQuestion` is unavailable, list each term with its proposed definitions as a numbered markdown list and ask the user to reply with their choice per term.
 
 1. ✅ **Recommended** — [Term]: [Definition] based on [codebase usage/patterns].
 2. **Alternative** — [Term]: [Alternative Definition] found in conflicting code/docs usage, if one exists.
@@ -119,7 +135,15 @@ Select 1-2 techniques (max 4 questions total):
 
 ## Phase 4: Design Proposal
 
-1. **Dispatch:** Spawn the subagent (`references/design-proposer-prompt.md`) with the compressed scan report and discovery findings.
+1. **Dispatch:**
+
+   > **MANDATORY — READ FIRST**: Read
+   > [`references/design-proposer-prompt.md`](references/design-proposer-prompt.md)
+   > in full before spawning the subagent.
+   > **Do NOT load** `codebase-scanner-prompt.md` or `structured-review-prompt.md` at this step.
+
+   Spawn the subagent with the compressed scan report and discovery findings.
+
 2. **Present:** Offer 2-3 competing approaches with grounded tradeoffs.
 3. **Approval Gate:** Wait for explicit commitment to one approach. Do not guess.
 4. **Review Check:** Phase 5 flag set → run Phase 5 before the brief. Not set → skip to Phase 6.
@@ -131,8 +155,16 @@ Runs only if the Phase 5 flag is set (canonical condition: Phase 1's Adaptive Ro
 
 **Parallel Adversarial Loop:** Reviewers run concurrently for objectivity and lower latency.
 
-1. **Dispatch Parallel Stress-Test:** Read `references/structured-review-prompt.md` before dispatching. Spawn the Skeptic, Constraint Guardian, and User Advocate templates from that file as three parallel `Agent()` calls (contract shape: `../multi-agent-development/references/subagent-contract.md`). Each sees only the design and context packet — none sees the others' objections or the designer's internal reasoning.
+1. **Dispatch Parallel Stress-Test:**
+
+   > **MANDATORY — READ FIRST**: Read
+   > [`references/structured-review-prompt.md`](references/structured-review-prompt.md)
+   > in full before dispatching any reviewer subagent.
+   > **Do NOT load** `codebase-scanner-prompt.md` or `design-proposer-prompt.md` at this step.
+
+   Spawn the Skeptic, Constraint Guardian, and User Advocate templates from that file as three parallel `Agent()` calls (contract shape: `../multi-agent-development/references/subagent-contract.md`). Each sees only the design and context packet — none sees the others' objections or the designer's internal reasoning.
    - **Log:** Append each reviewer's objections to the session log as it returns, not batched after all three finish — this is what lets an interrupted dispatch resume without re-running reviewers that already answered.
+
 2. **Consolidate & Respond:**
    - Log every objection in a **Response Log** (Objection | Source | Severity | Designer Response | Resolution). Apply the Severity Calibration in `references/structured-review-prompt.md` — discard wording/style objections rather than logging them.
    - Resolve each row: **Accept & Revise** (update the design) or **Reject** (give a technical rationale). No row may stay open.
@@ -170,13 +202,13 @@ Produce mandatory `markdown-kv` brief and persist it:
 - `planning`: To transform the design brief into a concrete implementation spec and task list.
 - `architecting`: To refine boundaries or choose patterns if the design reveals structural complexity.
 
-## Red Flags
+## NEVER Do
 
-- Skipping brainstorming because "it's obvious".
-- Assumed terminology (e.g., Account vs. Customer).
-- Capturing "HOW" (code) before "WHAT" (domain).
-- **Self-Approval**: Approving a flagged design without the Arbiter.
-- **Arbiter Rubber-stamping**: Arbiter approving with unresolved High-severity objections or rejections without rationale.
-- **Context Drift**: Design ignores architectural constraints found in Phase 1.
-- **Subagent Role Bleed**: Reviewers proposing redesigns instead of identifying flaws.
-- **Silent Restart**: Re-running a completed phase or re-dispatching an already-returned reviewer after resume, instead of reading the session log first.
+- **NEVER** skip Phase 1 for requests containing the words "simple" or "just" — these words historically correlate with the most expensive rework events because they invite assumed terminology and unstated stakeholders.
+- **NEVER** assume shared terminology without Phase 2 — "Account" vs. "Customer", "User" vs. "Member" have derailed entire implementations when resolved only at code-review time.
+- **NEVER** capture HOW (architecture, code) before WHAT (domain) — a design that skips Discovery produces the right answer to the wrong question.
+- **NEVER** approve a Phase 5-flagged design without a separate Arbiter dispatch — the designer agent cannot serve as its own Arbiter; context contamination from Phase 4's internal reasoning invalidates the judgment.
+- **NEVER** let the Arbiter approve with unresolved High-severity objections or rejections marked without rationale — an empty "Rejected" row in the Response Log is indistinguishable from a forgotten row.
+- **NEVER** let Phase 4 propose an architecture without explicitly citing which Phase 1 constraints it satisfies — a design that doesn't reference constraints has silently ignored them, not consciously addressed them.
+- **NEVER** allow a Phase 5 reviewer to propose a redesign — reviewers identify flaws; redesign is Phase 4's job. A reviewer that rewrites the solution has broken the adversarial objectivity the parallel dispatch is designed to preserve.
+- **NEVER** re-dispatch a Phase 5 reviewer whose objections are already logged in the session log — re-dispatching resets their context and produces a new, potentially contradictory objection set, corrupting the Response Log.
