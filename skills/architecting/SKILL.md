@@ -2,7 +2,7 @@
 name: architecting
 description: "Expert architecture review and system design for problems spanning 2+ files or crossing module boundaries — circular dependencies, God modules, or boundary violations (bleed). Not for single-file cleanup (see refactor). Trigger on: 'architecture review', 'restructure across modules', 'too coupled', 'design this system', 'where should this code live', 'God class', 'circular deps', 'dependency mapping', 'domain boundaries'."
 disable-model-invocation: false
-allowed-tools: Bash(node *), Bash(python *), AskUserQuestion
+allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion
 ---
 
 # architecting
@@ -39,17 +39,21 @@ Route and confirm via `AskUserQuestion` (or 2-option markdown block) — the too
 
 **action: MODE A — DIAGNOSE**
 
-1. **Explore**:
+1. **Explore** (Phase 1):
    - Detect tech stack.
-   - Run `check_locality.py`, `detect_bleed.py`, `git_coupling.py`, `detect_hotspots.py`.
+   - Run from `scripts/` (all accept a target dir positional arg, default shown):
+     - `python check_locality.py [dir=src]`
+     - `python detect_bleed.py [dir=src/domain] [--infra-prefixes express,typeorm,prisma,fs,path,react,mongoose]`
+     - `python git_coupling.py [dir=.] [--min-count 3] [--since "6 months ago"] [--top-n 20]`
+     - `python detect_hotspots.py [dir=src] [--since "6 months ago"]`
    - **Fallback**: Manually analyze imports, "God" modules (>500 lines/20+ exports), and history.
    - Dispatch `general-purpose` agent using `references/dispatch-template.md`.
-2. **Present**: List 3-6 opportunities: [Name], [Files], [Bleed], [Deepening], [Impact], [Risk], [Mermaid].
+2. **Present** (Phase 2): List 3-6 opportunities: [Name], [Files], [Bleed], [Deepening], [Impact], [Risk], [Mermaid]. End by asking: "Which of these candidates interests you most?"
 3. **Align**:
    - Interview via `references/DOMAIN_INTERVIEW.md`.
-   - Propose Seam: Interface definition, data flow, "Before vs After" Mermaid graph.
+   - Propose Seam: Interface definition, data flow, "Before vs After" Mermaid graph — use `references/INTERFACE_SHAPES.md` for the interface design and `references/SEAMS_BY_EXAMPLE.md` for worked good-vs-bad seam code.
 4. **Record ADR**: Write an ADR in `docs/adr/` using `references/ADR_TEMPLATE.md`.
-5. **Brief & Handoff**: Write `architecture-brief.json` (see `references/brief-schema.json`). Handoff to `refactor` or `planning`.
+5. **Brief & Handoff**: Write `architecture-brief.json` (see `references/brief-schema.json`). Read `references/MIGRATION_STRATEGIES.md` to pick how to execute the change without a Big Bang rewrite. Handoff to `refactor` or `planning`.
 
 **action: MODE B — DESIGN**
 
@@ -57,7 +61,7 @@ Route and confirm via `AskUserQuestion` (or 2-option markdown block) — the too
 2. **Select Pattern**: Use `references/architecture-patterns.md`.
 3. **Stress Test**: Apply Swap Test (If [mechanism] changes, what breaks?).
 4. **Record ADR**: Write an ADR in `docs/adr/` using `references/ADR_TEMPLATE.md`.
-5. **Scaffold**: Write `architecture-brief.json` (see `references/brief-schema.json`). Run `scaffold_boundary.py` or manually create structure.
+5. **Scaffold**: Write `architecture-brief.json` (see `references/brief-schema.json`). If integrating with an existing system, read `references/MIGRATION_STRATEGIES.md` for the cutover plan. Run `python scaffold_boundary.py <domain> [pattern=hexagonal] [output_dir=src] [--force]` — `pattern` is one of `hexagonal`, `vertical-slice`, `layered`, `clean-architecture`, `cqrs` (the other patterns in `references/architecture-patterns.md` — event-driven, event sourcing, modular monolith — have no scaffold and must be created manually).
 
 **heuristics:**
 
@@ -65,6 +69,7 @@ Route and confirm via `AskUserQuestion` (or 2-option markdown block) — the too
 - **Seam:** Is logic testable without I/O (DB/HTTP)?
 - **Locality:** Can module be understood without reading 5+ dependents?
 - **Stability:** UI/DB depends on Domain; never reverse.
+- **Scale:** Single-developer, throwaway, or <1,000 lines? Skip formal patterns (hexagonal, CQRS, etc.) — the boilerplate isn't repaid at this scale. Say so explicitly (YAGNI).
 
 **next skills:**
 
