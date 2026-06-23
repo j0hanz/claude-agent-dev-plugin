@@ -86,7 +86,9 @@ def test_scaffold_optional_dirs(tmp_path: Path) -> None:
     evals_data = json.loads(
         (tmp_path / "demo-skill" / "evals" / "evals.json").read_text()
     )
-    assert evals_data["skill_name"] == "demo-skill"
+    assert isinstance(evals_data, list)
+    assert len(evals_data) == 1
+    assert "expectations" in evals_data[0]
 
 
 # ---------------------------------------------------------------------------

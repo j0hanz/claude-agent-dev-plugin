@@ -106,21 +106,16 @@ if __name__ == "__main__":
 '''
 
 
-def _evals_stub(name: str) -> dict[str, Any]:
-    return {
-        "skill_name": name,
-        "evals": [
-            {
-                "id": 1,
-                "prompt": "FILL: a realistic user prompt that should trigger this skill",
-                "expected_output": "FILL: one sentence describing the expected shape of a good response",
-                "files": [],
-                "assertions": [
-                    "FILL: a specific, checkable assertion about the response"
-                ],
-            }
-        ],
-    }
+def _evals_stub(name: str) -> list[dict[str, Any]]:
+    return [
+        {
+            "id": 1,
+            "prompt": "FILL: a realistic user prompt that should trigger this skill",
+            "expectations": [
+                "FILL: a specific, checkable expectation about the response"
+            ],
+        }
+    ]
 
 
 def scaffold(
