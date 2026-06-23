@@ -1,6 +1,6 @@
 ---
 name: eval-skill
-description: "Behavior-tests an existing skill by measuring whether its description reliably triggers on realistic prompts and whether invoking it produces the correct route and artifacts, driving the existing tests/skill-triggering harness (run-test.sh + grade-transcript.mjs) and per-skill evals.json cases. Use this to test skill behavior; use make-a-skill instead for scaffolding or structural validation of a skill, and test-driven-development for testing application code. Trigger on: 'test if this skill triggers', 'eval this skill', 'does my skill fire', 'skill trigger rate', 'write evals for a skill', 'eval-skill'."
+description: "Runs behavior tests on local skills by executing run-test.sh over prompt txt files and validating outputs using grade-transcript.mjs against assertions in evals.json. Verifies that the LLM routes correctly and produces expected artifact files under the local test suite runner without building parallel runners. Trigger on: 'eval this skill', 'does my skill fire', 'run skill evals', 'eval-skill'."
 disable-model-invocation: false
 ---
 
@@ -28,50 +28,37 @@ checks structure — this checks behavior. It reuses the harness in `tests/skill
        -- all PASS ---------> wire into package.json test:eval
 ```
 
-## Step 1: Pick target & find the gap
+## Step 1: Choose Target & Check Tests
 
-- If the target skill is ambiguous, confirm it via `AskUserQuestion`.
-- Coverage check: look for `skills/<name>/evals/evals.json` and
-  `tests/skill-triggering/prompts/<name>.txt`. Skills with neither are untested — at time of
-  writing that includes `codebase-init`, `context-optimizer`, `make-a-skill`, and
-  `receive-code-review`.
-- Name the failure mode you're testing: **triggering** (does it fire at all?) vs. **output**
-  (does it do the right thing once fired?).
+- If the skill's goal is unclear, run `AskUserQuestion`.
+- Check for tests: Look for `skills/<name>/evals/evals.json` and `tests/skill-triggering/prompts/<name>.txt`. Missing files mean the skill is untested.
+- Pick your test goal: Are you testing if it **starts** (triggering) or if the **result is correct** (output)?
 
-## Step 2: Author eval cases
+## Step 2: Write Test Cases
 
-- Write `skills/<name>/evals/evals.json`: a JSON array of `{ "id", "prompt", "expectations": [] }`.
-- `prompt`: a realistic, naive user request that _should_ trigger the skill — no skill name,
-  no internal jargon. Match the naive style of the existing `prompts/*.txt` files.
-- `expectations`: specific, checkable claims about the response (route taken, artifact written,
-  gate enforced). `grade-transcript.mjs` reads these.
-- When debugging _over_-triggering, also add a near-miss prompt that should NOT fire it.
+- Edit `skills/<name>/evals/evals.json`. Add a JSON list using this format: `{ "id", "prompt", "expectations": [] }`.
+- **`prompt`**: Write a normal, everyday user request that should start the skill. Do not use the skill name or tech words.
+- **`expectations`**: List exact things that must happen (like writing a specific file).
+- **Near-miss**: Add a test that sounds similar but should NOT start the skill.
 
-## Step 3: Run the harness
+## Step 3: Run the Tests
 
-- One skill: `bash tests/skill-triggering/run-test.sh <name> tests/skill-triggering/prompts/<name>.txt`
-  — if `evals.json` exists, the script runs the evals loop and grader automatically; otherwise
-  it falls back to the static prompt file.
-- All wired skills: `bash tests/skill-triggering/run-all.sh`.
-- Requires the `claude` CLI on `PATH`; each case runs `claude -p --plugin-dir . --max-turns 3`.
+- **Test one skill:** Run `bash tests/skill-triggering/run-test.sh <name> tests/skill-triggering/prompts/<name>.txt`.
+- **Test all skills:** Run `bash tests/skill-triggering/run-all.sh`.
+- _Note:_ You must have the `claude` CLI working.
 
-## Step 4: Interpret & route the fix
+## Step 4: Fix the Results
 
-- **NOT triggered** → description problem. Rewrite the `description` field's trigger phrases
-  (hand to `make-a-skill` Step 4, which owns descriptions); re-run.
-- **Triggered but graded FAIL** → body problem. Fix the `SKILL.md` procedure; re-run.
-- **Flaky across runs** → tighten trigger phrases or expectations. Never accept a sub-100%
-  trigger rate as passing.
-- Once coverage is lasting, add it to `package.json` `test:eval` so `npm test` exercises it.
+- **Did not start?** Fix the `description` trigger words. Run again.
+- **Started but failed?** Fix the `SKILL.md` steps. Run again.
+- **Unstable (sometimes passes, sometimes fails)?** Make the test rules stricter. It must pass 100% of the time.
+- **Complete?** Add the test to `package.json` under `test:eval`.
 
-## NEVER
+## NEVER DO THESE
 
-- **NEVER** build a second eval runner. **WHY:** `run-test.sh` + `grade-transcript.mjs` already
-  do it. **FIX:** add `evals.json` cases instead.
-- **NEVER** assert a skill "works" from reading it. **WHY:** triggering is probabilistic.
-  **FIX:** run the harness and read the transcript.
-- **NEVER** put the skill name in an eval prompt. **WHY:** real users don't name skills, so it
-  tests nothing. **FIX:** naive prompts only.
+- **NEVER build a new test runner.** Just add test cases to `evals.json`.
+- **NEVER guess that a skill works by just reading it.** You must run the test.
+- **NEVER use the skill name in a prompt.** Real users do not know the skill names, so it ruins the test.
 
 **next skills:**
 
