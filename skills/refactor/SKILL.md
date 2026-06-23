@@ -23,76 +23,72 @@ Start: Refactor Request
 
 ## Step 1: Baseline Analysis
 
-Build a mental model before touching code:
+Understand the code first:
 
-- **Blast Radius:** Use `Grep` to find all callers and dependencies.
-- **Invariants:** Identify hidden logic requirements.
-- **Tests:** Verify current tests exist and pass. **Gate:** run the suite now and paste the actual output (exit code + pass/fail counts) as the green baseline — a claim that "tests pass" without pasted output does not satisfy this step. If the path being touched has no test covering it, write a characterization test first (see Critical Rules) and confirm IT passes before treating anything as a safety net.
+- **Blast Radius:** `Grep` callers and dependencies.
+- **Invariants:** Find hidden rules.
+- **Tests:** Run tests and paste the exact output (exit code + pass/fail). Saying "tests pass" is not allowed. If there are no tests, write one and prove it passes first.
 
 ## Step 2: Pain Point Mapping
 
-**action: Map Pain Points**
-If vague, ask "What is the hardest part of working with this code?" and confirm via `AskUserQuestion` — the tool supplies a free-text "Other" automatically, so don't add one manually. Ground options in the pain-point table below rather than generic phrasing — if the code shows symptoms matching 2+ rows, surface those as the real options instead of inventing a placeholder second guess:
+**Action:** Ask "What is the hardest part?" using `AskUserQuestion`. Pick the best match from the table below. Do not make up new options.
 
-1. ✅ **Recommended** — [Diagnosis] based on [the table row whose symptom best matches what you observed: nesting, duplication, coupling, naming].
-2. **Alternative** — [a second table row whose symptom is also plausible] + the reason it might be the better fit.
+**MANDATORY:** If the problem is hard, read `references/smell-catalog.md`. Skip this if it is a simple rename.
 
-**MANDATORY**: If the pain point is vague or complex, you MUST read `references/smell-catalog.md` to accurately diagnose the issue. **Skip it** if the pain point is a single, obvious mechanical change (e.g., a plain rename) — the table below is enough.
-
-| Pain                   | Likely Problem      | Rationale                                 |
-| :--------------------- | :------------------ | :---------------------------------------- |
-| \"Hard to add cases\"  | Missing Abstraction | Use Strategy, Enum, or Factory.           |
-| \"Hard to understand\" | Poor Naming / Bloat | Rename, extract helpers.                  |
-| \"Copy-pasted\"        | Duplication         | Extract shared utility (DRY).             |
-| \"Tests breaking\"     | Hidden Coupling     | Dependency injection, concern separation. |
+| Pain                 | Problem             | Fix                             |
+| :------------------- | :------------------ | :------------------------------ |
+| "Hard to add cases"  | Missing Abstraction | Use Strategy, Enum, or Factory. |
+| "Hard to understand" | Poor Naming / Bloat | Rename, extract helpers.        |
+| "Copy-pasted"        | Duplication         | Extract shared code.            |
+| "Tests breaking"     | Hidden Coupling     | Dependency injection.           |
 
 ## Step 3: Priority & Risk
 
-Risk tier follows directly from the Step 2 diagnosis — a "Missing Abstraction" or "Hidden Coupling" diagnosis is High Risk; "Poor Naming" or simple duplication is Low/Medium.
+Match risk to your Step 2 problem.
 
-1. **Low Risk (First):** Rename misnomers, replace magic literals, remove dead code, early returns. **DO NOT load `patterns.md` for these changes.**
-2. **Medium Risk:** Split functions, extract classes, introduce types/interfaces.
-3. **High Risk (Confirm First):** Reorganize modules, change public API signatures, apply Observer/Strategy patterns. **MANDATORY**: Before applying a pattern, read `references/patterns.md`.
+1. **Low Risk:** Rename, remove dead code, early returns. (Do NOT read `patterns.md`).
+2. **Medium Risk:** Split functions, extract classes.
+3. **High Risk:** Change APIs, move modules, add patterns. **MANDATORY:** Read `references/patterns.md` first.
 
 ## Step 4: Hidden Bug Protocol
 
-If a bug is discovered during refactoring: **STOP.**
+If you find a bug: **STOP**.
 
-1. Surface the bug (trigger, behavior, fix).
-2. **NEVER** fix it in the same turn as the refactor.
-3. Leave the buggy line intact. Fix only in a separate, dedicated step (invoke `diagnose`).
+1. Report the bug.
+2. **NEVER** fix it during a refactor.
+3. Leave the buggy line alone. Fix it later using `diagnose`.
 
 ## Step 5: Small, Verified Steps
 
-- **Checkpoint:** Commit or stash before starting.
-- **Cycle:** One change → Confirm (read diff) → Run tests → Confirm typecheck.
-- **Automated Tools:** Run `prettier`, `eslint --fix`, `ruff format`, or `gofmt` before manual edits.
+- **Save:** Commit or stash first.
+- **Cycle:** Edit → Read diff → Run tests → Check types.
+- **Format:** Auto-format (`prettier`, `eslint --fix`, `ruff format`, or `gofmt`) before you edit manually.
 
-## Step 6: Communication (Mandatory Output)
+## Step 6: Communication
 
-```markdown
+Output exactly this format:
+
 ## Changes
 
-**What changed:** [List renames, extractions, reorganizations]
-**Why:** [Problem solved / Benefit gained]
-**Deliberately NOT changed:** [Preserved scope / Justification]
-```
+**What:** [List changes]
+**Why:** [Problem solved]
+**Left alone:** [What was not changed and why]
 
-**next skills:**
+**Next Skills:**
 
-- `architecting`: If scope creeps beyond single-file/function (see description for the boundary).
-- `diagnose`: If a pre-existing bug is discovered during the refactor that requires systematic isolation.
-- `verification-before-completion`: Once the structural changes are complete, to ensure behavior is preserved.
+- `architecting`: For changes across multiple files.
+- `diagnose`: To fix bugs you found.
+- `verification-before-completion`: Run this after your final tests pass.
 
 ## Critical Rules
 
 - **NEVER** mix behavior changes with structural changes.
-- **NEVER** extract solely on structural similarity (Incidental Duplication).
-- **NEVER** change public signatures without test coverage.
-- **NEVER** refactor an untested critical path. Write characterization tests first.
-- **NEVER** introduce an abstraction (interface, factory, strategy map) before the third real occurrence — two similar blocks is not yet a pattern.
-- **NEVER** rename and change logic in the same edit, even when both touch the same line — split into two diffs so the diff itself proves no behavior changed.
+- **NEVER** extract code just because it looks similar.
+- **NEVER** change public APIs without tests.
+- **NEVER** touch untested critical code. Write tests first.
+- **NEVER** build an abstraction for just two cases. Wait for three.
+- **NEVER** rename and change logic at the same time. Do it in two separate steps.
 
 ## Transition
 
-Invoke `verification-before-completion` after the final test pass.
+Run `verification-before-completion` when done.
