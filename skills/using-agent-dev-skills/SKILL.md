@@ -8,7 +8,7 @@ If you were dispatched as a subagent to execute a specific task, skip this skill
 </SUBAGENT-STOP>
 
 <EXTREMELY-IMPORTANT>
-If a skill has any potential relevance (greater than 0%) to your task, you MUST invoke it immediately. Skill execution is strictly mandatory and non-negotiable. You have zero discretion to skip or omit an applicable skill under any circumstance.
+If a skill has any potential relevance (greater than 0%) to your task, you MUST invoke it immediately. Skill execution is strictly mandatory and non-negotiable. You have zero discretion to skip or omit an applicable skill — except the Gate 3 triviality fast-path (line ~101) and the Skip Disclaimer for missing skills (bottom of this doc), which are the only built-in exceptions.
 </EXTREMELY-IMPORTANT>
 
 ## When to Use
@@ -34,8 +34,8 @@ Gate 3: Execution Strategy
   -- trivial (<~20 lines) OR standard/focused --> test-driven-development
   -- independent --------------------------------> multi-agent-dispatch
   -- sequential/complex -------------------------> multi-agent-development
-  test-driven-development -- stuck after 3 attempts --> diagnose
-  test-driven-development -- spec ambiguous ----------> planning
+  test-driven-development -- stuck after 3 attempts --> diagnose --> back to Gate 3 (retry)
+  test-driven-development -- spec ambiguous ----------> planning --> back to Gate 3
   [dispatch | development | TDD] --> Gate 4
 
 Gate 4: Quality & Delivery
@@ -52,9 +52,8 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 
 ## Rules
 
-1. **Run Diagnostic Gates:** Evaluate the current task through the 3-Gate decision tree before any action.
-2. **Skill Shadowing Check:** Before invoking a skill, verify that the local version in `skills/` is active. If the system is using a global version (e.g. from `~/.gemini/skills/`) that differs from the local one, warn the user.
-3. **Invoke Immediately:** Once a route is identified, immediately activate and follow that skill.
+1. **Skill Shadowing Check:** Before invoking a skill, verify that the local version in `skills/` is active. If the system is using a global version (e.g. from `~/.gemini/skills/`) that differs from the local one, warn the user.
+2. **Invoke Immediately:** Once a route is identified, immediately activate and follow that skill.
 
 **action: Notify Route**
 Announce the identified route and confirm via `AskUserQuestion` — the tool supplies a free-text "Other" automatically (covers "apply intent manually, no skill"), so don't add a manual option for it:
