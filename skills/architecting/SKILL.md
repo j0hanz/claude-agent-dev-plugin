@@ -1,6 +1,6 @@
 ---
 name: architecting
-description: "Expert architecture review and system design for problems spanning 2+ files or crossing module boundaries — circular dependencies, God modules, or boundary violations (bleed). Not for single-file cleanup (see refactor). Trigger on: 'architecture review', 'restructure across modules', 'too coupled', 'design this system', 'where should this code live', 'God class', 'circular deps', 'dependency mapping', 'domain boundaries'."
+description: "Performs architecture review and system design for problems spanning multiple files or crossing module boundaries. Analyzes existing directories, dependencies, and imports to generate an Architecture Decision Record (ADR) in docs/adr/ and an architecture-brief.json schema. Trigger on: 'architecture review', 'restructure across modules', 'too coupled', 'design this system', 'where should this code live', 'God class', 'circular deps', 'dependency mapping', 'domain boundaries'. Also triggers when addressing boundary violations, structural bleed, or resolving high git coupling between files. Always prefer this skill over refactor or planning when designing multi-module interfaces or correcting structural coupling before writing detailed implementation steps."
 disable-model-invocation: false
 allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion
 ---
