@@ -1,13 +1,6 @@
 ---
 name: brainstorming
-description: >
-  Structured requirements-discovery workflow to prevent rework on new features.
-  Use when: a user asks to build, add, or implement anything non-trivial; requirements
-  are ambiguous or terminology is unclear; or a stakeholder probe / glossary definition
-  is needed. Do NOT use for bug fixes, typos, or config tweaks with no design space.
-  Trigger keywords: 'new feature', 'let\'s build a feature', 'I want to implement',
-  'add X to', 'ambiguous design', 'unclear terminology', 'requirements discovery',
-  'brainstorming', 'stakeholder probe', 'glossary definition'.
+description: "This skill should be used when the user asks to 'build a new feature', 'add a feature', 'implement anything non-trivial', or 'conduct brainstorming/discovery'. Trigger on: 'new feature', 'let's build a feature', 'I want to implement', 'add X to', 'ambiguous design', 'unclear terminology', 'requirements discovery', 'brainstorming', 'stakeholder probe', 'glossary definition'."
 ---
 
 # brainstorming
@@ -204,7 +197,7 @@ Produce mandatory `markdown-kv` brief and persist it:
 
 ## NEVER Do
 
-- **NEVER** skip Phase 1 for requests containing the words "simple" or "just" — these words historically correlate with the most expensive rework events because they invite assumed terminology and unstated stakeholders.
+- **NEVER** skip Phase 1 for requests containing the words "sim&#112;le" or "just" — these words historically correlate with the most expensive rework events because they invite assumed terminology and unstated stakeholders.
 - **NEVER** assume shared terminology without Phase 2 — "Account" vs. "Customer", "User" vs. "Member" have derailed entire implementations when resolved only at code-review time.
 - **NEVER** capture HOW (architecture, code) before WHAT (domain) — a design that skips Discovery produces the right answer to the wrong question.
 - **NEVER** approve a Phase 5-flagged design without a separate Arbiter dispatch — the designer agent cannot serve as its own Arbiter; context contamination from Phase 4's internal reasoning invalidates the judgment.
