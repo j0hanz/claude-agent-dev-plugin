@@ -12,7 +12,5 @@
   "homepage": "https://github.com/j0hanz/claude-agent-dev-plugin#readme",
   "keywords": ["claude-agent-dev", "claude", "plugin", "agent", "development", "testing"],
   "hooks": "./hooks/hooks.json",
-  "experimental": {
-    "monitors": "./monitors/monitors.json"
-  }
+  "monitors": "./monitors/monitors.json"
 }
