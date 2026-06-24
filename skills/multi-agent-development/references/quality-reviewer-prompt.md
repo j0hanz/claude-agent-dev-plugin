@@ -28,7 +28,7 @@ CONTEXT:
 CONSTRAINTS:
   - Evaluate ONLY code introduced by this task (delta from baseline to implementation commit).
   - Do NOT suggest features or scope expansions.
-  - Flag any file that grew by more than 150 lines due to this task alone.
+  - Flag any file that grew by more than 150 lines due to this task alone (advisory heuristic — generated files like migrations/fixtures can legitimately exceed it; note as MINOR, not CRITICAL/IMPORTANT, unless the growth itself indicates a responsibility violation).
 
 CHECKS:
   1. Responsibility: Does each file/class/function have one clear job?

@@ -1,6 +1,6 @@
 # Subagent Prompt Contract (Zero-Shot)
 
-Canonical contract for any skill that dispatches a `general-purpose` subagent. Subagents start cold — they have no memory of the parent conversation. Every dispatch prompt MUST contain all five fields below.
+Canonical contract for any skill that dispatches a `general-purpose` subagent — shared by `multi-agent-development` and `multi-agent-dispatch`. Subagents start cold — they have no memory of the parent conversation. Every dispatch prompt MUST contain all five fields below.
 
 - **SCOPE:** Validated paths (In/Out of bounds). For writer roles, list the exact files the agent may touch.
 - **OBJECTIVE:** One concrete, verifiable/falsifiable outcome. Not "improve X" — state the exact done-condition.
@@ -36,6 +36,7 @@ Use these role labels when configuring subagents so isolation and tool-restricti
 - **Investigator (Read-only):** Trace root cause, propose a fix as a code block. No edits.
 - **Writer (Isolation: worktree):** Implement a spec, write tests, report changes. Needs its own worktree if it runs experiments or makes edits that could collide with sibling agents.
 - **Researcher (Read-only):** Explore code/docs, report file paths and usages.
+- **Reviewer (Read-only):** Verify a Writer's diff against a spec or quality bar — never the Writer's own summary. Used for `multi-agent-development`'s Phase 2 (spec) and Phase 3 (quality) gates.
 
 ### Routing a lane to a specialist
 

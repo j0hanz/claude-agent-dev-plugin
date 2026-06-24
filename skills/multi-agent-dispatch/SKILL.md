@@ -21,15 +21,16 @@ Batches pipeline, they don't queue: launching batch N in the background is the s
 
 - **NO Overlapping Writes:** Never launch parallel agents editing the same files. Use sequential execution instead.
 - **NO Assumed Context:** Subagents start blank. Put every needed fact directly into the prompt.
-- **MAX 3 Agents in the foreground at once:** that cap is about how many results you read and merge together, not how many can be running. Lanes dispatched with `run_in_background` don't occupy a foreground slot — you get notified on completion instead of blocking on it, so a 4th+ lane can launch the moment its own dependencies clear, without waiting on batch N's INTEGRATE.
-- **NO Blind Trust:** Agents make mistakes. You MUST run the test suite to prove their work is correct.
-- **NO Hidden Skips:** If you skip a check or a lane, say so in the final report. Never bury it in a summary.
+- **MAX 3 Agents in the foreground at once:** the cap counts only results read and merged in one sitting, not how many agents can be running.
+- **Background lanes are exempt from that cap:** a lane launched with `run_in_background` doesn't occupy a foreground slot — the harness notifies on completion instead of blocking on it, so a 4th+ lane can launch the moment its own dependencies clear, without waiting on batch N's INTEGRATE. If the harness has no background/notify primitive, treat MAX 3 as a hard concurrency cap instead and run remaining lanes in sequential batches of ≤3.
+- **NO Blind Trust:** Agents make mistakes. Run the test suite to prove their work is correct — never merge on a self-reported verdict alone.
+- **NO Hidden Skips:** Name any skipped check or lane in the final report. Never bury it in a summary.
 
 ## Step 1: GROUP
 
-Form task groups yourself from the work already visible (a plan, a backlog, several independent fix-its) and state them as plain text — don't stop on `AskUserQuestion` by default, that just adds a wait for something the file list already tells you. Ask only when grouping is genuinely ambiguous (unclear whether two tasks actually share state or a file).
+Form task groups from the work already visible (a plan, a backlog, several independent fix-its) and state them as plain text — don't stop on `AskUserQuestion` by default, that just adds a wait for something the file list already answers. Ask only when grouping is genuinely ambiguous (unclear whether two tasks actually share state or a file).
 
-Heuristic, not a rule: parallel dispatch pays off most once you have 3+ tasks (or failures) in separate files with unrelated causes. Below that, sequential is usually simpler to reason about — don't force parallelism for its own sake.
+Heuristic, not a rule: parallel dispatch pays off most once there are 3+ tasks (or failures) in separate files with unrelated causes. Below that, sequential is usually simpler to reason about — don't force parallelism for its own sake.
 
 ## Step 2: MATRIX (write it down — don't reason about independence silently)
 
@@ -44,11 +45,21 @@ This table **is** the dispatch gate:
 
 - A lane may run in the current parallel batch only if its "Files touched" set is disjoint from every other lane in that batch AND "Depends on" is empty (or already merged).
 - Any overlap or dependency → that lane moves to a later batch, or to sequential `multi-agent-development`.
-- If you can't fill every cell with a concrete answer (not "probably fine"), you are not ready to parallelize that lane.
+- Treat any cell without a concrete answer (not "probably fine") as a sign that lane isn't ready to parallelize.
 
 ## Step 3: SELECT
 
-Assign roles using the Role Vocabulary defined in `../multi-agent-development/references/subagent-contract.md` (Investigator / Writer / Researcher). **MANDATORY:** read that file before dispatching — it defines the prompt contract every dispatch below depends on.
+Assign roles: **Investigator** (read-only, traces root cause), **Writer** (`isolation: worktree`, implements a spec), **Researcher** (read-only, reports file paths/usages).
+
+Every dispatch prompt MUST contain five fields — subagents start cold with no memory of this conversation:
+
+- **SCOPE:** exact files the agent may touch (and may not).
+- **OBJECTIVE:** one concrete, falsifiable done-condition, not "improve X."
+- **CONTEXT:** error text, baseline commit, conventions — everything needed to start cold.
+- **CONSTRAINTS:** tool restrictions, explicit "Do Not" rules.
+- **OUTPUT SCHEMA:** require `VERDICT/FILES_TOUCHED/SUMMARY/EVIDENCE` verbatim.
+
+For the full contract, common mistakes, and specialist-routing table, see `../multi-agent-development/references/subagent-contract.md` — read it before dispatching when available; the five fields above are the fallback if that file is missing.
 
 - Writers MUST use `isolation: worktree` to prevent overlapping edits.
 
@@ -56,8 +67,8 @@ Assign roles using the Role Vocabulary defined in `../multi-agent-development/re
 
 - Re-check the matrix for the lanes in this batch: zero file overlap, zero unresolved dependencies.
 - Launch all agents for a batch in ONE single message.
-- **Default every Writer lane to `run_in_background: true`.** Foreground (blocking) dispatch is the exception now, reserved for a lane whose result you need before you can write the next prompt. Background is the default because the harness notifies you on completion — you are not "waiting" in either case, but background lets you keep working (prep the next batch's Matrix, answer the user, start a lane with no dependency on this one) instead of sitting idle until the slowest agent in the batch returns.
-- As soon as a lane is launched in the background, immediately start GROUP/MATRIX for the next batch rather than waiting at this step — don't let "batch N is running" block "start scoping batch N+1."
+- **Default every Writer lane to `run_in_background: true`.** Reserve foreground (blocking) dispatch for a lane whose result is needed before writing the next prompt. The harness notifies on completion either way; background just keeps the next batch's Matrix, a user reply, or an independent lane moving instead of sitting idle until the slowest agent in the batch returns.
+- As soon as a lane launches in the background, start GROUP/MATRIX for the next batch immediately — "batch N is running" is not a reason to delay scoping batch N+1.
 - Track every in-flight background lane by name/id. When notified of a completion, INTEGRATE that lane immediately rather than batching notifications up.
 
 ## Step 5: INTEGRATE
@@ -90,7 +101,7 @@ Skipped/blocked lanes: [list, or "none"]
 - If a lane failed because it secretly depended on another lane finishing first, stop parallel work for that pair — update the Matrix and switch them to sequential.
 - Always report blocked or failed lanes to the user, tiered as above.
 
-## Failure Modes (check before you call it done)
+## Failure Modes (check before calling it done)
 
 - Concurrent edits collided because a Matrix "Files touched" cell was guessed instead of verified.
 - A lane self-reported `SUCCESS` and that report was trusted instead of the test suite.
