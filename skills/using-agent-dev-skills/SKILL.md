@@ -41,7 +41,7 @@ Gate 3: Execution Strategy
 
 Gate 4: Quality & Delivery
   -> verification-before-completion -> request-code-review
-       -- PASS (recommendation) --> github-automation
+       -- PASS (recommendation) --> pr-workflow
        -- FAIL ----------------------> receive-code-review
                                           -- blocking issue ------> diagnose
                                           -- hygiene issue -------> refactor
@@ -96,7 +96,7 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 
 - **Execution Complete:** Route to `verification-before-completion`.
 - **Security & Quality Check:** Route to `request-code-review` (Mandatory).
-- **Review Passes:** Recommend `github-automation` (User invocation required).
+- **Review Passes:** Recommend `pr-workflow` (User invocation required — confirms before push).
 - **Review Fails:** Route to `receive-code-review` (loops to `diagnose` or `refactor`, capped at 2 cycles).
 
 ---
@@ -117,7 +117,7 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 - **NEVER** skip `diagnose` when a bug interrupts feature work.
 - **NEVER** allow infinite TDD retries (strictly capped at 3).
 - **NEVER** skip `request-code-review` after multi-agent development.
-- **NEVER** auto-invoke `codebase-init` or `github-automation`.
+- **NEVER** auto-invoke `codebase-init` or `gh-actions`; `pr-workflow` is recommended at Gate 4 but never pushes without an explicit go-ahead.
 - **NEVER** route skill authoring or structural validation outside of `make-a-skill`, or skill behavior-testing (triggering / output evals) outside of `eval-skill`.
 - **NEVER** dispatch subagents (Gate 3) for trivial inline edits.
 

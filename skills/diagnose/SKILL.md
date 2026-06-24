@@ -83,7 +83,8 @@ Phase 1: Build Feedback Loop (pass/fail signal)
 **multi-agent-dispatch:** resume INTEGRATE step
 **receive-code-review:** resume Step 4 Implement
 **codebase-init:** resume Failure Recovery step
-**github-automation:** resume failed script/PR step
+**pr-workflow:** resume failed commit/push/PR step
+**gh-actions:** resume failed CI/workflow/script step
 
 ## Exclusions
 

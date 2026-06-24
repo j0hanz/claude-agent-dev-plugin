@@ -34,7 +34,7 @@ graph TD
     TDD --> V
 
     V --> RCR[request-code-review]
-    RCR -- PASS --> GH[github-automation]
+    RCR -- PASS --> SHIP[pr-workflow]
     RCR -- FAIL --> RECV[receive-code-review]
     RECV -- "Tier 1/2" --> DIAG
     RECV -- "Tier 4" --> REF

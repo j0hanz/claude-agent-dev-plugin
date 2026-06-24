@@ -71,9 +71,9 @@ claude --plugin-dir ./claude-agent-dev-plugin
 
 ## What's Included
 
-### Skills (17)
+### Skills (18)
 
-Skills are invoked automatically by Claude based on task context, or manually with `/skill-name`. 15 are listed below; `multi-agent-dispatch` and `multi-agent-development` are detailed in [Subagent Dispatch](#subagent-dispatch).
+Skills are invoked automatically by Claude based on task context, or manually with `/skill-name`. 16 are listed below; `multi-agent-dispatch` and `multi-agent-development` are detailed in [Subagent Dispatch](#subagent-dispatch).
 
 | Skill                            | Trigger                                                    | Purpose                                                        |
 | :------------------------------- | :--------------------------------------------------------- | :------------------------------------------------------------- |
@@ -85,7 +85,8 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 | `refactor`                       | "clean up", "refactor", "simplify", "messy"                | Structural improvements                                        |
 | `test-driven-development`        | "TDD", "write tests", "implement this"                     | Red-green-refactor workflow                                    |
 | `architecting`                   | "architecture", "structure", "how is this organized"       | Codebase structural analysis                                   |
-| `github-automation`              | "GitHub Actions", "gh CLI", "automate workflow"            | Actions and `gh` CLI scripting                                 |
+| `pr-workflow`                    | "commit this", "open a PR", "ship it", "push my work"      | Branch, commit, push & open a PR — multi-agent aware delivery  |
+| `gh-actions`                     | "GitHub Actions", "gh CLI", "harden a workflow", "OIDC"    | Secure CI/CD authoring and `gh` CLI scripting                  |
 | `context-optimizer`              | "optimize context", "compress context", "reduce tokens"    | Prunes conversation bloat before hitting context limits        |
 | `verification-before-completion` | (automatic before task completion)                         | Verify changes work before marking done                        |
 | `using-agent-dev-skills`         | (meta-routing)                                             | Routes to the right skill based on context                     |
@@ -155,7 +156,7 @@ This file configures local settings for the `claude-agent-dev` plugin.
 │   └── hooks.json
 ├── monitors/               # Live development watchers (experimental)
 ├── output-styles/          # Output style definitions
-├── skills/                 # Skill SKILL.md files (17 skills)
+├── skills/                 # Skill SKILL.md files (18 skills)
 └── tests/                  # Integration tests
 ```
 

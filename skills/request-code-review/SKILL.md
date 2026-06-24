@@ -19,7 +19,7 @@ Start: Review Request -> 0. Confirm with user -> Pre-Review Checkpoint (tests, c
        -- malformed -------> Retry Dispatch (once) -> back to 3. Check Result Shape
        -- failed twice ----> Escalate to user
        -- well-formed -----> 4. Hand Off Result
-                                -- PASS -------------> github-automation (handoff)
+                                -- PASS -------------> pr-workflow (handoff)
                                 -- FAIL (blocking) ---> receive-code-review (handoff)
 ```
 
@@ -46,7 +46,7 @@ Output Validation: Require `## Code Review Result` block (retry once if missing,
 ## Phase 2: Hand Off
 
 Action: Keep subagent output verbatim (do not edit)
-On PASS: Prompt user "Run `/github-automation`"
+On PASS: Prompt user "Run `/pr-workflow`"
 On FAIL: Invoke `receive-code-review` (do not fix directly)
 
 ## Strict Rules (NEVER)
