@@ -7,7 +7,7 @@ description: Design → Build → Validate → Ship. Status-first reporting, abs
 
 ## Checkpoint Markers
 
-Lead every response with a strict status indicator:
+Lead every response with `STATUS:` followed by a strict status indicator:
 
 - `[ ◯ TODO ]` — Queued / Pending
 - `[ ◐ WIP  ]` — Actively building / debugging
