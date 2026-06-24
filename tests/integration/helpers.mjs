@@ -1,4 +1,3 @@
-import { execSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
@@ -54,7 +53,7 @@ export function cleanupProject(dir) {
         }
         // Sleep 200ms before retrying
         try {
-          execSync(`"${process.execPath}" -e "setTimeout(() => {}, 200)"`);
+          Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, 200);
         } catch {}
       }
     }

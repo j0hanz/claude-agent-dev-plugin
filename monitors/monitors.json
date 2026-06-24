@@ -1,9 +1,8 @@
 [
   {
     "name": "telemetry-watcher",
-    "command": "if (-not (Test-Path \"${CLAUDE_PROJECT_DIR}/.claude/telemetry.log\")) { New-Item -ItemType File \"${CLAUDE_PROJECT_DIR}/.claude/telemetry.log\" | Out-Null }; Get-Content -Wait -Tail 20 \"${CLAUDE_PROJECT_DIR}/.claude/telemetry.log\"",
-    "shell": "powershell",
-    "description": "Hook execution telemetry — surfaces errors and slow hooks in real time (PowerShell)"
+    "command": "node -e \"const fs = require('fs'), path = require('path'); const p = path.resolve('${CLAUDE_PROJECT_DIR}/.claude/telemetry.log'); if (!fs.existsSync(p)) { fs.mkdirSync(path.dirname(p), {recursive: true}); fs.writeFileSync(p, ''); } let size = fs.statSync(p).size; setInterval(() => { const s = fs.statSync(p).size; if (s > size) { const fd = fs.openSync(p, 'r'); const buf = Buffer.alloc(s - size); fs.readSync(fd, buf, 0, s - size, size); fs.closeSync(fd); process.stdout.write(buf.toString()); size = s; } }, 500);\"",
+    "description": "Hook execution telemetry — surfaces errors and slow hooks in real time (cross-platform)"
   },
   {
     "name": "python-test-watcher",
