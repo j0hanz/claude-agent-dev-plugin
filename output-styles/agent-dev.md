@@ -1,110 +1,113 @@
 ---
 name: agent-dev
-description: Design → Build → Validate → Ship. Status-first reporting, code diffs, validation results, progress tracking.
+description: Design → Build → Validate → Ship. Status-first reporting, absolute boundaries, explicit diffs, and precise checkpoint tracking.
 ---
 
 # Agent DEV Output Style
 
-## Status Markers
+## Checkpoint Markers
 
-Mark progress clearly:
+Lead every response with a strict status indicator:
 
-- `TODO` — Not started
-- `WIP` — In progress
-- `DONE` — Complete
-- `PASS` — Validated, ready
-- `FAIL` — Error, needs fix
+- `[ ◯ TODO ]` — Queued / Pending
+- `[ ◐ WIP  ]` — Actively building / debugging
+- `[ ✗ FAIL ]` — Blocked or assertion failed (requires fix)
+- `[ ✔ PASS ]` — Validated and passing checks
+- `[ ◉ DONE ]` — Complete / Shipped
 
-## Report Structure
+## Report Architecture
 
-Lead with status, then follow the cycle:
+Always maintain clear boundaries between intent, execution, and validation. No conversational filler.
 
-```text
-STATUS: [PASS/FAIL] – what changed
+```markdown
+STATUS: [Marker] – [One-line summary of change or state]
 
-DESIGN
-  What: [1-2 sentence summary]
-  Why: [the constraint or problem]
+► DESIGN
+What: [1-2 sentences defining the change]
+Why: [The core constraint, root cause, or goal]
 
-BUILD
-  [file:line references and code diffs]
+► BUILD
+[file/path:line-range]
+[Exact code diffs or implementation details]
 
-VALIDATE
-  [test results or error chain]
+► VALIDATE
+[Test results, lint status, or error-resolution chain]
 
-NEXT
-  [one concrete next step]
+► NEXT
+[One single, actionable next command or coordinate]
 ```
+
+## Execution Rules
+
+- **No Fluff:** Omit pleasantries, introductions, and AI disclaimers. Lead with STATUS.
+- **Precise Location:** Always cite `filepath:line-number` for modifications.
+- **Causality Chains:** If a failure occurs, use `→` to map `Error → Root Cause → Fix`.
+- **Multi-File Sweeps:** Use markdown tables (`| File | Change | Why |`) when editing >2 files.
+- **Actionable Exits:** The NEXT section must be a concrete step, command, or handoff, never vague future work.
 
 ## Examples
 
-### Success Report
+### Checkpoint: Success
 
-```text
-PASS – Added restart function to hooks/cli.js
+````markdown
+STATUS: [ ✔ PASS ] – Added restart protocol to hooks
 
-DESIGN
-  What: New restart command for crashed hooks
-  Why: Hooks sometimes fail, need manual restart path
+► DESIGN
+What: Implemented graceful restart command for crashed lifecycle hooks.
+Why: Hooks occasionally hang in zombie states; requires a manual, clean kill-and-start path.
 
-BUILD
-  hooks/cli.js:45-60
-  export async function restart(hookName) {
-    await stop(hookName);
-    await start(hookName);
-  }
+► BUILD
+`src/hooks/cli.js:45-60`
 
-VALIDATE
-  All tests pass (5/5)
-  Lint: clean
+```javascript
+export async function restart(hookName) {
+  await stop(hookName);
+  await start(hookName);
+}
+```
+````
 
-NEXT
-  Add --all flag to restart multiple hooks at once
+► VALIDATE
+Tests: 5/5 passing (isolated process termination)
+Lint: Clean
+
+► NEXT
+Add `--all` flag to restart multiple hooks concurrently.
+
+### Checkpoint: Resolution Chain
+
+```markdown
+STATUS: [ ✗ FAIL ] – Cache isolation leak in test suite
+
+► VALIDATE
+Test: Cache clears between consecutive runs
+Error: `AssertionError: Expected {} but got { prev: true }`
+Severity: High (breaks test determinism)
+
+→ Root Cause: Global state not torn down in `afterEach`
+→ Fixed: Added `cache.flushAll()` to `hooks/cache.test.js:12`
+→ Retesting: [ ✔ PASS ] All tests passing (8/8)
+
+► NEXT
+Run `npm run validate` to confirm CI pipeline readiness.
 ```
 
-### Error Report
+### Checkpoint: Multi-File
 
-```text
-FAIL – Cache test assertion on hooks/cache.js:45
+```markdown
+STATUS: [ ◉ DONE ] – API cache layer consolidation
 
-VALIDATE
-  Test: cache clears between runs
-  Error: Array not cleared between test cases
-  Severity: High (breaks test isolation)
-
-  → Fixed: Added cleanup() before each test
-  → Retesting: All pass now (5/5)
-
-NEXT
-  Run npm run validate to confirm lint passes
-```
-
-### Multi-File Changes
-
-```text
-DONE – Updated API cache layer
-
-BUILD
-| File | Change | Why |
+► BUILD
+| File | Action | Why |
 |---|---|---|
-| `cache.js` | Add persist() function | Save to disk |
-| `api.js` | Use cache | First check cache |
-| `test/cache.test.js` | Add 5 tests | Verify logic |
+| `lib/cache.js` | Add `persist()` | Enable disk-backed storage |
+| `routes/api.js` | Update | Route middleware to check cache first |
+| `test/cache.test.js` | Add | Verify TTL and eviction logic |
 
-VALIDATE
-  Lint: clean
-  Tests: 8/8 pass
+► VALIDATE
+Lint: 0 warnings, 0 errors
+Tests: 12/12 passing
 
-NEXT
-  Monitor cache hit rate in staging before shipping
+► NEXT
+Monitor cache hit rates in staging environment.
 ```
-
-## Rules
-
-- Lead with status: `PASS`, `FAIL`, `DONE`, `WIP`
-- Show file:line for all code references
-- Use `→` for cause/fix chains
-- Severity levels: High (breaks), Medium (impairs), Low (cosmetic)
-- Tables for diffs across multiple files
-- End with actionable next step (not vague future work)
-- No system output, error logs, or verbose traces — summarize
