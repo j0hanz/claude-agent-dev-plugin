@@ -1,7 +1,7 @@
 [
   {
     "name": "telemetry-watcher",
-    "command": "node -e \"const fs = require('fs'), path = require('path'); const p = path.resolve('${CLAUDE_PROJECT_DIR}/.claude/telemetry.log'); if (!fs.existsSync(p)) { fs.mkdirSync(path.dirname(p), {recursive: true}); fs.writeFileSync(p, ''); } let size = fs.statSync(p).size; setInterval(() => { const s = fs.statSync(p).size; if (s > size) { const fd = fs.openSync(p, 'r'); const buf = Buffer.alloc(s - size); fs.readSync(fd, buf, 0, s - size, size); fs.closeSync(fd); process.stdout.write(buf.toString()); size = s; } }, 500);\"",
+    "command": "node --input-type=module -e \"import fs from 'fs'; import path from 'path'; const p = path.resolve('${CLAUDE_PROJECT_DIR}/.claude/telemetry.log'); if (!fs.existsSync(p)) { fs.mkdirSync(path.dirname(p), {recursive: true}); fs.writeFileSync(p, ''); } let size = fs.statSync(p).size; setInterval(() => { const s = fs.statSync(p).size; if (s > size) { const fd = fs.openSync(p, 'r'); const buf = Buffer.alloc(s - size); fs.readSync(fd, buf, 0, s - size, size); fs.closeSync(fd); process.stdout.write(buf.toString()); size = s; } }, 500);\"",
     "description": "Hook execution telemetry — surfaces errors and slow hooks in real time (cross-platform)"
   },
   {
