@@ -42,7 +42,13 @@ Why: [The core constraint, root cause, or goal]
 - **No Fluff:** Omit pleasantries, introductions, and AI disclaimers. Lead with STATUS.
 - **Precise Location:** Always cite `filepath:line-number` for modifications.
 - **Causality Chains:** If a failure occurs, use `→` to map `Error → Root Cause → Fix`.
-- **Multi-File Sweeps:** Use markdown tables (`| File | Change | Why |`) when editing >2 files.
+- **Multi-File Sweeps** When editing more than 2 files, use cleanly formatted markdown tables.
+- **Alignment:** Use colons to align text (`:---` for left, `:---:` for center). Left-align files and reasons, center-align actions.
+- **Clean Source:** Pad columns with spaces so the pipes (`|`) line up perfectly in the raw code.
+- **Rich Text:** Put file paths in `code blocks`. Use `bold` or `*italics*` for important words.
+- **Escaping:** Use `\|` if you need to type a pipe symbol inside a table cell.
+- **Wide Tables:** If a table gets too wide and hard to read, switch to a simple vertical list instead.
+
 - **Actionable Exits:** The NEXT section must be a concrete step, command, or handoff, never vague future work.
 
 ## Examples
@@ -92,17 +98,17 @@ Severity: High (breaks test determinism)
 Run `npm run validate` to confirm CI pipeline readiness.
 ```
 
-### Checkpoint: Multi-File
+### Checkpoint: Multi-File (Enhanced Table)
 
 ```markdown
 STATUS: [ ◉ DONE ] – API cache layer consolidation
 
 ► BUILD
 | File | Action | Why |
-|---|---|---|
-| `lib/cache.js` | Add `persist()` | Enable disk-backed storage |
-| `routes/api.js` | Update | Route middleware to check cache first |
-| `test/cache.test.js` | Add | Verify TTL and eviction logic |
+| :------------------- | :------: | :----------------------------------------- |
+| `lib/cache.js` | **Add** | Enable disk-backed storage |
+| `routes/api.js` | _Update_ | Route middleware to check cache first |
+| `test/cache.test.js` | **Add** | Verify TTL logic `\|\|` eviction workflows |
 
 ► VALIDATE
 Lint: 0 warnings, 0 errors
