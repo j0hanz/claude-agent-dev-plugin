@@ -26,14 +26,47 @@ python <skill-dir>/scripts/cli.py pipeline --name <name> --depth contract  # spe
 - `Validate` field contains a backtick-wrapped command
 - Warning when `Satisfies:` is missing (traceability spine not set)
 
-### `pipeline` — cross check
+### `pipeline` — cross check (Traceability Spine)
 
-See [traceability.md](traceability.md) for full details. In brief:
+The `Satisfies:` field is the link between spec requirements and plan tasks. Every plan task has a `Satisfies:` field listing one or more spec IDs:
 
-- Every `REQ/SEC/PERF/COMP` ID covered by ≥1 task
-- Every `Satisfies:` ID exists in the spec
-- Every `AC-###` mapped to a task (warning if not)
-- Every backtick-quoted skill-name-shaped token resolves to a real `skills/` directory (warning if not — catches hallucinated/cross-plugin skill references)
+```markdown
+### TASK-003: Implement token signing
+
+Depends on: TASK-002
+Files: [src/auth/jwt.ts](src/auth/jwt.ts)
+Symbols: [signToken](src/auth/jwt.ts#L24)
+Satisfies: REQ-001, SEC-001
+Action: Implement JWT signing using the configured secret and RS256 algorithm.
+Validate: `npm test -- auth/jwt.test.ts`
+Expected result: All 6 tests pass, 0 skipped.
+```
+
+`cli.py sync` sets `Satisfies:` automatically when generating stubs — never type it by hand. Never manually edit the `Satisfies:` field of an existing task either; always let `cli.py sync` manage it.
+
+The cross check loads both paired files and checks:
+
+| Check                          | Rule                                                                                                      | Error type                                                               |
+| ------------------------------ | --------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **No uncovered requirements**  | Every `REQ/SEC/PERF/COMP` ID from the spec must appear in at least one task's `Satisfies:` field          | `[CROSS] Uncovered requirement: REQ-002`                                 |
+| **No orphan tasks**            | Every ID in a `Satisfies:` field must exist in the spec                                                   | `[CROSS] Orphan task: TASK-007 satisfies 'REQ-999' which is not in spec` |
+| **AC coverage**                | Every `AC-###` from the spec should map to at least one task (warning if not)                             | Warning: `[CROSS] AC-003 has no corresponding task`                      |
+| **No hallucinated skill refs** | Every backtick-quoted skill-name-shaped token must resolve to a real `skills/` directory (warning if not) | Warning: `[CROSS] Backtick token 'xyz' looks like a skill reference...`  |
+
+`CON-###` (constraints) and `VAL-###` (validation commands) are not checked for coverage — they are spec-internal. A requirement is "covered" if any task has that ID in its `Satisfies:` field; one task can satisfy multiple IDs, and one ID can be satisfied by multiple tasks.
+
+Output includes a summary table:
+
+```
+Coverage matrix:
+  Requirements covered : 5/5
+  ACs covered          : 3/3
+  Orphan Satisfies IDs : 0
+```
+
+**When spec changes after sync:** edit the spec, re-run `python cli.py sync <name>.specs.md` (adds stubs for new IDs only; existing tasks untouched), then re-run `cli.py pipeline --name <name>` to confirm coverage is clean.
+
+The spine turns "the plan should implement the requirements" from prose advice into a machine-checkable contract. A plan that passes the cross check with zero errors provably covers every stated requirement.
 
 ## Exit codes
 
