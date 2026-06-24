@@ -59,18 +59,18 @@ Next Task?
 
 - **Phase 1**: Implement.
 - **Agent**: `general-purpose` (isolated worktree).
-- **Input**: Read `implementer-prompt.md` and `subagent-contract.md`.
+- **Input**: Read `references/implementer-prompt.md` and `references/subagent-contract.md`.
 - **Output**: Verdict, files touched, commit, summary.
 
 - **Phase 2**: Spec Check.
 - **Agent**: Read-only `general-purpose`.
-- **Input**: Read `spec-reviewer-prompt.md`.
+- **Input**: Read `references/spec-reviewer-prompt.md`.
 - **Goal**: Check if they built exactly what was asked.
 - **Rules**: Max 2 tries. If blocked, pause all tasks and ask the user.
 
 - **Phase 3**: Quality Check.
 - **Agent**: Read-only `general-purpose`.
-- **Input**: Read `quality-reviewer-prompt.md`.
+- **Input**: Read `references/quality-reviewer-prompt.md`.
 - **Goal**: Check code quality and tests.
 - **Rules**: Max 2 tries (this does not count against Phase 2).
 

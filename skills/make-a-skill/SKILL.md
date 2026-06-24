@@ -19,10 +19,10 @@ Scaffold a new skill from a template, draft its body, then validate it before ca
                        -- Overwrite --> 1. Survey + Scaffold (--force)
                        -- Rename -----> back to 0
   -- no collision -> 1. Survey + Scaffold
-1. Survey + Scaffold (AskUserQuestion once, then scaffold_skill.py)
+1. Survey + Scaffold (AskUserQuestion once, then scripts/scaffold_skill.py)
   -> 1.5 Pattern Pick (AskUserQuestion)
   -> 2. Draft Body (fill placeholders, leave description)
-  -> 3. Validate (validate_skill.py)
+  -> 3. Validate (scripts/validate_skill.py)
        -- errors? yes --> back to 2. Draft Body
        -- errors? no  --> 4. Write Real Description + revalidate -> Done
 ```
@@ -95,10 +95,10 @@ python "$CLAUDE_PLUGIN_ROOT/skills/make-a-skill/scripts/validate_skill.py" <name
 ## Critical Constraints
 
 - **NEVER write the description early:** It must be written in Step 4 so it reflects the actual drafted body, not an initial guess.
-- **NEVER hand-write the skeleton:** Always use `scaffold_skill.py` to maintain proper `{{FILL}}` placeholder conventions.
+- **NEVER hand-write the skeleton:** Always use `scripts/scaffold_skill.py` to maintain proper `{{FILL}}` placeholder conventions.
 - **NEVER guess scaffolding flags:** `--scripts`, `--references`, and `--evals` must strictly match the user's Step 1 survey answers.
 - **NEVER expose raw stack traces:** Catch `FileExistsError` during the Step 0 Name Collision Check.
-- **NEVER skip repo validation:** If the target repository has its own validator (e.g., `npm run validate`), run it in addition to `validate_skill.py`.
+- **NEVER skip repo validation:** If the target repository has its own validator (e.g., `npm run validate`), run it in addition to `scripts/validate_skill.py`.
 
 **Next Skills:**
 

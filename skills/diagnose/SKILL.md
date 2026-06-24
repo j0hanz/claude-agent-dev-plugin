@@ -30,7 +30,7 @@ Phase 1: Build Feedback Loop (pass/fail signal)
 
 **action:** create <2s deterministic pass/fail signal
 **action:** isolate filesystem, pin seeds/time
-**mandatory:** read `references/feedback-loops.md` (do NOT load `phases.md`)
+**mandatory:** read `references/feedback-loops.md` (do NOT load `references/phases.md`)
 **gate:** require loop or request telemetry/logs
 
 ## Phase 2: Reproduce
@@ -40,7 +40,7 @@ Phase 1: Build Feedback Loop (pass/fail signal)
 
 ## Phase 3: Hypothesize & Falsify
 
-**mandatory:** read `references/phases.md` (do NOT load `feedback-loops.md`)
+**mandatory:** read `references/phases.md` (do NOT load `references/feedback-loops.md`)
 **action:** propose 3-5 falsifiable hypotheses via `AskUserQuestion` (surface top 3, queue rest)
 **format:** "If [X] is the cause, then [Y] will change when I do [Z]."
 **dispatch:** use `multi-agent-dispatch` for independent hypotheses (require `isolation: worktree`)

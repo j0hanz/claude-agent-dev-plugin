@@ -62,7 +62,7 @@ Default subagent type for every dispatch below: `general-purpose`. Type is only 
 ## Phase 1: Discovery
 
 - **Stakeholder Probe:** Identify users. Trigger `AskUserQuestion` (1. Recommended, 2. Alternative). Skip if unambiguous.
-- **Scanner Subagent:** **MANDATORY - READ ENTIRE FILE**: Before dispatching, you MUST read [codebase-scanner-prompt.md](file:///C:/agent-dev/skills/brainstorming/references/codebase-scanner-prompt.md) completely. NEVER set range limits on reading this file. Do NOT load other reference files for this phase. Dispatch subagent (`scan_context.py` → `compress_report.py`). Fallback to regex on failure.
+- **Scanner Subagent:** **MANDATORY - READ ENTIRE FILE**: Before dispatching, you MUST read [codebase-scanner-prompt.md](file:///C:/agent-dev/skills/brainstorming/references/codebase-scanner-prompt.md) completely. NEVER set range limits on reading this file. Do NOT load other reference files for this phase. Dispatch subagent (`scripts/scan_context.py` → `scripts/compress_report.py`). Fallback to regex on failure.
 - **Extraction:** Interface Shapes, Technical Constraints, Analogous Features, Key Unknowns.
 - **Zero-Code Exit:** Offer exit if scan finds existing satisfying feature/config.
 - **Understanding Statement:** Summarize extraction. Require user confirmation.

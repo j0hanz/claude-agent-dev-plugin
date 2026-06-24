@@ -1,6 +1,6 @@
 ---
 name: github-automation
-description: "Authors and hardens GitHub Actions workflows and headless command-line automation scripts. Accepts workflow requirements or existing YAML files as input, and outputs secure, SHA-pinned, OIDC-compliant workflows or automated gh CLI scripts with linting validation. Trigger on: 'add CI', 'setup a release pipeline', 'harden a workflow', 'pin actions to SHA', 'setup OIDC', 'gh api script', 'least-privilege permissions', 'headless GitHub automation'. Also triggers when securing workflows against script injection or auditing repository CI configurations. Always prefer this workflow over request-code-review or refactor when creating or hardening GitHub CI/CD configurations rather than reviewing general code changes."
+description: 'Generates, audits, and hardens GitHub Actions workflows and headless gh CLI scripts from user requirements. Use when the user requests "setup CI/CD", "add GitHub Actions", "pin workflows to SHA", "configure OIDC authentication", or "harden a workflow". Action: reads current YAML configs and outputs secure, SHA-pinned, least-privilege workflows.'
 ---
 
 # github-automation
@@ -85,7 +85,7 @@ Both paths: if a script or workflow fails at runtime, read `references/troublesh
 ## Mandatory Security Checklist
 
 - [ ] `permissions:` set explicitly (no reliance on defaults).
-- [ ] All third-party actions pinned to 40-char SHA via `pin_actions.py`.
+- [ ] All third-party actions pinned to 40-char SHA via `scripts/pin_actions.py`.
 - [ ] Untrusted inputs piped through `env:`, never `run:` interpolation.
 - [ ] No long-lived cloud credentials (OIDC only for AWS/GCP/Azure/npm/PyPI).
 - [ ] `pull_request_target` audited for PR head checkout (Forbidden).

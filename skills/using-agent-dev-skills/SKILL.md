@@ -125,6 +125,6 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 
 ## Auxiliary Information
 
-- **Reference:** `lifecycle.md` (State transitions).
+- **Reference:** `references/lifecycle.md` (State transitions).
 - **Next Skills:** Ecosystem skills determine successors based on the identified route.
 - **Missing Skill Protocol:** Apply intent manually and output: `The <skill-name> skill is not installed. Proceeding without it.`

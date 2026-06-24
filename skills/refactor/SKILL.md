@@ -46,7 +46,7 @@ Understand the code first:
 
 Match risk to your Step 2 problem.
 
-1. **Low Risk:** Rename, remove dead code, early returns. (Do NOT read `patterns.md`).
+1. **Low Risk:** Rename, remove dead code, early returns. (Do NOT read `references/patterns.md`).
 2. **Medium Risk:** Split functions, extract classes.
 3. **High Risk:** Change APIs, move modules, add patterns. **MANDATORY:** Read `references/patterns.md` first.
 

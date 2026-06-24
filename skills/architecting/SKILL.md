@@ -34,10 +34,10 @@ Trigger: Review/Design Request
 - **Constraint_Context:** NEVER load `references/architecture-patterns.md`.
 - **Phase_1_Explore:** - Detect tech stack.
 - Run `scripts/` (default args shown):
-- `python check_locality.py [dir=src]`
-- `python detect_bleed.py [dir=src/domain] [infra=express,typeorm,prisma,fs,path,react,mongoose]`
-- `python git_coupling.py [dir=.] [--min-count 3] [--since "6 months ago"] [--top-n 20]`
-- `python detect_hotspots.py [dir=src] [infra=...] [--since "6 months ago"]`
+- `python scripts/check_locality.py [dir=src]`
+- `python scripts/detect_bleed.py [dir=src/domain] [infra=express,typeorm,prisma,fs,path,react,mongoose]`
+- `python scripts/git_coupling.py [dir=.] [--min-count 3] [--since "6 months ago"] [--top-n 20]`
+- `python scripts/detect_hotspots.py [dir=src] [infra=...] [--since "6 months ago"]`
 
 - **Fallback:** Manually analyze imports, God modules (>500 lines/20+ exports), and history.
 - **Dispatch:** Use `general-purpose` agent; strictly load `references/dispatch-template.md`.
@@ -50,14 +50,14 @@ Trigger: Review/Design Request
 - **Phase_5_Handoff:** Generate `architecture-brief.json` (`references/brief-schema.json`). Read `references/MIGRATION_STRATEGIES.md` for gradual cutover. Handoff to `refactor` or `planning`.
 
 - **Mode_B_Design:**
-- **Constraint_Context:** NEVER load diagnostic templates (`dispatch-template.md`, `DOMAIN_INTERVIEW.md`, `SEAMS_BY_EXAMPLE.md`).
+- **Constraint_Context:** NEVER load diagnostic templates (`references/dispatch-template.md`, `references/DOMAIN_INTERVIEW.md`, `references/SEAMS_BY_EXAMPLE.md`).
 - **Step_1_Diagnose:** Isolate Core Domain vs. Mechanism.
 - **Step_2_Pattern:** Read `references/architecture-patterns.md`; select optimal pattern.
 - **Step_3_Stress_Test:** Apply Swap Test (If [mechanism] changes, what breaks?).
 - **Step_4_ADR:** Generate ADR in `docs/adr/` using `references/ADR_TEMPLATE.md`.
 - **Step_5_Scaffold:** - Generate `architecture-brief.json` (`references/brief-schema.json`).
 - Read `references/MIGRATION_STRATEGIES.md` for integration cutovers.
-- Run `python scaffold_boundary.py <domain> [pattern] [output_dir=src] [--force]`. _(Valid patterns: hexagonal, vertical-slice, layered, clean-architecture, cqrs. Others require manual creation)._
+- Run `python scripts/scaffold_boundary.py <domain> [pattern] [output_dir=src] [--force]`. _(Valid patterns: hexagonal, vertical-slice, layered, clean-architecture, cqrs. Others require manual creation)._
 
 - **Heuristics:**
 - **Deletion:** Removal must not scatter complexity across callers.
