@@ -104,6 +104,8 @@ Rules:
 
 **Task** — an atomic unit: one code change, one file modified, one clear observable outcome.
 
+Prefer bounding a phase to one feature's vertical slice (the complete path through its layers) over one architectural layer spanning multiple features — slicing horizontally by layer hides integration gaps until the last phase.
+
 ## Task sizing
 
 A well-sized task:
@@ -130,6 +132,8 @@ Good phases have one measurable goal and 3–8 tasks:
 
 ## PHASE-END: Acceptance
 ```
+
+This Setup → Core → Integration sequence is intra-slice sequencing for one feature, not a template for batching by layer across unrelated features (e.g. "all DB work, then all API work, then all UI work").
 
 ## Effort reference
 

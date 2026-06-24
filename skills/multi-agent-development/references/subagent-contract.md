@@ -19,7 +19,7 @@ Canonical contract for any skill that dispatches a `general-purpose` subagent. S
 
 ## Role Vocabulary
 
-Use these role labels when configuring subagents so isolation and tool-restriction decisions are explicit, not implied by prose:
+Use these role labels when configuring subagents so isolation and tool-restriction decisions are explicit, not implied by prose. For a read-only Investigator/Researcher lane, prefer a more specific `subagent_type` already present in the user's installed agent roster over generic `general-purpose` when one matches the lane's task domain; fall back to `general-purpose` when none matches. Name no specific third-party agent here — this plugin ships no `agents/` directory of its own, so any named example would be environment-specific.
 
 - **Investigator (Read-only):** Trace root cause, propose a fix as a code block. No edits.
 - **Writer (Isolation: worktree):** Implement a spec, write tests, report changes. Needs its own worktree if it runs experiments or makes edits that could collide with sibling agents.

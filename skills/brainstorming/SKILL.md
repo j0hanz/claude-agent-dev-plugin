@@ -18,7 +18,7 @@ analogous code that Phase 1 would have surfaced. If a request truly has zero amb
 implementation, say so explicitly and name which step (Stakeholder Probe, Codebase Scan, Understanding
 Statement) is skipped and why — never skip silently.
 
-Default subagent type for every dispatch below: `general-purpose`. Type is only called out where it differs.
+Default subagent type for every dispatch below: `general-purpose`. Type is only called out where it differs — for Researcher-role dispatches (codebase scans), prefer a more specific specialized agent already in the user's roster per `../multi-agent-development/references/subagent-contract.md`'s Role Vocabulary, falling back to `general-purpose` when none matches.
 
 ## Process Flow
 
