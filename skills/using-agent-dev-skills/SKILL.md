@@ -55,7 +55,7 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 
 - **Skill Shadowing:** Warn the user if a global skill version overrides the local `skills/` version.
 - **Immediate Invocation:** Activate and follow a skill immediately once a route is identified.
-- **Notification:** Announce the route via `AskUserQuestion` stating: `✅ Routing to [<skill-name>]: [reason]`. Do not add a manual "Other" option.
+- **Notification:** Announce the route as plain text: `✅ Routing to [<skill-name>]: [reason]`. This is an FYI, not a decision — don't spend a blocking `AskUserQuestion` just to acknowledge a routing choice the matrix/gates already determined.
 - **No Skips:** Never bypass process gates for "simple" or "quick" tasks.
 - **Context Constraints:** Route to `context-optimizer` at any gate if the active context is bloated or token limits are approached, pruning memory before continuing the task (see the `[Any Gate]` branch in the diagram above — it preempts whichever gate is active).
 
@@ -90,7 +90,7 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 - **Mixed DAG tasks:** Route to `multi-agent-development` (batch tasks with gated reviews).
 - **Standard single feature:** Route to `test-driven-development`.
 - **TDD fails 3 times:** Route to `diagnose` (stuck) or `planning` (ambiguous spec).
-- **⚠️ Autonomous Warning:** Pause and require user confirmation before executing `test-driven-development`, `request-code-review`, `multi-agent-development`, or `multi-agent-dispatch`.
+- **Autonomous by default:** `test-driven-development`, `request-code-review`, `multi-agent-development`, and `multi-agent-dispatch` are all worktree-isolated and test-gated before anything merges — so run them directly and announce the route, don't stop and wait for a go-ahead. Ask first only when a step is genuinely irreversible outside the worktree (a destructive command, a push, a migration) or it's the first dispatch of the session and the user hasn't seen the behavior yet.
 
 ### Gate 4: Quality & Delivery
 

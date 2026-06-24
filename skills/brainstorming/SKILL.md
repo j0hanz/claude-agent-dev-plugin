@@ -62,7 +62,7 @@ Default subagent type for every dispatch below: `general-purpose`. Type is only 
 ## Phase 1: Discovery
 
 - **Stakeholder Probe:** Identify users. Trigger `AskUserQuestion` (1. Recommended, 2. Alternative). Skip if unambiguous.
-- **Scanner Subagent:** **MANDATORY - READ ENTIRE FILE**: Before dispatching, you MUST read [codebase-scanner-prompt.md](file:///C:/agent-dev/skills/brainstorming/references/codebase-scanner-prompt.md) completely. NEVER set range limits on reading this file. Do NOT load other reference files for this phase. Dispatch subagent (`scripts/scan_context.py` → `scripts/compress_report.py`). Fallback to regex on failure.
+- **Scanner Subagent:** Dispatch one read-only `general-purpose` agent (Glob/Grep/Read/Bash only — no Write/Edit). Give it the feature description verbatim and the project root, and have it run `python scripts/scan_context.py -- '<sanitized_noun1>' ['<sanitized_noun2>' ...] --cwd '<project_root>' | python scripts/compress_report.py` (extract 2-3 domain nouns/verbs from the feature description, strip shell metacharacters, alphanumeric+hyphen only), falling back to manual Glob/Grep exploration only if the script fails. Ask for a Codebase Context Report: Related Files, Recent Changes, Terminology Found, Interface Shapes, Design Docs, Technical Constraints, Analogous Features, Test Coverage, Scope Signal (S/M/L/XL with reasoning — S=1-2 files, M=3-5, L=5-10 or module boundary, XL=10+ or architectural), Key Unknowns. If the agent times out or the repo is too large, fall back to shallow regex/Grep in the parent context rather than failing the workflow.
 - **Extraction:** Interface Shapes, Technical Constraints, Analogous Features, Key Unknowns.
 - **Zero-Code Exit:** Offer exit if scan finds existing satisfying feature/config.
 - **Understanding Statement:** Summarize extraction. Require user confirmation.
@@ -102,7 +102,7 @@ Default subagent type for every dispatch below: `general-purpose`. Type is only 
 
 ## Phase 4: Design Proposal
 
-- **Designer Subagent:** **MANDATORY - READ ENTIRE FILE**: Before dispatching, you MUST read [design-proposer-prompt.md](file:///C:/agent-dev/skills/brainstorming/references/design-proposer-prompt.md) completely. NEVER set range limits on reading this file. Do NOT load other reference files for this phase. Dispatch subagent with compressed scan report + discovery findings.
+- **Designer Subagent:** Dispatch one reasoning-only `general-purpose` agent (no tools — Read/Write/Edit/Bash all out of scope). Give it the full context packet: feature description, stakeholder type, compressed Codebase Context Report (Analogous Features, Test Coverage, Interface Shapes especially), domain terms, risks/success criteria, Creative Checkpoint finding. Ask for 2-3 approaches that differ on real axes (build vs extend, sync vs async, simple+fast vs robust+complex, conventional vs unconventional) — never naming/minor-detail variants. At least one must be non-obvious/unconventional; the Creative Checkpoint candidate (if any) must be "Approach A". Each approach: What/Gains/Costs/Fit/First step. Recommendation must cite a specific constraint from the report and the success criterion it satisfies — never generic best practice. Unjustified components go in a "Deferred (YAGNI)" list, not silently dropped.
 - **Presentation:** 2-3 approaches with grounded tradeoffs.
 - **Approval Gate:** Await explicit user commitment to one approach. Do not guess.
 - **Review Check:** Phase 5 flag set → Phase 5. Not set → Phase 6.
@@ -113,10 +113,19 @@ Default subagent type for every dispatch below: `general-purpose`. Type is only 
 ## Phase 5: Structured Review
 
 - **Trigger:** Phase 5 flag set OR explicit user request to stress test.
-- **Parallel Dispatch:** **MANDATORY - READ ENTIRE FILE**: Before dispatching reviewers, you MUST read [structured-review-prompt.md](file:///C:/agent-dev/skills/brainstorming/references/structured-review-prompt.md) completely. NEVER set range limits on reading this file. Spawn Skeptic, Constraint Guardian, User Advocate concurrently.
+- **Parallel Dispatch:** Run `multi-agent-dispatch` with this Lane Matrix — three read-only, reasoning-only lanes, no files touched, no dependencies between them. Each reviewer sees the chosen design + Codebase Context Report but never another reviewer's objections.
+
+  | Lane | Role                | Objective                                                                                                                                                                                                                            | Output                                                                          |
+  | :--- | :------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------------------------------------------------------------------------ |
+  | 1    | Skeptic             | Assume the design fails in production. Find weaknesses, edge cases, YAGNI violations. No redesigns, no alternative architectures, no new features — that's the Designer's job.                                                       | Objections table (Concern / Failure mode or edge case / Severity) + YAGNI flags |
+  | 2    | Constraint Guardian | Enforce non-functional constraints — perf, scale, reliability, security/privacy, maintainability, operational cost — against the report's Technical Constraints section or a well-known non-functional risk. No product-goal debate. | Objections table (Constraint violated / Concrete risk / Severity)               |
+  | 3    | User Advocate       | Represent the end user — cognitive load, usability, error handling — grounded in the stated stakeholder type. No architecture changes, no new features.                                                                              | Objections table (Concern / User-facing impact / Severity)                      |
+
+  **Severity Calibration** (all three + Arbiter): **High** = causes rework after implementation starts, breaks a stated constraint/requirement, or a concrete production/security/data-loss path. **Med** = shippable but a noticeably worse outcome. **Low** = worth a one-line mention, never blocks alone. Out of scope entirely: naming/wording/style preferences — omit, don't log even as Low.
+
 - **Consolidation:** Create Response Log (Objection | Source | Severity | Designer Response | Resolution). Discard style/wording objections.
 - **Resolution:** Accept & Revise (update design) OR Reject (provide technical rationale). No open rows allowed.
-- **Arbiter Gate:** Dispatch Arbiter with original design, revised design, Response Log. Yields `APPROVED`, `REVISE`, or `REJECT`.
+- **Arbiter Gate:** One follow-up reasoning-only `general-purpose` agent (no tools) — give it the Original Design, Revised Design, and full Response Log. It must discard any objection that's really a style/naming preference even if marked High, require every genuinely High-severity objection to be "Accept & Fixed" with a matching Revised Design change or "Reject" with valid technical rationale, treat Med/Low as informational only (never blocking on their own), and return `APPROVED | REVISE | REJECT` with a 1-3 sentence rationale citing the specific Response Log row(s) — plus the exact required change(s) if `REVISE`.
 - **Exit Condition:** All reviewers invoked, Response Log complete, Arbiter `APPROVED`.
 - **Log Entry:** Append reviewer objections (upon individual return), resolved rows, Arbiter disposition, and rationale.
 
@@ -142,15 +151,3 @@ Default subagent type for every dispatch below: `general-purpose`. Type is only 
 - **Ignore Constraints:** Phase 4 architecture must explicitly cite which Phase 1 constraints it satisfies.
 - **Reviewer Redesign:** Phase 5 reviewers only identify flaws; Phase 4 handles redesign.
 - **Re-dispatch Reviewers:** Never re-run a Phase 5 reviewer if objections are already logged in the session log.
-
----
-
-## Additional Resources
-
-### Reference Files
-
-Consult these files for subagent prompt templates:
-
-- **[codebase-scanner-prompt.md](file:///C:/agent-dev/skills/brainstorming/references/codebase-scanner-prompt.md)** - Prompts for scanning codebase and extracting domain context.
-- **[design-proposer-prompt.md](file:///C:/agent-dev/skills/brainstorming/references/design-proposer-prompt.md)** - Prompts for creating 2-3 design approaches.
-- **[structured-review-prompt.md](file:///C:/agent-dev/skills/brainstorming/references/structured-review-prompt.md)** - Prompts for Adversarial Review and Arbiter Gate.

@@ -40,7 +40,7 @@ Trigger: Review/Design Request
 - `python scripts/detect_hotspots.py [dir=src] [infra=...] [--since "6 months ago"]`
 
 - **Fallback:** Manually analyze imports, God modules (>500 lines/20+ exports), and history.
-- **Dispatch:** Use `general-purpose` agent; strictly load `references/dispatch-template.md`.
+- **Dispatch:** One read-only `general-purpose` agent (Read/Glob/Grep only, no edits). Give it `target_dir` and the four scripts' stdout (or "skipped"). Ask it to read every high-severity flagged file, apply all four Seam Tests — Deletion (would complexity scatter to callers if removed?), Seam (testable without DB/API/infra?), Locality (readable without understanding 5+ other modules?), Bounded Context (do modules share tables directly without APIs/interfaces?) — quote the exact file path + import/pattern per friction signal (no editorializing), never propose event buses/base classes/utils folders, and return JSON only: a `candidates` array ranked by impact, each `{seam_name, evidence, seam_test_results, visual_diagram}` with a Mermaid `graph LR`/`graph TD` contrasting current tangled dependencies vs. the proposed clean boundary.
 
 - **Phase_2_Present:** List 3-6 targets: [Name], [Files], [Bleed], [Deepening], [Impact], [Risk], [Mermaid]. Prompt: "Which of these candidates interests you most?"
 - **Phase_3_Align:** - Load `references/DOMAIN_INTERVIEW.md` strictly upon interview start.
@@ -50,7 +50,7 @@ Trigger: Review/Design Request
 - **Phase_5_Handoff:** Generate `architecture-brief.json` (`references/brief-schema.json`). Read `references/MIGRATION_STRATEGIES.md` for gradual cutover. Handoff to `refactor` or `planning`.
 
 - **Mode_B_Design:**
-- **Constraint_Context:** NEVER load diagnostic templates (`references/dispatch-template.md`, `references/DOMAIN_INTERVIEW.md`, `references/SEAMS_BY_EXAMPLE.md`).
+- **Constraint_Context:** NEVER load diagnostic templates (`references/DOMAIN_INTERVIEW.md`, `references/SEAMS_BY_EXAMPLE.md`).
 - **Step_1_Diagnose:** Isolate Core Domain vs. Mechanism.
 - **Step_2_Pattern:** Read `references/architecture-patterns.md`; select optimal pattern.
 - **Step_3_Stress_Test:** Apply Swap Test (If [mechanism] changes, what breaks?).

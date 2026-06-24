@@ -1,0 +1,12 @@
+[
+  {
+    "id": 1,
+    "prompt": "I need a deep investigation of three things in this repo, each substantial on its own and totally unrelated to the others: (1) trace through the full brainstorming skill in skills/brainstorming/ including any reference files, and summarize its whole gate logic, (2) trace through the full architecting skill in skills/architecting/ including any reference files and scripts, and summarize how it generates an ADR, (3) trace through the full diagnose skill in skills/diagnose/ and summarize its hypothesis-falsification loop. These three don't share files and don't depend on each other. Go investigate all three right now in parallel, don't wait on me for anything, and report back a summary of each.",
+    "expectations": [
+      "The transcript does not show an AskUserQuestion tool call before the investigation work is dispatched",
+      "At least two separate Agent tool_use calls are dispatched in the same batch for the independent investigations, rather than the main thread reading every file itself one at a time",
+      "The agent states the task grouping or plan as plain text rather than stopping to ask the user to confirm the grouping before starting",
+      "The final response includes a summary of all three skills: brainstorming, architecting, and diagnose"
+    ]
+  }
+]

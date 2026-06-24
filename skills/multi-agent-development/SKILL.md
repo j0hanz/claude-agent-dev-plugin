@@ -13,22 +13,25 @@ Orchestrate sequential task execution with zero context pollution and high quali
 
 - **Dependencies or shared state across tasks?** → Sequential (this skill).
 - **Fully independent tasks, no shared state?** → Parallel (`multi-agent-dispatch`).
+- **A plan mixing both?** → This skill, but cluster the independent tasks (see Partitioning & Scope) and dispatch each cluster the way `multi-agent-dispatch` does — background, in parallel — instead of forcing every task through the loop one at a time.
 
 ## Process Flow
 
 ```
-Start Loop (Per Task) -> Phase 1: Implement (general-purpose subagent) -> Phase 2: Spec Compliance (read-only reviewer)
-  -- SPEC_PASS ------------------> Phase 3: Code Quality (read-only auditor)
-  -- SPEC_FAIL (retry) -----------> back to Phase 1
-  -- SPEC_FAIL (after 2 attempts) -> BLOCKED (escalate to user)
+Start Cluster (1+ tasks, Depends-on satisfied) -> Phase 1: Implement EACH task in the cluster
+  (independent tasks: launched together, run_in_background, isolation: worktree — no waiting between them)
+  -> per task, as it reports back: Phase 2: Spec Compliance (read-only reviewer)
+       -- SPEC_PASS ------------------> Phase 3: Code Quality (read-only auditor)
+       -- SPEC_FAIL (retry) -----------> back to Phase 1 for that task only
+       -- SPEC_FAIL (after 2 attempts) -> BLOCKED (escalate to user)
 
-Phase 3: Code Quality
-  -- QUALITY_PASS -------------> Next Task?
-  -- CRITICAL / IMPORTANT (retry) -> back to Phase 1
+     Phase 3: Code Quality
+       -- QUALITY_PASS -------------> this task done
+       -- CRITICAL / IMPORTANT (retry) -> back to Phase 1 for that task only
 
-Next Task?
+Cluster done when every task in it is done/blocked -> Next Cluster?
   -- yes --> Orchestrator Context Bloated? -- yes --> context-optimizer --> resume loop
-                                            -- no  --> loop to Start
+                                            -- no  --> loop to Start Cluster
   -- no  --> Final Validation (test & verify)
 ```
 
@@ -42,11 +45,9 @@ Next Task?
 - **Merge Early**: NEVER. Wait until the task fully passes.
 - **Trust Clean Merges**: NEVER. Run tests after every merge.
 
-## Step 0: Confirm
+## Step 0: Setup
 
-- **Action**: AskUserQuestion for setup.
-- **Option 1**: Run all tasks (Recommended).
-- **Option 2**: Run one task to test (Alternative).
+Default to running all tasks straight through — that was already the recommended option, so don't spend a round-trip asking for it. Raise `AskUserQuestion` ("run all" vs. "run one task first to validate the loop") only when the plan is large or unfamiliar enough that a single test task is a genuinely safer first step.
 
 ## Partitioning & Scope
 
@@ -58,11 +59,14 @@ Before asking the user, write the same Lane Matrix `multi-agent-dispatch` uses �
 | 2    | ...           | Task 1     | ...  | ...          |
 
 - **File Rule**: Combine tasks into one if they touch the same files — never run two tasks against overlapping paths even sequentially without merging them first.
-- **Action**: AskUserQuestion for task order, using the matrix as evidence.
-- **Option 1**: Strict order based on the matrix's `Depends on` column (Recommended).
-- **Option 2**: Grouped tasks with reasons (Alternative).
+- **Cluster Rule**: Group every run of tasks that share `Depends on: none` and disjoint files into one cluster. A cluster is dispatched together (see Clustered Phase 1 below) — clusters themselves still run in the matrix's dependency order.
+- **Action**: Derive the order directly from the matrix's `Depends on` column and state it as plain text — that was already the recommended option, so don't ask for it. Raise `AskUserQuestion` only if the matrix itself is ambiguous (conflicting or circular dependencies) and the order can't be resolved from the files alone.
 
-## Core Loop (Strict Order)
+## Clustered Phase 1 (independent tasks only)
+
+For a cluster of 2+ tasks with no dependency between them: dispatch one implementer per task in the SAME message, each with `isolation: "worktree"` and `run_in_background: true`. Don't wait for one to finish before launching the next in the cluster — that's the serialization this skill otherwise forces, and it's unnecessary when the Matrix already proves the tasks don't touch each other. Run Phase 2/Phase 3 for each task as soon as its implementer reports back, independently of the others in the cluster — a slow task in the cluster never blocks review of a fast one. Move to the next task/cluster only once every task in the current cluster has reached `QUALITY_PASS` or escalated.
+
+## Core Loop (Strict Order, per task or per cluster member)
 
 - **Phase 1**: Implement.
 - **Agent**: `general-purpose` (isolated worktree).
@@ -106,10 +110,11 @@ Blocked/escalated tasks: [list, or "none"]
 - An implementer's `DONE` summary was trusted instead of the spec/quality reviewers actually reading the diff.
 - A blocked or skipped task wasn't surfaced to the user — it just silently didn't happen.
 - An old agent was reused across tasks, carrying stale memory into a new task's context.
+- Tasks with `Depends on: none` and disjoint files were still run one-at-a-time instead of clustered — wasted wall-clock time with no correctness benefit.
 
 ## Operational Rules
 
-- **Agents**: Use a new agent for every task.
+- **Agents**: Use a new agent for every task. Independent tasks in a cluster get separate agents launched together, not reused or queued.
 - **Prompts**: Give agents all facts. They have no memory.
 - **Commits**: Give reviewers the exact old commit and new commit.
 - **Rejects**: Throw away bad work. Start over from a clean base.

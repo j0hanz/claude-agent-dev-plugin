@@ -10,22 +10,24 @@ argument-hint: '[the independent tasks to parallelize]'
 Maximize efficiency through parallel execution across isolated problem domains. Independent domains (no shared state) → this skill. Shared mutable state or dependencies → `multi-agent-development` instead; the Lane Matrix below is the test.
 
 ```
-GROUP -> MATRIX -> SELECT -> LAUNCH -> INTEGRATE
-                                ^         |
-                                └─ retry ─┘ (partial failure)
+GROUP -> MATRIX -> SELECT -> LAUNCH(background) ─┬─> INTEGRATE (on notify)
+                                  |               |        ^
+                                  └─ next batch ──┘    retry (partial failure)
 ```
+
+Batches pipeline, they don't queue: launching batch N in the background is the signal to start scoping batch N+1, not a reason to wait.
 
 ## Strict Rules
 
 - **NO Overlapping Writes:** Never launch parallel agents editing the same files. Use sequential execution instead.
 - **NO Assumed Context:** Subagents start blank. Put every needed fact directly into the prompt.
-- **MAX 3 Agents:** Launch a maximum of 3 agents per batch. Combine their work before starting more.
+- **MAX 3 Agents in the foreground at once:** that cap is about how many results you read and merge together, not how many can be running. Lanes dispatched with `run_in_background` don't occupy a foreground slot — you get notified on completion instead of blocking on it, so a 4th+ lane can launch the moment its own dependencies clear, without waiting on batch N's INTEGRATE.
 - **NO Blind Trust:** Agents make mistakes. You MUST run the test suite to prove their work is correct.
 - **NO Hidden Skips:** If you skip a check or a lane, say so in the final report. Never bury it in a summary.
 
 ## Step 1: GROUP
 
-Confirm task groups with the user using `AskUserQuestion`.
+Form task groups yourself from the work already visible (a plan, a backlog, several independent fix-its) and state them as plain text — don't stop on `AskUserQuestion` by default, that just adds a wait for something the file list already tells you. Ask only when grouping is genuinely ambiguous (unclear whether two tasks actually share state or a file).
 
 Heuristic, not a rule: parallel dispatch pays off most once you have 3+ tasks (or failures) in separate files with unrelated causes. Below that, sequential is usually simpler to reason about — don't force parallelism for its own sake.
 
@@ -53,9 +55,10 @@ Assign roles using the Role Vocabulary defined in `../multi-agent-development/re
 ## Step 4: LAUNCH
 
 - Re-check the matrix for the lanes in this batch: zero file overlap, zero unresolved dependencies.
-- Limit to 3 agents per batch.
 - Launch all agents for a batch in ONE single message.
-- A lane that's long-running or purely exploratory (no one is blocked on it) can run with `run_in_background` instead of holding up the batch — but never leave it unmonitored past this task.
+- **Default every Writer lane to `run_in_background: true`.** Foreground (blocking) dispatch is the exception now, reserved for a lane whose result you need before you can write the next prompt. Background is the default because the harness notifies you on completion — you are not "waiting" in either case, but background lets you keep working (prep the next batch's Matrix, answer the user, start a lane with no dependency on this one) instead of sitting idle until the slowest agent in the batch returns.
+- As soon as a lane is launched in the background, immediately start GROUP/MATRIX for the next batch rather than waiting at this step — don't let "batch N is running" block "start scoping batch N+1."
+- Track every in-flight background lane by name/id. When notified of a completion, INTEGRATE that lane immediately rather than batching notifications up.
 
 ## Step 5: INTEGRATE
 
