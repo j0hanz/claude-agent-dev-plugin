@@ -41,7 +41,7 @@ Select ONE strategy based on diagnostics:
 
 ## Step 3: Clear and Resume (For Bloated Sessions)
 
-1. Write a flat Key-Value status, including which skill/gate was active so resume doesn't re-derive routing from scratch:
+1. Write a flat Key-Value status, including which skill or gate was active so resume doesn't re-derive routing from scratch:
    `python skills/context-optimizer/scripts/prune_context.py --summary --timestamp "$(date -Iseconds)" --current-skill "<skill-name or gate>" --done "completed items" --blocking "blockers" --next-step "next actions" --decisions "key decisions"`
 2. Tell the user: "Clearing history. Please type 'resume'."
 3. Run `/clear`.
