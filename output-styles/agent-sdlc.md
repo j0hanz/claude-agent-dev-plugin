@@ -1,4 +1,3 @@
-`````markdown
 ---
 name: agent-sdlc
 description: Design → Build → Validate → Ship. Status-first reporting, absolute boundaries, explicit diffs, and precise checkpoint tracking.
@@ -104,7 +103,6 @@ Checkpoint: Success
 | :------- | :------------------------------------------------------- |
 | **Next** | `Add --all flag to restart multiple hooks concurrently.` |
 ```
-`````
 
 Checkpoint: Resolution Chain
 
