@@ -15,7 +15,6 @@ skills/*/eval-workspace/
 
 # Claude settings (keep project settings, ignore machine-local overrides)
 !.claude/settings.json
-.claude/telemetry.log
 .claude/state
 .claude/explorer-breadcrumbs.log
 .continue

@@ -6,7 +6,7 @@ A Claude Code plugin for authoring and maintaining skills and hooks — structur
 
 ## Overview
 
-Agent Dev Plugin extends Claude Code with 15 skills and 3 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on session events to guard against destructive commands, surface relevant skills, and keep a local telemetry trail. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
+Agent Dev Plugin extends Claude Code with 15 skills and 2 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on session events to guard against destructive commands and surface relevant skills. Multi-step or parallel work is delegated to the built-in `general-purpose` agent — configured per task via the prompt — orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
 
 | Aspect              | Detail                       |
 | :------------------ | :--------------------------- |
@@ -22,7 +22,7 @@ Agent Dev Plugin extends Claude Code with 15 skills and 3 lifecycle hooks coveri
 | :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
 | 15 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                   |
 | Subagent orchestration   | `multi-agent-dispatch` and `multi-agent-development` drive every `general-purpose` subagent dispatch — no custom agent definitions to maintain |
-| 3 lifecycle hooks        | Bash-only handlers: a shell-safety guard, a skill nudge, and telemetry capture                                                                 |
+| 2 lifecycle hooks        | Bash-only handlers: a shell-safety guard and a skill nudge                                                                                     |
 | Marketplace install      | One-command install from GitHub — no manual clone required                                                                                     |
 
 ## Installation
@@ -111,7 +111,6 @@ Bash-only handlers (`hooks/*.sh`), wired in `hooks/hooks.json`. `shell-safety` i
 | Event                 | Handler             | What it does                                                                                                                                                          | Blocking? |
 | :-------------------- | :------------------ | :-------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :-------- |
 | `PreToolUse` (`Bash`) | `shell-safety`      | Rejects a small, explicit denylist of catastrophic commands (`rm -rf /`, force-push to main/master, `git clean -fdx`). Override with `AGENT_DEV_SKIP_SHELL_SAFETY=1`. | Yes       |
-| `PostToolUse` (`*`)   | `telemetry-capture` | Appends a human-readable line per tool call to `.claude/telemetry.log`. Opt out with `AGENT_DEV_TELEMETRY=0`. Tail it live via the `telemetry-watcher` monitor.       | No        |
 | `SessionStart` (`*`)  | `skill-nudge`       | Points toward this plugin's bundled skills, at most once per 24h. Opt out with `AGENT_DEV_SKILL_NUDGE=0`.                                                             | No        |
 
 `shell-safety.sh` is self-contained (no shared-library dependency) so a bug in `hooks/lib.sh` can never silently disable the one blocking guard. The denylist is intentionally narrow and documented as best-effort, not comprehensive protection.
@@ -127,9 +126,6 @@ skip_shell_safety: false
 
 # Set to false to disable the periodic skill nudge on session start
 skill_nudge: true
-
-# Set to false to disable telemetry log capturing (.claude/telemetry.log)
-telemetry: true
 ---
 
 # claude-agent-dev Configuration
@@ -149,7 +145,6 @@ This file configures local settings for the `claude-agent-dev` plugin.
 │   ├── lib.sh
 │   ├── shell-safety.sh
 │   ├── skill-nudge.sh
-│   ├── telemetry-capture.sh
 │   └── hooks.json
 ├── monitors/               # Live development watchers (experimental)
 ├── output-styles/          # Output style definitions
@@ -161,7 +156,7 @@ This file configures local settings for the `claude-agent-dev` plugin.
 | :--------------- | :--------------------------------------------------------------- |
 | `hooks/`         | Bash hook handlers and the hooks manifest                        |
 | `skills/`        | One directory per skill, each containing a `SKILL.md` definition |
-| `monitors/`      | Experimental live watchers for tests and telemetry               |
+| `monitors/`      | Experimental live watchers for tests                             |
 | `output-styles/` | Output style definitions                                         |
 | `bin/`           | Plugin manifest validator and YAML schema checker                |
 | `tests/`         | Integration tests verifying hooks fire and skills load correctly |

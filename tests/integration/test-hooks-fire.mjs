@@ -84,41 +84,6 @@ test('shell-safety.sh respects the AGENT_DEV_SKIP_SHELL_SAFETY override', () => 
   assert.strictEqual(exitCode, 0);
 });
 
-test('telemetry-capture.sh appends a line to .claude/telemetry.log', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'agent-dev-telemetry-'));
-  try {
-    const { exitCode } = runHandler(
-      'telemetry-capture.sh',
-      { tool_name: 'Write' },
-      { CLAUDE_PROJECT_DIR: dir },
-    );
-    assert.strictEqual(exitCode, 0);
-
-    const logPath = join(dir, '.claude', 'telemetry.log');
-    assert.ok(existsSync(logPath), 'telemetry.log should exist after the hook runs');
-    const lines = readFileSync(logPath, 'utf-8').trim().split('\n');
-    assert.ok(lines.length > 0);
-    assert.match(lines[lines.length - 1], /PostToolUse Write ok$/);
-  } finally {
-    cleanupProject(dir);
-  }
-});
-
-test('telemetry-capture.sh writes nothing when AGENT_DEV_TELEMETRY=0', () => {
-  const dir = mkdtempSync(join(tmpdir(), 'agent-dev-telemetry-'));
-  try {
-    runHandler(
-      'telemetry-capture.sh',
-      { tool_name: 'Write' },
-      { CLAUDE_PROJECT_DIR: dir, AGENT_DEV_TELEMETRY: '0' },
-    );
-    const logPath = join(dir, '.claude', 'telemetry.log');
-    assert.ok(!existsSync(logPath), 'telemetry.log should not be created when opted out');
-  } finally {
-    cleanupProject(dir);
-  }
-});
-
 test('skill-nudge.sh emits additionalContext on first fire, then stays quiet (cooldown)', () => {
   const dir = mkdtempSync(join(tmpdir(), 'agent-dev-nudge-'));
   try {
