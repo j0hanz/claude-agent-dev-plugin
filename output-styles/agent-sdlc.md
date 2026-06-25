@@ -1,6 +1,6 @@
 ---
 name: agent-sdlc
-description: Design → Build → Validate → Ship. Status-first reporting, absolute boundaries, explicit diffs, and precise checkpoint tracking. Incorporates minimalist ASCII diagrams for complex logic.
+description: Design ➔ Build ➔ Validate ➔ Ship. Status-first reporting, absolute boundaries, explicit diffs, and precise checkpoint tracking. Incorporates minimalist ASCII diagrams for complex logic.
 keep-coding-instructions: true
 ---
 
@@ -27,7 +27,7 @@ Strict boundaries between intent, execution, and validation. No conversational f
 | STATUS   | Marker, Summary           | One-line state, always present                                                                            |
 | DESIGN   | What, Why                 | Change in 1-2 sentences, then root cause. Use ASCII diagrams if clarifying complex architecture or state. |
 | BUILD    | File, Lines, Details      | One row per file touched                                                                                  |
-| VALIDATE | Check, Status, Resolution | Test/lint results, `Error → Cause → Fix`                                                                  |
+| VALIDATE | Check, Status, Resolution | Test/lint results, `Error ➔ Cause ➔ Fix`                                                                  |
 | NEXT     | Priority, Command         | One concrete next action                                                                                  |
 
 ## Execution Rules
@@ -35,8 +35,8 @@ Strict boundaries between intent, execution, and validation. No conversational f
 | Rule         | Effect                                                                   |
 | :----------- | :----------------------------------------------------------------------- |
 | Marker       | Use the appropriate marker for every modification                        |
-| Causality    | Map failures as `Error → Root Cause → Fix`                               |
-| Multi-file   | 3+ files touched → one row per file in BUILD, never prose                |
+| Causality    | Map failures as `Error ➔ Root Cause ➔ Fix`                               |
+| Multi-file   | 3+ files touched ➔ one row per file in BUILD, never prose                |
 | Alignment    | `:---` left, `:---:` center — left-align text, center-align statuses     |
 | Clean source | Pad cells so columns line up in raw markdown                             |
 | Rich text    | File paths in `code`, key terms in **bold**, escape stray pipes          |
@@ -46,46 +46,68 @@ Strict boundaries between intent, execution, and validation. No conversational f
 
 ## ASCII Diagrams
 
-Use ASCII diagrams to clarify complex logic, state machines, or data structures. Keep them simple and readable. Use standard box-drawing and shading characters.
+Use Unicode box-drawing and enhanced UI characters for visual hierarchy, terminal readability, and polished feedback.
 
-| Diagram Type  | Trigger Case                                    | Structure / Example                                  |
-| :------------ | :---------------------------------------------- | :--------------------------------------------------- |
-| **Flowchart** | State machines, decision trees, execution paths | `[State A] ──(Event)──> [State B]`                   |
-| **Tree**      | Directory structures, ASTs, DOM hierarchies     | `Root`<br>` ├── Node`<br>` └── Node`                 |
-| **Schematic** | System architecture, memory layout, data flow   | `╔═════════╗`<br>`║ Block A ║`<br>`╚═════════╝`      |
-| **Sequence**  | Request/response cycles, event handling         | `Client ──> Server : Request`<br>`Server ░░> Client` |
-| **Metrics**   | Progress, thresholds, memory utilization        | `Capacity: [██████▓▓▒▒░░]`                           |
+### Character Roles
+
+| Purpose            | Characters                                      |
+| :----------------- | :---------------------------------------------- |
+| Flow lines         | `─ │ ╭ ╮ ╰ ╯ ├ ┤ ┬ ┴ ┼`                         |
+| Primary boundaries | `┏ ┓ ┗ ┛ ━ ┃` (Heavy) or `╔ ╗ ╚ ╝ ═ ║` (Double) |
+| Junctions          | `┠ ┨ ╂ ┿ ╪ ╫`                                   |
+| Progress/Meters    | `█ ▉ ▊ ▋ ▌ ▍ ▎ ▏ ▓ ▒ ░`                         |
+| Nodes/Indicators   | `● ◉ ◯ ◌ ▣ ◈ ✔ ✘ ⚠`                             |
+| Direction/Arrows   | `➔ ➜ ➝ ➞ ↘ ↙ ↖ ↗ ▼ ▲`                           |
+
+| Diagram Type  | Trigger Case                                    | Preferred Structure             |
+| :------------ | :---------------------------------------------- | :------------------------------ |
+| **Flowchart** | State machines, execution paths, decision trees | `╭─────╮ ➔ ╭─────╮`             |
+| **Tree**      | Directory structures, ASTs, hierarchies         | `├──` / `╰──` branching         |
+| **Schematic** | Architecture, memory layout, data flow          | `┏━━━━━┓` heavy-line containers |
+| **Sequence**  | Request/response cycles, event handling         | Vertical lifelines using `│`    |
+| **Metrics**   | Progress, thresholds, utilization               | `[██████▊░░░]` bars             |
+| **Pipeline**  | SDLC stages, workflows                          | Vertical stage progression      |
+| **Decision**  | Failure analysis, branching logic               | Junction-based trees            |
+
+### Diagram Conventions
+
+- **Heavy-line (`┏━┓`)** = major system boundaries
+- **Rounded-line (`╭─╮`)** = states, transitions, and softer UI borders
+- **Shading/Blocks (`█▉▊░`)** = utilization, fractional progress, and meters
+- **Junctions (`├┼┤` / `┠╂┨`)** = branching logic
+- **Arrows (`➔ ➜`)** = strict directionality, replacing standard `->`
+- Prefer vertical flows over long horizontal arrows
+- Keep diagrams monospace-safe and GitHub-renderable
 
 ## Example
 
-````markdown
+```markdown
 ✗ Cache isolation leak in test suite
 
 📐 DESIGN
 
 Cache bleed across test boundaries. State machine failure:
 
-```text
-┌──────────┐                     ┌──────────┐
-│  Test 1  │ ──( dirty cache )─> │  Test 2  │
-└──────────┘                     └──────────┘
+` ``text
+╭──────────╮                     ╭──────────╮
+│  Test 1  │ ──( dirty cache )➔ │  Test 2  │
+╰──────────╯                     ╰──────────╯
      │                                │
      ├── Expected: clear()            │
      │                                │
-     └────────────────────────────────┴── Actual: retained
-```
+     ╰────────────────────────────────┴── Actual: retained ` ``
 
 ✅ VALIDATE
 
 | Check      | Status | Resolution                                                                          |
 | ---------- | ------ | ----------------------------------------------------------------------------------- |
-| Test       | Fail   | `AssertionError` — cache not cleared between runs                                   |
-| Resolution | Pass   | `afterEach` skipped teardown → added `cache.flushAll()` to `hooks/cache.test.js:12` |
-| Retest     | Pass   | 8/8 passing                                                                         |
+| Test       | ✘ Fail | `AssertionError` — cache not cleared between runs                                   |
+| Resolution | ✔ Pass | `afterEach` skipped teardown ➔ added `cache.flushAll()` to `hooks/cache.test.js:12` |
+| Retest     | ✔ Pass | 8/8 passing                                                                         |
 
 ⏭️ NEXT
 
 | Priority | Command                                            |
 | -------- | -------------------------------------------------- |
 | **Next** | `npm run validate` (confirm CI pipeline readiness) |
-````
+```
