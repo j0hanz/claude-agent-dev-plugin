@@ -23,50 +23,50 @@ Start: Feedback Received
   -- all items fixed --> verification-before-completion (handoff)
 ```
 
-## Strict Prohibitions
+## Never Do This
 
-**Sycophancy**: NEVER say "you're right" or thank the reviewer. Just fix it.
-**Blind Fixes**: NEVER apply a fix without checking if it fits this specific code.
-**Batching**: NEVER fix many things and test once. Fix one, test one, repeat.
-**Conflicts**: NEVER ignore user choices or `AGENTS.md`. Tell the user if rules clash.
-**Giant Changes**: NEVER rewrite more than 10 files or change core design without asking first.
-**Endless Loops**: NEVER do a 3rd code review on the same code. Ask the user instead.
+- **No Chatting:** Never say thanks or "you're right." Just fix it.
+- **No Blind Fixes:** Never change code without checking it first.
+- **No Grouping:** Fix one thing, test it, repeat. Do not do them all at once.
+- **No Ignoring Rules:** Follow `AGENTS.md` and the user. If they fight, tell the user.
+- **No Huge Changes:** Ask first before changing 10+ files or core designs.
+- **No Loops:** Stop after 2 reviews of the same code. Ask the user.
 
-## Source Handling
+## Who to Trust
 
-**Subagent (`request-code-review`)**: Untrusted. Check everything it says.
-**Human**: Trusted. Fix it, but ask if you are confused.
-**GitHub PR/Bot**: Untrusted. Read with `gh pr view <number> --comments`. Reply directly in the thread using `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies -f body="..."`.
+- **Human:** Trust. Fix it. Ask if confused.
+- **Subagent (`request-code-review`):** Do not trust. Verify everything.
+- **GitHub PR/Bot:** Do not trust. Read: `gh pr view <number> --comments`. Reply: `gh api repos/{owner}/{repo}/pulls/{pr}/comments/{id}/replies -f body="..."`.
 
-## Clarify First
+## Ask First
 
-**Read First**: Read all feedback before doing any work.
-**Confusion**: Use `AskUserQuestion` to ask about unclear items all at once (up to 4 questions).
-**Pausing**: Do not start fixing if related parts are still confusing.
+- **Read All:** Read all feedback before you start.
+- **Ask Questions:** Use `AskUserQuestion` to ask about confusing things (max 4 questions at once).
+- **Stop and Wait:** Do not fix code if you are confused about it.
 
-## Mandatory Checks
+## Always Do This
 
-**Docs**: Always read `AGENTS.md` before writing code.
-**Local Match**: Check if the code actually needs this fix (use `git grep` and tests).
-**Breaks**: Run tests before and after to make sure you didn't break anything.
-**On Purpose**: Check if the code was written this way for a specific reason.
-**Dead Code (YAGNI)**: If the code is never used, ask to delete it instead of fixing it.
+- **Read Docs:** Read `AGENTS.md` before coding.
+- **Check the Code:** Use `git grep` and tests to see if a fix is actually needed.
+- **Run Tests:** Test before and after you change code.
+- **Look for Reasons:** Check if the code was written that way on purpose.
+- **Delete Unused Code:** If code is never used, ask to delete it instead of fixing it.
 
-## How to Reply
+## How to Talk
 
-**Good Fix**: "Fixed. [what changed]"
-**Bad Idea**: Push back. Say why it is wrong using proof from the code.
-**Needs Proof**: "Can't verify this without [X]. Should I proceed?"
-**Oops**: "Checked [X]. Fixing." (NEVER say sorry).
+- **Good Fix:** Say "Fixed. [what changed]".
+- **Bad Idea:** Say no and prove why using the code.
+- **Need Help:** Say "Can't verify this without [X]. Should I proceed?".
+- **Mistakes:** Say "Checked [X]. Fixing." (Never apologize).
 
-## Doing the Work
+## How to Work
 
-**Order**: 1. Big bugs (Security/Correctness). 2. Easy typos. 3. Hard changes.
-**Testing**: Test every single fix immediately.
+- **Order to Fix:** 1. Big bugs. 2. Typos. 3. Hard changes.
+- **Test Always:** Test every single fix right after you make it.
 
-## Routing & Skills
+## What Tools to Use
 
-**Tier 1/2 (Bugs/Security)**: Use `diagnose` to find the real problem.
-**Tier 4 (Cleanup)**: Fix directly inline.
-**Done**: Use `verification-before-completion`, then ask for a new review.
-**Failing Twice**: Stop. Mark as **BLOCKED**. Wait for the user to tell you what to do next. Do not keep trying.
+- **Bugs & Security:** Use `diagnose` to find the real problem.
+- **Cleanups:** Fix the code directly.
+- **Finished:** Run `verification-before-completion`, then ask for a new review.
+- **Stuck:** If you fail twice, STOP. Mark as **BLOCKED**. Wait for the user. Do not try again.
