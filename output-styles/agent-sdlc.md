@@ -10,13 +10,13 @@ keep-coding-instructions: true
 
 Lead every response with `STATUS:` followed by a strict status indicator:
 
-| Marker       |                  Meaning                   |
-| :----------- | :----------------------------------------: |
-| `[ ◯ TODO ]` |              Queued / Pending              |
-| `[ ◐ WIP  ]` |       Actively building / debugging        |
-| `[ ✗ FAIL ]` | Blocked or assertion failed (requires fix) |
-| `[ ✔ PASS ]` |        Validated and passing checks        |
-| `[ ◉ DONE ]` |             Complete / Shipped             |
+| Marker |                  Meaning                   |
+| :----- | :----------------------------------------: |
+| `◯`    |              Queued / Pending              |
+| `◐`    |       Actively building / debugging        |
+| `✗`    | Blocked or assertion failed (requires fix) |
+| `✔`    |        Validated and passing checks        |
+| `◉`    |             Complete / Shipped             |
 
 ## Report Architecture
 
@@ -28,6 +28,8 @@ Always maintain clear boundaries between intent, execution, and validation. No c
 | :--------- | :------------------------------------ |
 | `[Marker]` | [One-line summary of change or state] |
 
+---
+
 📐 DESIGN
 
 | Aspect   | Description                                |
@@ -35,17 +37,23 @@ Always maintain clear boundaries between intent, execution, and validation. No c
 | **What** | [1-2 sentences defining the change]        |
 | **Why**  | [The core constraint, root cause, or goal] |
 
+---
+
 🛠️ BUILD
 
 | File / Path   | Line Range     | Implementation Details                       |
 | :------------ | :------------- | :------------------------------------------- |
 | `[file/path]` | `[line-range]` | [Exact code diffs or implementation details] |
 
+---
+
 ✅ VALIDATE
 
 | Check Type               | Status      | Details / Resolution Chain                             |
 | :----------------------- | :---------- | :----------------------------------------------------- |
 | [e.g., Unit Test / Lint] | [Pass/Fail] | [Test results, lint status, or error-resolution chain] |
+
+---
 
 ⏭️ NEXT
 
@@ -75,7 +83,9 @@ Checkpoint: Success
 
 | Marker       | Summary of Change / State       |
 | :----------- | :------------------------------ |
-| `[ ✔ PASS ]` | Added restart protocol to hooks |
+| `✔` | Added restart protocol to hooks |
+
+---
 
 📐 DESIGN
 
@@ -84,11 +94,15 @@ Checkpoint: Success
 | **What** | Implemented graceful restart command for crashed lifecycle hooks.                       |
 | **Why**  | Hooks occasionally hang in zombie states; requires a manual, clean kill-and-start path. |
 
+---
+
 🛠️ BUILD
 
 | File / Path        | Line Range | Implementation Details                                                                     |
 | :----------------- | :--------- | :----------------------------------------------------------------------------------------- |
 | `src/hooks/cli.js` | `45-60`    | `export async function restart(hookName) { await stop(hookName); await start(hookName); }` |
+
+---
 
 ✅ VALIDATE
 
@@ -96,6 +110,8 @@ Checkpoint: Success
 | :--------- | :----- | :----------------------------------------- |
 | Tests      | Pass   | 5/5 passing (isolated process termination) |
 | Lint       | Pass   | Clean                                      |
+
+---
 
 ⏭️ NEXT
 
@@ -111,7 +127,9 @@ Checkpoint: Resolution Chain
 
 | Marker       | Summary of Change / State          |
 | :----------- | :--------------------------------- |
-| `[ ✗ FAIL ]` | Cache isolation leak in test suite |
+| `✗` | Cache isolation leak in test suite |
+
+---
 
 ✅ VALIDATE
 
@@ -120,6 +138,8 @@ Checkpoint: Resolution Chain
 | Test       | Fail   | **Test:** Cache clears between consecutive runs<br>**Error:** `AssertionError`<br>**Severity:** High (breaks test determinism)   |
 | Resolution | Pass   | **→ Root Cause:** Global state not torn down in `afterEach`<br>**→ Fixed:** Added `cache.flushAll()` to `hooks/cache.test.js:12` |
 | Retesting  | Pass   | `[ ✔ PASS ]` All tests passing (8/8)                                                                                             |
+
+---
 
 ⏭️ NEXT
 
@@ -135,7 +155,9 @@ Checkpoint: Multi-File (Enhanced Table)
 
 | Marker       | Summary of Change / State     |
 | :----------- | :---------------------------- |
-| `[ ◉ DONE ]` | API cache layer consolidation |
+| `◉` | API cache layer consolidation |
+
+---
 
 🛠️ BUILD
 
@@ -145,12 +167,16 @@ Checkpoint: Multi-File (Enhanced Table)
 | `routes/api.js`      | `-`        | _Update:_ Route middleware to check cache first |
 | `test/cache.test.js` | `-`        | **Add:** Verify TTL logic \| eviction workflows |
 
+---
+
 ✅ VALIDATE
 
 | Check Type | Status | Details / Resolution Chain |
 | :--------- | :----- | :------------------------- |
 | Lint       | Pass   | 0 warnings, 0 errors       |
 | Tests      | Pass   | 12/12 passing              |
+
+---
 
 ⏭️ NEXT
 

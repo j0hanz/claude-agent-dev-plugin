@@ -1,6 +1,6 @@
 ---
 name: request-plan
-description: "Generates a draft plan/specs pair from a feature description using a multi-agent ideate-and-synthesize pipeline: blind drafting agents propose candidate plans, one Synthesizer merges them into plan/NAME.specs.md + plan/NAME.plan.md, then unconditionally hands off to receive-plan for verification. Use when the user requests 'write a spec', 'create implementation plan', 'spec and plan this', 'production rollout plan', or 'task decomposition'. Trigger on: 'request-plan', 'draft a plan', 'generate a spec'. Always prefer this skill over receive-plan when no plan exists yet; prefer receive-plan instead when a plan already exists and just needs verification."
+description: "Generates a draft plan/specs pair from a feature description using a multi-agent ideate-and-synthesize pipeline: blind drafting agents propose candidate plans, one Synthesizer merges them into plan/NAME.specs.md + plan/NAME.plan.md, then unconditionally hands off to receive-plan for verification. Use when the user requests 'write a spec', 'create implementation plan', 'spec and plan this', 'production rollout plan', or 'task decomposition'. Trigger on: 'request-plan', 'draft a plan', 'generate a spec'. Not for open-ended design exploration with no chosen approach yet (use parallel-brainstorming) or multi-module/architectural restructuring (use architecting) — use this only once a single approach or feature scope is already decided. Always prefer this skill over receive-plan when no plan exists yet; prefer receive-plan instead when a plan already exists and just needs verification."
 disable-model-invocation: false
 user-invocable: true
 argument-hint: '[--depth sketch|contract|blueprint] <feature description>'
@@ -52,7 +52,7 @@ Dispatch 1 `general-purpose` Synthesizer agent to review all N candidates.
 **Required Output**:
 
 - **Merged Files**: One final `specs.md` and `plan.md` pair (Strict Task Block Schema).
-- **Rationale**: Explicitly state what was kept and discarded from EACH candidate draft.
+- **Rationale**: Explicitly state what was kept and discarded from EACH candidate draft. At `sketch` depth (N=1), there is no merge — restate the single candidate's choices as the rationale instead.
 - **Advisory Check**: Verify all `Satisfies` and `Depends on` references resolve.
 
 ## Step 4: Write & Handoff
