@@ -17,6 +17,7 @@ pm: npm
 install: npm install
 validate: npm run validate
 test: npm test
+release: npm version patch|minor|major (syncs manifests, tags, pushes; release.yml takes it from there)
 
 ## Dependency Locations
 
