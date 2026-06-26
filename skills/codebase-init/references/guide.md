@@ -170,9 +170,8 @@ Helper scripts are available via `scripts/run.py`:
 python scripts/run.py <command> [args]
 ```
 
-- `analyze-all [target_dir] [--max-depth 3]` — Run analyze-env, find-dependencies, and scan-structure sequentially
+- `analyze-all [target_dir] [--max-depth 3]` — Run environment detection, dependency listing, and structure scan sequentially
 - `analyze-env [target_dir]` — Detect package manager, test runner, linter, monorepo structure
-- `find-dependencies [target_dir]` — Locate installed dependency directories
 - `scan-structure [target_dir] [--max-depth 3]` — Output directory tree (respects .gitignore)
 - `scaffold-agents-md --language L --commit C --maturity M --testing T [--purpose P] [--pm PM] [--set k=v ...] [--out FILE]` — Print/write a complete AGENTS.md skeleton, Hard Rules first (see §1)
 - `lint-agents-md <path_to_AGENTS.md>` — Validate AGENTS.md length, filler text, commit attribution

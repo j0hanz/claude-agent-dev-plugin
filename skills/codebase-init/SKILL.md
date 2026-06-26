@@ -90,7 +90,7 @@ Phase 1: Environment Discovery (analyze toolchain/structure)
 
 - command: `python "$CLAUDE_PLUGIN_ROOT/skills/codebase-init/scripts/run.py" analyze-all . --max-depth 2`
 - env-resolution: Fallback to relative path `skills/codebase-init` if `$CLAUDE_PLUGIN_ROOT` undefined.
-- action: Run `analyze-env`, `find-dependencies`, `scan-structure`.
+- action: Detects environment, lists dependencies, scans structure.
 
 ### Manual Fallback (On Failure)
 

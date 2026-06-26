@@ -9,12 +9,9 @@ from run import (  # noqa: E402
     render_agents_md_skeleton,
     validate_agents_md_file,
     analyze_project_env,
-    validate_hooks_config,
-    validate_manifest_file,
     should_ignore,
     wire_agents_files,
     get_dependencies,
-    validate_skill_files,
 )
 
 
@@ -334,103 +331,6 @@ def test_automated_ci_detection(tmp_path: Path) -> None:
     assert env.ci_provider == "github-actions"
 
 
-def test_hooks_config_with_arguments(tmp_path: Path) -> None:
-    # Set up dummy hooks.json and handler script in tmp_path
-    hooks_file = tmp_path / "hooks" / "hooks.json"
-    hooks_file.parent.mkdir(parents=True, exist_ok=True)
-
-    # Create the script file so it exists
-    script_file = tmp_path / "hooks" / "shell-safety.sh"
-    script_file.write_text("echo 'hello'", encoding="utf-8")
-
-    # Command containing trailing arguments/flags
-    hooks_content = """{
-        "hooks": {
-            "PreToolUse": [
-                {
-                    "hooks": [
-                        {
-                            "command": "bash \\"${CLAUDE_PLUGIN_ROOT}/hooks/shell-safety.sh\\" --verbose"
-                        }
-                    ]
-                }
-            ]
-        }
-    }"""
-    hooks_file.write_text(hooks_content, encoding="utf-8")
-
-    result = validate_hooks_config(hooks_file)
-    assert result.success is True
-    assert len(result.issues) == 0
-
-
-def test_hooks_config_with_null_hooks(tmp_path: Path) -> None:
-    hooks_file = tmp_path / "hooks" / "hooks.json"
-    hooks_file.parent.mkdir(parents=True, exist_ok=True)
-
-    # Null hooks key under a hook entry
-    hooks_content = """{
-        "hooks": {
-            "PreToolUse": [
-                {
-                    "hooks": null
-                }
-            ]
-        }
-    }"""
-    hooks_file.write_text(hooks_content, encoding="utf-8")
-
-    # This should return a clean validation error/warning instead of crashing
-    result = validate_hooks_config(hooks_file)
-    assert result.success is False
-    assert any(
-        "must be an array" in str(issue).lower()
-        or "must be an object" in str(issue).lower()
-        for issue in result.issues
-    )
-
-
-def test_hooks_config_non_bash_handler(tmp_path: Path) -> None:
-    hooks_file = tmp_path / "hooks" / "hooks.json"
-    hooks_file.parent.mkdir(parents=True, exist_ok=True)
-
-    # Create the handler files so they exist
-    script_mjs = tmp_path / "hooks" / "handler.mjs"
-    script_mjs.write_text("console.log('hello')", encoding="utf-8")
-
-    # Command containing non-bash handler (.mjs)
-    hooks_content = """{
-        "hooks": {
-            "PreToolUse": [
-                {
-                    "hooks": [
-                        {
-                            "command": "node \\"${CLAUDE_PLUGIN_ROOT}/hooks/handler.mjs\\""
-                        }
-                    ]
-                }
-            ]
-        }
-    }"""
-    hooks_file.write_text(hooks_content, encoding="utf-8")
-
-    result = validate_hooks_config(hooks_file)
-    assert result.success is False
-    assert any("Non-Bash hook handler" in str(issue) for issue in result.issues)
-
-
-def test_manifest_file_type_safety(tmp_path: Path) -> None:
-    manifest_file = tmp_path / "plugin.json"
-
-    # Write invalid manifest containing an array instead of a dict object
-    manifest_file.write_text("[1, 2, 3]", encoding="utf-8")
-    result = validate_manifest_file(manifest_file)
-    assert result.success is False
-    assert any(
-        "Manifest must be a JSON object" in str(issue) for issue in result.issues
-    )
-
-
 def test_agents_md_utf8_bom(tmp_path: Path) -> None:
     body = "\ufeff" + _BASE_BODY.replace(
         "## Commit Attribution",
@@ -520,60 +420,11 @@ def test_wire_agents_files_outside_root(tmp_path: Path, monkeypatch) -> None:
 
 
 def test_get_dependencies(tmp_path: Path) -> None:
-    # Create fake node_modules directory with some files
     node_modules = tmp_path / "node_modules"
     node_modules.mkdir()
-
-    file1 = node_modules / "a.js"
-    file1.write_text("console.log(1);", encoding="utf-8")
-
-    sub = node_modules / "sub"
-    sub.mkdir()
-    file2 = sub / "b.js"
-    file2.write_text("x" * 1024 * 1024, encoding="utf-8")  # 1 MB
+    (node_modules / "a.js").write_text("console.log(1);", encoding="utf-8")
 
     deps = get_dependencies(tmp_path)
     assert len(deps) == 1
     assert deps[0].name == "node_modules"
-    assert deps[0].size_mb > 0.9
-
-
-def test_validate_skill_files(tmp_path: Path) -> None:
-    skills_dir = tmp_path / "skills"
-    skills_dir.mkdir()
-
-    # Create a valid skill
-    skill1 = skills_dir / "valid-skill"
-    skill1.mkdir()
-    (skill1 / "SKILL.md").write_text(
-        "---\nname: valid-skill\ndescription: valid desc\n---\nBody content",
-        encoding="utf-8",
-    )
-
-    # Create an invalid skill (missing SKILL.md)
-    skill2 = skills_dir / "invalid-no-skill-md"
-    skill2.mkdir()
-
-    # Create an invalid skill (missing frontmatter name)
-    skill3 = skills_dir / "invalid-missing-name"
-    skill3.mkdir()
-    (skill3 / "SKILL.md").write_text(
-        "---\ndescription: missing name\n---\nBody", encoding="utf-8"
-    )
-
-    # Create a skill that is too long (above 150 lines default)
-    skill4 = skills_dir / "too-long"
-    skill4.mkdir()
-    long_content = "---\nname: too-long\ndescription: test desc\n---\n" + "\n".join(
-        ["line"] * 160
-    )
-    (skill4 / "SKILL.md").write_text(long_content, encoding="utf-8")
-
-    res = validate_skill_files(skills_dir)
-    assert res.success is False
-
-    # Find issues related to each skill
-    messages = [issue.message for issue in res.issues]
-    assert any("has no SKILL.md" in m for m in messages)
-    assert any("missing frontmatter key: 'name'" in m for m in messages)
-    assert any("is long (>150 lines)" in m for m in messages)
+    assert deps[0].path == "node_modules"

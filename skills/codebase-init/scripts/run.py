@@ -10,7 +10,6 @@ import fnmatch
 import json
 import os
 import re
-import shlex
 import sys
 from dataclasses import dataclass, field
 from enum import Enum, auto
@@ -67,13 +66,7 @@ class Config:
         ".DS_Store",
     }
 
-    # ── Skill validation constants ─────────────────────────────────────────
-    SKILL_REQUIRED_KEYS: ClassVar[tuple[str, ...]] = (
-        "name",
-        "description",
-    )
-    MAX_DIR_SCAN_COUNT: ClassVar[int] = 10000
-    MAX_SKILL_LINES: ClassVar[int] = 150
+    # ── AGENTS.md validation constants ─────────────────────────────────────
     MAX_AGENTS_MD_LINES: ClassVar[int] = 100
 
     # ── Per-language scaffold defaults for `scaffold-agents-md` ───────────
@@ -371,29 +364,6 @@ class DependencyInfo:
     name: str
     type: str
     path: str
-    size_mb: float
-    size_truncated: bool = False
-
-
-@dataclass
-class AuditResults:
-    """Consolidated results of the plugin audit."""
-
-    structure: list[str] = field(default_factory=list)
-    env: ProjectEnvironment = field(default_factory=ProjectEnvironment)
-    dependencies: list[DependencyInfo] = field(default_factory=list)
-    skills: ValidationResult = field(
-        default_factory=lambda: ValidationResult(success=True)
-    )
-    agents_md: ValidationResult = field(
-        default_factory=lambda: ValidationResult(success=True)
-    )
-    hooks: ValidationResult = field(
-        default_factory=lambda: ValidationResult(success=True)
-    )
-    manifest: ValidationResult = field(
-        default_factory=lambda: ValidationResult(success=True)
-    )
 
 
 def safe_print(text: str, file: IO[str] = sys.stdout) -> None:
@@ -615,138 +585,15 @@ def get_dependencies(target_dir: Path) -> list[DependencyInfo]:
 
     for entry in dirs:
         if entry.name in Config.DEPENDENCY_DIRS:
-            size_mb = 0.0
-            count = 0
-            truncated = False
-            try:
-                # NOTE: The manual while/next(iterator) pattern is intentional.
-                # A plain `for f in entry.rglob("*")` cannot catch OSError
-                # raised by the iterator's own __next__ call (e.g. when
-                # descending into a sub-directory raises PermissionError).
-                # The inner try/except is the only portable way to handle it.
-                iterator = entry.rglob("*")
-                while True:
-                    try:
-                        f = next(iterator)
-                    except StopIteration:
-                        break
-                    except OSError:
-                        truncated = True
-                        continue
-
-                    try:
-                        if f.is_file():
-                            size_mb += f.stat().st_size
-                            count += 1
-                            if count > Config.MAX_DIR_SCAN_COUNT:
-                                # FIX B-5: discard the partial accumulation so
-                                # the reported size is not a misleading partial
-                                # sum from only the first MAX_DIR_SCAN_COUNT
-                                # files (which may be the smallest ones).
-                                size_mb = 0.0
-                                truncated = True
-                                break
-                    except OSError:
-                        truncated = True
-                        continue
-
-                size_mb /= 1024 * 1024
-                found.append(
-                    DependencyInfo(
-                        name=entry.name,
-                        type=Config.DEPENDENCY_DIRS[entry.name],
-                        path=str(entry.relative_to(target_dir)),
-                        size_mb=round(size_mb, 1),
-                        size_truncated=truncated,
-                    )
+            found.append(
+                DependencyInfo(
+                    name=entry.name,
+                    type=Config.DEPENDENCY_DIRS[entry.name],
+                    path=str(entry.relative_to(target_dir)),
                 )
-            except OSError:
-                found.append(
-                    DependencyInfo(
-                        name=entry.name,
-                        type=Config.DEPENDENCY_DIRS[entry.name],
-                        path=str(entry.relative_to(target_dir)),
-                        size_mb=0.0,
-                        size_truncated=True,
-                    )
-                )
+            )
 
     return found
-
-
-def validate_skill_files(skills_dir: Path) -> ValidationResult:
-    """Validate all SKILL.md files in the skills directory."""
-    if not skills_dir.exists():
-        return ValidationResult(
-            success=False,
-            issues=[
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"Skills directory not found: {skills_dir}",
-                )
-            ],
-        )
-
-    issues: list[ValidationIssue] = []
-
-    try:
-        patterns = load_gitignore(skills_dir.parent) | Config.DEFAULT_IGNORE_PATTERNS
-        skill_dirs = sorted(
-            d
-            for d in skills_dir.iterdir()
-            if d.is_dir() and not should_ignore(d, patterns, skills_dir.parent)
-        )
-    except OSError as e:
-        return ValidationResult(
-            success=False,
-            issues=[
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"Failed to list skills directory: {e}",
-                )
-            ],
-        )
-
-    for skill_dir in skill_dirs:
-        skill_file = skill_dir / "SKILL.md"
-        if not skill_file.exists():
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL, message=f"{skill_dir.name}/ has no SKILL.md"
-                )
-            )
-            continue
-
-        try:
-            content = skill_file.read_text(encoding="utf-8")
-            fm = _parse_frontmatter(content)
-
-            for key in Config.SKILL_REQUIRED_KEYS:
-                if key not in fm:
-                    issues.append(
-                        ValidationIssue(
-                            level=IssueLevel.FAIL,
-                            message=f"{skill_dir.name}/SKILL.md missing frontmatter key: '{key}'",
-                        )
-                    )
-
-            if len(content.splitlines()) > Config.MAX_SKILL_LINES:
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.WARN,
-                        message=f"{skill_dir.name}/SKILL.md is long (>{Config.MAX_SKILL_LINES} lines)",
-                    )
-                )
-        except (OSError, UnicodeDecodeError) as e:
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL, message=f"Failed to read {skill_file}: {e}"
-                )
-            )
-
-    return ValidationResult(
-        success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
-    )
 
 
 # ── Compiled regular expressions ──────────────────────────────────────────
@@ -1050,241 +897,6 @@ def validate_agents_md_file(file_path: Path) -> ValidationResult:
     )
 
 
-def _validate_hook_cmd(
-    event: str, cmd: str, plugin_root: Path, issues: list[ValidationIssue]
-) -> None:
-    """Validate a single hook command and check handler/script existence."""
-    # FIX S-1: use POSIX tokenisation only on non-Windows systems.
-    # In POSIX mode, shlex treats `\` as an escape character, which
-    # silently corrupts Windows backslash paths (C:\hooks\...)
-    # before they reach the Path.exists() check, potentially
-    # causing a dangerously missing handler to go undetected.
-    # On Windows, we strip outer quotes from tokens returned under
-    # non-POSIX mode so path validation resolves successfully.
-    # FIX B-2 (narrow): catch only ValueError (malformed shell
-    # syntax) so programming bugs in surrounding logic still
-    # propagate normally.
-    try:
-        is_windows = sys.platform == "win32"
-        parts = shlex.split(cmd, posix=not is_windows)
-        if is_windows:
-            parts = [p.strip("\"'") for p in parts]
-    except ValueError:
-        issues.append(
-            ValidationIssue(
-                level=IssueLevel.WARN,
-                message=f"Malformed shell command for hook '{event}': {cmd!r}",
-            )
-        )
-        return
-
-    if "runner.mjs" in cmd:
-        issues.append(
-            ValidationIssue(
-                level=IssueLevel.FAIL,
-                message=f"Non-Bash hook handler detected: {cmd!r}. Project rules require Bash-only handlers.",
-            )
-        )
-        return
-
-    if (
-        "scripts" in cmd
-        or "hooks/handlers" in cmd
-        or "${CLAUDE_PLUGIN_ROOT}" in cmd
-        or "$CLAUDE_PLUGIN_ROOT" in cmd
-    ):
-        script_part = next(
-            (
-                p
-                for p in parts
-                if "${CLAUDE_PLUGIN_ROOT}" in p
-                or "$CLAUDE_PLUGIN_ROOT" in p
-                or "hooks/" in p
-                or "scripts" in p
-            ),
-            parts[-1] if parts else "",
-        )
-        script_path_str = script_part.replace(
-            "${CLAUDE_PLUGIN_ROOT}", str(plugin_root)
-        ).replace("$CLAUDE_PLUGIN_ROOT", str(plugin_root))
-        script_path = Path(script_path_str)
-        if not script_path.exists():
-            # FIX S-4: report basename only to avoid leaking full
-            # server-side filesystem paths in CI logs.
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"Missing script for hook '{event}': {script_path.name}",
-                )
-            )
-        elif script_path.suffix in (".mjs", ".py"):
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"Non-Bash hook handler '{script_path.name}' detected. Project rules require Bash-only handlers.",
-                )
-            )
-
-
-def _validate_event_hooks(
-    event: str, event_hooks: list[Any], plugin_root: Path, issues: list[ValidationIssue]
-) -> None:
-    """Validate list of hook entries for a specific event."""
-    for hook_entry in event_hooks:
-        if not isinstance(hook_entry, dict):
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"Hook entry under event '{event}' must be an object.",
-                )
-            )
-        hooks_val = hook_entry.get("hooks")
-        if hooks_val is None:
-            if "hooks" in hook_entry:
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message=f"Hooks list under event '{event}' must be an array.",
-                    )
-                )
-                continue
-            hooks_list = []
-        elif not isinstance(hooks_val, list):
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"Hooks list under event '{event}' must be an array.",
-                )
-            )
-            continue
-        else:
-            hooks_list = hooks_val
-
-        for hook in hooks_list:
-            if not isinstance(hook, dict):
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message=f"Hook details under event '{event}' must be an object.",
-                    )
-                )
-                continue
-            cmd = hook.get("command", "")
-            if not cmd or not isinstance(cmd, str):
-                continue
-
-            _validate_hook_cmd(event, cmd, plugin_root, issues)
-
-
-def validate_hooks_config(hooks_file: Path) -> ValidationResult:
-    """Validate hooks.json and existence of handlers."""
-    if not hooks_file.exists():
-        return ValidationResult(
-            success=False,
-            issues=[
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"hooks.json not found at {hooks_file}",
-                )
-            ],
-        )
-
-    issues: list[ValidationIssue] = []
-    try:
-        hooks_data = json.loads(hooks_file.read_text(encoding="utf-8-sig"))
-    except (json.JSONDecodeError, OSError) as e:
-        return ValidationResult(
-            success=False,
-            issues=[
-                ValidationIssue(
-                    level=IssueLevel.FAIL, message=f"Failed to parse hooks.json: {e}"
-                )
-            ],
-        )
-
-    plugin_root = hooks_file.parent.parent
-
-    # FIX B-2: the previous code wrapped all validation logic in a broad
-    # `except Exception` block that silently swallowed programming bugs
-    # (AttributeError, IndexError, etc.) and returned them as synthetic FAIL
-    # results indistinguishable from bad hooks.json content.  The outer
-    # try/except has been removed entirely.  Only ValueError from shlex.split
-    # is caught narrowly, directly around the call site.
-    if not isinstance(hooks_data, dict) or not isinstance(
-        hooks_data.get("hooks"), dict
-    ):
-        return ValidationResult(
-            success=False,
-            issues=[
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message="hooks.json must be a JSON object with a 'hooks' dictionary.",
-                )
-            ],
-        )
-
-    for event, event_hooks in hooks_data.get("hooks", {}).items():
-        if not isinstance(event_hooks, list):
-            issues.append(
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"Hooks list for event '{event}' must be an array.",
-                )
-            )
-            continue
-        _validate_event_hooks(event, event_hooks, plugin_root, issues)
-
-    return ValidationResult(
-        success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
-    )
-
-
-def validate_manifest_file(manifest_file: Path) -> ValidationResult:
-    """Validate plugin.json manifest."""
-    if not manifest_file.exists():
-        return ValidationResult(
-            success=False,
-            issues=[
-                ValidationIssue(
-                    level=IssueLevel.FAIL,
-                    message=f"plugin.json not found at {manifest_file}",
-                )
-            ],
-        )
-
-    issues: list[ValidationIssue] = []
-    try:
-        data = json.loads(manifest_file.read_text(encoding="utf-8-sig"))
-        if not isinstance(data, dict):
-            return ValidationResult(
-                success=False,
-                issues=[
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message="Manifest must be a JSON object.",
-                    )
-                ],
-            )
-        for key in ("name", "version", "description"):
-            if key not in data:
-                issues.append(
-                    ValidationIssue(
-                        level=IssueLevel.FAIL,
-                        message=f"Manifest missing required key: '{key}'",
-                    )
-                )
-    except (json.JSONDecodeError, OSError) as e:
-        issues.append(
-            ValidationIssue(
-                level=IssueLevel.FAIL, message=f"Failed to parse plugin.json: {e}"
-            )
-        )
-
-    return ValidationResult(
-        success=not any(i.level == IssueLevel.FAIL for i in issues), issues=issues
-    )
-
-
 def wire_agents_files(source: Path, targets: list[Path]) -> int:
     """Create one-line redirect stubs (never full copies) in target files pointing to *source*.
 
@@ -1363,94 +975,6 @@ def print_validation_issues(result: ValidationResult) -> None:
         safe_print(f"{prefix}: {issue}", file=sys.stderr)
 
 
-def print_audit_report(root_dir: Path, results: AuditResults) -> int:
-    """Print the final formatted audit report."""
-    safe_print(f"## Full Plugin Health Audit: {root_dir.name}\n")
-
-    safe_print(f"### Directory Structure ({root_dir.name})")
-    safe_print("```")
-    for line in results.structure:
-        safe_print(line)
-    safe_print("```\n")
-
-    safe_print("### Project Environment")
-    safe_print(f"- **Package Manager:** {results.env.package_manager}")
-    safe_print(f"- **Test Runner:** {results.env.test_runner}")
-    safe_print(f"- **Linter/Formatter:** {results.env.linter}")
-    safe_print(f"- **Monorepo:** {'Yes' if results.env.is_monorepo else 'No'}")
-    safe_print(f"- **CI/CD Automation:** {results.env.ci_provider}\n")
-
-    safe_print("### Installed Dependencies")
-    if results.dependencies:
-        for dep in results.dependencies:
-            prefix = ">" if dep.size_truncated else ""
-            size_str = f"{prefix}{dep.size_mb} MB"
-            safe_print(f"- **{dep.name}** ({dep.type}) → `{dep.path}` [{size_str}]")
-    else:
-        safe_print("- None detected in root directory.")
-    safe_print("")
-
-    safe_print(f"### Validating Skills in {root_dir / 'skills'}")
-    if results.skills.success and not results.skills.issues:
-        safe_print("PASS: All skills have valid frontmatter.")
-    else:
-        print_validation_issues(results.skills)
-    safe_print("")
-
-    safe_print(f"### Linting {root_dir / 'AGENTS.md'}")
-    if results.agents_md.success and not results.agents_md.issues:
-        safe_print(f"PASS: {root_dir / 'AGENTS.md'} looks correct.")
-    else:
-        print_validation_issues(results.agents_md)
-    safe_print("")
-
-    safe_print(f"### Validating Hooks in {root_dir / 'hooks' / 'hooks.json'}")
-    if results.hooks.success and not results.hooks.issues:
-        safe_print("PASS: Hook configuration and handlers are valid.")
-    else:
-        print_validation_issues(results.hooks)
-    safe_print("")
-
-    safe_print(
-        f"### Validating Manifest in {root_dir / '.claude-plugin' / 'plugin.json'}"
-    )
-    if results.manifest.success and not results.manifest.issues:
-        safe_print("PASS: Manifest is valid.")
-    else:
-        print_validation_issues(results.manifest)
-
-    safe_print("\n## Audit Summary")
-    checks = (results.skills, results.agents_md, results.hooks, results.manifest)
-    if any(r.has_errors for r in checks):
-        safe_print("FAIL: Audit failed with one or more errors.")
-        return 1
-    safe_print("PASS: Audit passed. Plugin is healthy.")
-    return 0
-
-
-def run_full_audit(root_dir: Path) -> int:
-    """Orchestrate the full audit process for *root_dir*.
-
-    Returns the exit code from :func:`print_audit_report`.
-    """
-    # FIX B-6: removed the duplicate dead docstring that previously followed
-    # this one; Python only ever exposes the first string literal as __doc__.
-    results = AuditResults()
-    patterns = load_gitignore(root_dir) | Config.DEFAULT_IGNORE_PATTERNS
-
-    results.structure = get_tree_lines(root_dir, patterns)
-    results.env = analyze_project_env(root_dir)
-    results.dependencies = get_dependencies(root_dir)
-    results.skills = validate_skill_files(root_dir / "skills")
-    results.agents_md = validate_agents_md_file(root_dir / "AGENTS.md")
-    results.hooks = validate_hooks_config(root_dir / "hooks" / "hooks.json")
-    results.manifest = validate_manifest_file(
-        root_dir / ".claude-plugin" / "plugin.json"
-    )
-
-    return print_audit_report(root_dir, results)
-
-
 def _resolve_target(raw: Path | None, fallback: Path) -> Path:
     """Resolve an optional target_dir argument, falling back to cwd."""
     return (raw or fallback).resolve()
@@ -1469,9 +993,7 @@ def _print_dependencies(deps: list[DependencyInfo]) -> None:
         safe_print("None found.")
         return
     for dep in deps:
-        prefix = ">" if dep.size_truncated else ""
-        size_str = f"{prefix}{dep.size_mb} MB"
-        safe_print(f"{dep.name} ({dep.type}) -> {dep.path} [{size_str}]")
+        safe_print(f"{dep.name} ({dep.type}) -> {dep.path}")
 
 
 # ── Subcommand handlers ────────────────────────────────────────────────────
@@ -1572,26 +1094,6 @@ def _setup_parser() -> argparse.ArgumentParser:
     )
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    # FIX C-7: add optional target_dir to check-all so callers need not `cd`
-    # into the project before running the full audit.
-    check_all_parser = subparsers.add_parser("check-all", help="Run all health checks.")
-    _add_target_dir_arg(check_all_parser, "audit")
-
-    check_hooks_parser = subparsers.add_parser(
-        "check-hooks", help="Validate hook configuration and handlers."
-    )
-    _add_target_dir_arg(check_hooks_parser, "check")
-
-    check_manifest_parser = subparsers.add_parser(
-        "check-manifest", help="Validate plugin manifest."
-    )
-    _add_target_dir_arg(check_manifest_parser, "check")
-
-    validate_skills_parser = subparsers.add_parser(
-        "validate-skills", help="Check SKILL.md frontmatter."
-    )
-    _add_target_dir_arg(validate_skills_parser, "check")
-
     lint_parser = subparsers.add_parser("lint-agents-md", help="Validate AGENTS.md.")
     lint_parser.add_argument(
         "file_path", type=Path, nargs="?", default=Path("AGENTS.md")
@@ -1601,11 +1103,6 @@ def _setup_parser() -> argparse.ArgumentParser:
         "analyze-env", help="Detect project environment."
     )
     _add_target_dir_arg(analyze_env_parser, "analyze")
-
-    find_deps_parser = subparsers.add_parser(
-        "find-dependencies", help="Locate installed dependency directories."
-    )
-    _add_target_dir_arg(find_deps_parser, "search")
 
     scan_parser = subparsers.add_parser(
         "scan-structure", help="Show directory structure."
@@ -1620,7 +1117,7 @@ def _setup_parser() -> argparse.ArgumentParser:
 
     analyze_all_parser = subparsers.add_parser(
         "analyze-all",
-        help="Run analyze-env, find-dependencies, and scan-structure sequentially.",
+        help="Run environment detection, dependency listing, and structure scan sequentially.",
     )
     _add_target_dir_arg(analyze_all_parser, "analyze")
     analyze_all_parser.add_argument(
@@ -1697,31 +1194,6 @@ def main() -> int:
     root = Path(".").resolve()
 
     match args.command:
-        case "check-all":
-            # FIX C-7: honour optional target_dir — no forced `cd` required.
-            target = _resolve_target(args.target_dir, root)
-            return run_full_audit(target)
-        case "check-hooks":
-            target = _resolve_target(args.target_dir, root)
-            result = validate_hooks_config(target / "hooks" / "hooks.json")
-            print_validation_issues(result)
-            if result.success:
-                safe_print("PASS: Hooks are valid.")
-            return 0 if result.success else 1
-        case "check-manifest":
-            target = _resolve_target(args.target_dir, root)
-            result = validate_manifest_file(target / ".claude-plugin" / "plugin.json")
-            print_validation_issues(result)
-            if result.success:
-                safe_print("PASS: Manifest is valid.")
-            return 0 if result.success else 1
-        case "validate-skills":
-            target = _resolve_target(args.target_dir, root)
-            result = validate_skill_files(target / "skills")
-            print_validation_issues(result)
-            if result.success:
-                safe_print("PASS: Skills are valid.")
-            return 0 if result.success else 1
         case "lint-agents-md":
             result = validate_agents_md_file(args.file_path)
             print_validation_issues(result)
@@ -1731,10 +1203,6 @@ def main() -> int:
         case "analyze-env":
             target = _resolve_target(args.target_dir, root)
             _print_env(analyze_project_env(target))
-            return 0
-        case "find-dependencies":
-            target = _resolve_target(args.target_dir, root)
-            _print_dependencies(get_dependencies(target))
             return 0
         case "scan-structure":
             target = _resolve_target(args.target_dir, root)
