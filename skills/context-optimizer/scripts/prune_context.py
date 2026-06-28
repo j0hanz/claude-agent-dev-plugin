@@ -184,8 +184,6 @@ def update_rolling_summary(
 def append_task_ledger(summary_path: Path, task_line: str) -> str:
     """Appends a line to the Task Ledger section, creating it if needed (FIFO order)."""
     summary_path.parent.mkdir(parents=True, exist_ok=True)
-
-    # Read existing content
     content = ""
     if summary_path.exists():
         try:
@@ -193,38 +191,12 @@ def append_task_ledger(summary_path: Path, task_line: str) -> str:
         except OSError:
             pass
 
-    # Check if Task Ledger section exists
-    if "## Task Ledger" in content:
-        lines = content.split("\n")
-        # Find the Task Ledger heading
-        ledger_idx = -1
-        for i, line in enumerate(lines):
-            if line.strip() == "## Task Ledger":
-                ledger_idx = i
-                break
-
-        if ledger_idx >= 0:
-            # Find the last task entry (Task N: complete ...) in the ledger section
-            insert_pos = ledger_idx + 1
-            last_task_idx = ledger_idx
-
-            for i in range(ledger_idx + 1, len(lines)):
-                # Stop at the next section heading
-                if lines[i].startswith("#"):
-                    break
-                # Track the last task entry line
-                if lines[i].strip().startswith("Task ") and ": complete" in lines[i]:
-                    last_task_idx = i
-
-            # Insert after the last task entry, or after the heading if no entries exist
-            insert_pos = last_task_idx + 1
-
-            output = lines[:insert_pos] + [task_line] + lines[insert_pos:]
-            final_content = "\n".join(output)
-        else:
-            final_content = content
+    # Insert after the last consecutive "Task N: complete ..." line under the heading
+    match = re.search(r"^## Task Ledger\n(?:Task .*: complete.*\n)*", content, re.M)
+    if match:
+        insert_at = match.end()
+        final_content = content[:insert_at] + task_line + "\n" + content[insert_at:]
     else:
-        # Create the section at the end
         if content and not content.endswith("\n"):
             content += "\n"
         final_content = content + "\n## Task Ledger\n" + task_line + "\n"

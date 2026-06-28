@@ -28,15 +28,8 @@ agent_sdlc_json_escape() {
     printf '%s' "$input" | jq -Rs . | sed -e 's/^"//' -e 's/"$//'
     return
   fi
-  # bash-only fallback if jq is unavailable in the consuming repo
-  local out="$input"
-  local bs='\'
-  out="${out//"$bs"/"$bs$bs"}"
-  out="${out//\"/"$bs"\"}"
-  out="${out//$'\n'/"$bs"n}"
-  out="${out//$'\r'/"$bs"r}"
-  out="${out//$'\t'/"$bs"t}"
-  printf '%s' "$out"
+  # Node is a guaranteed prerequisite for this plugin environment (same fallback as shell-safety.sh)
+  node -e 'process.stdout.write(JSON.stringify(process.argv[1]).slice(1, -1))' "$input" 2>/dev/null
 }
 
 agent_sdlc_skill_exists() {

@@ -17,7 +17,6 @@ from __future__ import annotations
 import argparse
 import ast
 import json
-import os
 import re
 import subprocess
 import sys
@@ -53,12 +52,12 @@ _SKIP_DIRS = frozenset(
 )
 
 _DOC_GLOBS = [
-    "**/glossary.md",
-    "**/CONTEXT.md",
-    "**/ARCHITECTURE.md",
-    "**/docs/adr/*.md",
-    "**/decisions/*.md",
-    "**/docs/design/*.md",
+    "glossary.md",
+    "CONTEXT.md",
+    "ARCHITECTURE.md",
+    "docs/adr/*.md",
+    "decisions/*.md",
+    "docs/design/*.md",
 ]
 _CONSTRAINT_PATTERNS = ["TODO", "FIXME", "HACK", "rate.limit", "timeout", "max_size"]
 
@@ -104,10 +103,6 @@ def _sanitize_noun(raw: str) -> str:
     if not cleaned or cleaned.startswith("-"):
         raise ValueError(f"invalid domain noun after sanitization: {raw!r}")
     return cleaned
-
-
-def _is_skippable(path: Path) -> bool:
-    return any(part in _SKIP_DIRS for part in path.parts)
 
 
 def _expand_synonyms(nouns: list[str]) -> list[str]:
@@ -204,19 +199,15 @@ def _grep_files(pattern: str, cwd: Path) -> list[str] | None:
     return normalized[:5]
 
 
-_DOC_SUFFIXES = [g.removeprefix("**/") for g in _DOC_GLOBS]
-
-
 def _find_doc_files(cwd: Path) -> list[str]:
     found: list[str] = []
-    for root, dirs, files in os.walk(cwd):
-        dirs[:] = [d for d in dirs if d not in _SKIP_DIRS]
-        for name in files:
-            rel = (Path(root) / name).relative_to(cwd)
-            if any(rel.match(suf) for suf in _DOC_SUFFIXES):
-                found.append(str(rel))
-                if len(found) >= 5:
-                    return found
+    for glob in _DOC_GLOBS:
+        for p in cwd.rglob(glob):
+            if any(part in _SKIP_DIRS for part in p.relative_to(cwd).parts):
+                continue
+            found.append(str(p.relative_to(cwd)))
+            if len(found) >= 5:
+                return found
     return found
 
 

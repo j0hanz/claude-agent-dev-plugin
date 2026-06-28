@@ -44,13 +44,13 @@ Trigger: Review/Design Request
 
 - **Phase_2_Present:** List 3-6 targets: [Name], [Files], [Bleed], [Deepening], [Impact], [Risk], [Mermaid]. Prompt: "Which of these candidates interests you most?"
 - **Phase_3_Align:** - Load `references/DOMAIN_INTERVIEW.md` strictly upon interview start.
-- Load `references/INTERFACE_SHAPES.md` & `references/SEAMS_BY_EXAMPLE.md` before proposing seams.
+- Load `references/INTERFACE_SHAPES.md` before proposing seams.
 
 - **Phase_4_ADR:** Generate ADR in `docs/adr/` using `references/ADR_TEMPLATE.md`.
 - **Phase_5_Handoff:** Generate `architecture-brief.json` (`references/brief-schema.json`). Read `references/MIGRATION_STRATEGIES.md` for gradual cutover. Handoff to `request-plan`.
 
 - **Mode_B_Design:**
-- **Constraint_Context:** NEVER load diagnostic templates (`references/DOMAIN_INTERVIEW.md`, `references/SEAMS_BY_EXAMPLE.md`).
+- **Constraint_Context:** NEVER load diagnostic templates (`references/DOMAIN_INTERVIEW.md`, `references/INTERFACE_SHAPES.md`).
 - **Step_1_Diagnose:** Isolate Core Domain vs. Mechanism.
 - **Step_2_Pattern:** Read `references/architecture-patterns.md`; select optimal pattern.
 - **Step_3_Stress_Test:** Apply Swap Test (If [mechanism] changes, what breaks?).

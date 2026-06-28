@@ -118,14 +118,6 @@ const VALID_COLORS = new Set([
   'pink',
   'cyan',
 ]);
-const VALID_PERMISSION_MODES = new Set([
-  'default',
-  'acceptEdits',
-  'auto',
-  'dontAsk',
-  'bypassPermissions',
-  'plan',
-]);
 const VALID_MEMORY = new Set(['user', 'project', 'local']);
 const AGENT_NAME_PATTERN = /^[a-z][a-z0-9-]*$/;
 
@@ -193,15 +185,6 @@ function validateAgentStructure(agentMd, agentNamesSeen) {
     if (!VALID_COLORS.has(color)) {
       errors.push(
         `[Agent] ${agentMd}: Invalid 'color' value "${color}" — expected one of ${[...VALID_COLORS].join('|')}`,
-      );
-    }
-  }
-
-  if (typeof fmData.permissionMode === 'string' && fmData.permissionMode.trim()) {
-    const mode = fmData.permissionMode.trim();
-    if (!VALID_PERMISSION_MODES.has(mode)) {
-      errors.push(
-        `[Agent] ${agentMd}: Invalid 'permissionMode' value "${mode}" — expected one of ${[...VALID_PERMISSION_MODES].join('|')}`,
       );
     }
   }

@@ -8,7 +8,6 @@ to the design-proposer in Phase 4. Reads from a file or stdin.
 Usage:
     python compress_report.py report.json
     cat report.json | python compress_report.py
-    python compress_report.py report.json --max-files 3 --max-log-lines 2
 """
 
 from __future__ import annotations
@@ -133,48 +132,12 @@ def _annotate_savings(original: dict[str, Any], compressed: dict[str, Any]) -> N
     )
 
 
-def _non_negative_int(value: str) -> int:
-    try:
-        val = int(value)
-    except ValueError:
-        raise argparse.ArgumentTypeError(f"invalid int value: {value!r}") from None
-    if val < 0:
-        raise argparse.ArgumentTypeError(f"value must be >= 0, got {val}")
-    return val
-
-
-_DEFAULTS = CompressConfig()
-
-
 def main() -> None:
     parser = argparse.ArgumentParser(
         description="Compress a Codebase Context Report for Phase 4"
     )
     parser.add_argument(
         "report", nargs="?", help="Path to report JSON (omit to read from stdin)"
-    )
-    parser.add_argument(
-        "--max-files", type=_non_negative_int, default=_DEFAULTS.max_files
-    )
-    parser.add_argument(
-        "--max-log-lines", type=_non_negative_int, default=_DEFAULTS.max_log_lines
-    )
-    parser.add_argument(
-        "--max-constraints", type=_non_negative_int, default=_DEFAULTS.max_constraints
-    )
-    parser.add_argument(
-        "--max-interface-shapes",
-        type=_non_negative_int,
-        default=_DEFAULTS.max_interface_shapes,
-    )
-    parser.add_argument(
-        "--max-unknowns", type=_non_negative_int, default=_DEFAULTS.max_unknowns
-    )
-    parser.add_argument(
-        "--max-design-docs", type=_non_negative_int, default=_DEFAULTS.max_design_docs
-    )
-    parser.add_argument(
-        "--max-analogous", type=_non_negative_int, default=_DEFAULTS.max_analogous
     )
     args = parser.parse_args()
 
@@ -192,17 +155,8 @@ def main() -> None:
     except (OSError, EOFError) as exc:
         sys.exit(f"error: failed to read input — {exc}")
 
-    cfg = CompressConfig(
-        max_files=args.max_files,
-        max_log_lines=args.max_log_lines,
-        max_constraints=args.max_constraints,
-        max_interface_shapes=args.max_interface_shapes,
-        max_unknowns=args.max_unknowns,
-        max_design_docs=args.max_design_docs,
-        max_analogous=args.max_analogous,
-    )
     try:
-        compressed = compress(raw, cfg)
+        compressed = compress(raw, CompressConfig())
     except TypeError as exc:
         sys.exit(f"error: {exc}")
     print(json.dumps(compressed, indent=2))

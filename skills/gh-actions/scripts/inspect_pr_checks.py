@@ -139,19 +139,7 @@ def fetch_checks(pr_value: str, repo_root: Path) -> list[dict[str, Any]] | None:
 def parse_available_fields(message: str) -> list[str]:
     if "Available fields:" not in message:
         return []
-    fields: list[str] = []
-    collecting = False
-    for line in message.splitlines():
-        if "Available fields:" in line:
-            collecting = True
-            continue
-        if not collecting:
-            continue
-        field = line.strip()
-        if not field:
-            continue
-        fields.append(field)
-    return fields
+    return message.split("Available fields:", 1)[1].split()
 
 
 def is_failing(check: dict[str, Any]) -> bool:

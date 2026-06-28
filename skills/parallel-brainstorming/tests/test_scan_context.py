@@ -6,7 +6,6 @@ using a temporary directory fixture.
 
 import json
 import sys
-from pathlib import Path
 
 import pytest
 
@@ -182,23 +181,6 @@ class TestExtractInterfaceShapes:
 # ---------------------------------------------------------------------------
 # _dedupe_stable (via _expand_synonyms indirectly)
 # ---------------------------------------------------------------------------
-
-
-class TestIsSkippable:
-    def test_skips_node_modules(self):
-        assert scan_context._is_skippable(Path("project/node_modules/lib.js"))
-
-    def test_skips_pycache(self):
-        assert scan_context._is_skippable(Path("src/__pycache__/cache.py"))
-
-    def test_skips_venv(self):
-        assert scan_context._is_skippable(Path(".venv/lib/python3.10/site.py"))
-
-    def test_allows_normal_path(self):
-        assert not scan_context._is_skippable(Path("src/search/engine.py"))
-
-    def test_allows_tests_dir(self):
-        assert not scan_context._is_skippable(Path("tests/test_search.py"))
 
 
 # ---------------------------------------------------------------------------
