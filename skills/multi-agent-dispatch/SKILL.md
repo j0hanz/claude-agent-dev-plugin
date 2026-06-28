@@ -89,13 +89,17 @@ Tier every lane, regardless of schema, into the same three buckets used here and
 - **MINOR** — cosmetic: merge now, log for later.
 
 ### Git Merge Conflict Resolution
+
 If a Git merge conflict occurs during integration, do NOT immediately abort or escalate to the user:
+
 1. Dispatch the specialized `conflict-resolver` agent (`agents/conflict-resolver.md`) to resolve the conflict markers.
 2. The conflict resolver will read the conflicted files, resolve the edits, run tests, and commit the resolution.
 3. If it returns `VERDICT: DONE`, proceed with the merge. If it returns `VERDICT: BLOCKED`, escalate the conflict to the user.
 
 ### Context Compaction & Token Hygiene
+
 To prevent orchestrator context bloat during multi-lane integration:
+
 1. Once a lane's work is integrated (merged and tests pass), prune intermediate agent logs, thinking steps, and full file diffs from the active conversation context.
 2. Retain only a high-level summary and the merge commit hash in the main thread.
 3. If token footprint is high or 3+ lanes have been merged, execute the `context-optimizer` skill to generate a rolling summary and reset/compact active context.

@@ -143,7 +143,6 @@ def test_linter_passes_package_scoped_agents_md():
     assert "missing/malformed project-init:package-scoped marker" in fails
 
 
-
 def test_cmd_alias_normalizes_to_canonical_key(tmp_path: Path):
     """`cmd.tests` and `cmd.test` collapse to one canonical key, not two."""
     assert init.normalize_key("cmd.tests") == "cmd.test"
@@ -214,24 +213,39 @@ def test_claims_filtering_by_package_prefix(tmp_path: Path):
     (tmp_path / "packages" / "api").mkdir()
     (tmp_path / "packages" / "frontend").mkdir()
     (tmp_path / "packages" / "api" / "package.json").write_text('{"name": "api"}\n')
-    (tmp_path / "packages" / "frontend" / "package.json").write_text('{"name": "frontend"}\n')
+    (tmp_path / "packages" / "frontend" / "package.json").write_text(
+        '{"name": "frontend"}\n'
+    )
     (tmp_path / "README.md").write_text("root readme\n")
 
     claims = [
         _claim("pm", "pnpm", "packages/api/package.json", match="api", confidence=0.9),
-        _claim("cmd.build", "pnpm build", "packages/api/package.json", match="api", confidence=0.9),
-        _claim("cmd.test", "vitest", "packages/frontend/package.json", match="frontend", confidence=0.8),
+        _claim(
+            "cmd.build",
+            "pnpm build",
+            "packages/api/package.json",
+            match="api",
+            confidence=0.9,
+        ),
+        _claim(
+            "cmd.test",
+            "vitest",
+            "packages/frontend/package.json",
+            match="frontend",
+            confidence=0.8,
+        ),
         _claim("conv.git", "ESM only", "README.md", confidence=0.5),
     ]
 
     # Run merge_claims as normal
     winners, _ = init.merge_claims(claims, tmp_path)
-    
+
     # Simulate filtering logic
     package_path = "packages/api"
     prefix = package_path.strip().replace("\\", "/").rstrip("/") + "/"
     filtered = {
-        k: v for k, v in winners.items()
+        k: v
+        for k, v in winners.items()
         if v.evidence.path.replace("\\", "/").startswith(prefix)
     }
 
@@ -252,9 +266,23 @@ def test_cli_package_filtering(tmp_path: Path, monkeypatch):
     claims_file.write_text(
         json.dumps(
             [
-                _claim("pm", "pnpm", "packages/api/package.json", match="api", confidence=0.9),
-                _claim("cmd.build", "pnpm build", "packages/api/package.json", match="api", confidence=0.9),
-                _claim("cmd.test", "vitest", "README.md", match="readme", confidence=0.8),
+                _claim(
+                    "pm",
+                    "pnpm",
+                    "packages/api/package.json",
+                    match="api",
+                    confidence=0.9,
+                ),
+                _claim(
+                    "cmd.build",
+                    "pnpm build",
+                    "packages/api/package.json",
+                    match="api",
+                    confidence=0.9,
+                ),
+                _claim(
+                    "cmd.test", "vitest", "README.md", match="readme", confidence=0.8
+                ),
             ]
         )
     )
@@ -296,7 +324,12 @@ def test_render_package_scoped_agents_md(tmp_path: Path):
         "stack": init.Claim("stack", "Go 1.22", 4, 1.0),
     }
     out = init.render_agents_md(
-        winners, "minimal", "development", "always", "local-only", package="packages/api"
+        winners,
+        "minimal",
+        "development",
+        "always",
+        "local-only",
+        package="packages/api",
     )
 
     assert "# Agent Instructions: packages/api" in out
@@ -406,5 +439,3 @@ def test_cli_package_validation(tmp_path: Path, monkeypatch, capsys):
         ]
     )
     assert init._cmd_generate(args) == 0
-
-

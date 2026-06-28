@@ -18,12 +18,12 @@ Agent SDLC Plugin extends Claude Code with 15 skills and 2 lifecycle hooks cover
 
 ## Highlights
 
-| Feature                  | Description                                                                                                                                    |
-| :----------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------- |
-| 15 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                   |
+| Feature                  | Description                                                                                                                                                  |
+| :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 15 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                                 |
 | Subagent orchestration   | `multi-agent-dispatch` and `multi-agent-development` drive subagent dispatches using specialized, safe-by-default agents (`implementer`, `researcher`, etc.) |
-| 2 lifecycle hooks        | Bash-only handlers: a shell-safety guard and a skill nudge                                                                                     |
-| Marketplace install      | One-command install from GitHub — no manual clone required                                                                                     |
+| 2 lifecycle hooks        | Bash-only handlers: a shell-safety guard and a skill nudge                                                                                                   |
+| Marketplace install      | One-command install from GitHub — no manual clone required                                                                                                   |
 
 ## Installation
 
@@ -96,11 +96,11 @@ Skills are invoked automatically by Claude based on task context, or manually wi
 
 This plugin defines custom agents in the `agents/` directory covering specialized roles: `implementer` (code writer), `researcher` (read-only investigator/explorer), `conflict-resolver` (merge conflict resolution), `spec-reviewer`, `quality-reviewer`, and `diff-reviewer`. Three skills orchestrate these:
 
-| Skill                     | Pattern                                                                                            |
-| :------------------------ | :------------------------------------------------------------------------------------------------- |
-| `multi-agent-dispatch`    | Parallel fan-out — one `researcher` or `implementer` agent per independent domain, one batch       |
-| `multi-agent-development` | Sequential — one `implementer` per plan task, gated by `spec-reviewer` and `quality-reviewer`      |
-| `request-code-review`     | Read-only — one fresh-context `diff-reviewer` per diff, no memory of the implementation            |
+| Skill                     | Pattern                                                                                       |
+| :------------------------ | :-------------------------------------------------------------------------------------------- |
+| `multi-agent-dispatch`    | Parallel fan-out — one `researcher` or `implementer` agent per independent domain, one batch  |
+| `multi-agent-development` | Sequential — one `implementer` per plan task, gated by `spec-reviewer` and `quality-reviewer` |
+| `request-code-review`     | Read-only — one fresh-context `diff-reviewer` per diff, no memory of the implementation       |
 
 > [!NOTE]
 > Read-only roles (researcher, reviewers) utilize the specialized `researcher` and `*-reviewer` agents which enforce hard tool restrictions (Write/Edit tools are disabled) at the harness level. Implementer and conflict-resolver roles run in an isolated git worktree (`isolation: "worktree"`).

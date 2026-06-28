@@ -307,7 +307,13 @@ def verify_claim(raw: dict[str, Any], root: Path) -> tuple[Claim | None, str]:
     except (TypeError, ValueError):
         confidence = 0.5
     relative_path = resolved.relative_to(root).as_posix()
-    return Claim(key, value, evidence_tier(ev_path), confidence, Evidence(path=relative_path, match=match)), ""
+    return Claim(
+        key,
+        value,
+        evidence_tier(ev_path),
+        confidence,
+        Evidence(path=relative_path, match=match),
+    ), ""
 
 
 def merge_claims(
@@ -362,11 +368,7 @@ def render_agents_md(
     pkg_normalized = package.strip().replace("\\", "/").rstrip("/") if package else None
 
     if pkg_normalized:
-        lines = [
-            f"# Agent Instructions: {pkg_normalized}",
-            "",
-            f"purpose: {purpose}"
-        ]
+        lines = [f"# Agent Instructions: {pkg_normalized}", "", f"purpose: {purpose}"]
     else:
         lines = ["# Agent Instructions", "", f"purpose: {purpose}"]
 
@@ -418,7 +420,9 @@ def render_agents_md(
     return "\n".join(lines)
 
 
-def _trim_to_budget(winners: dict[str, Claim], package: str | None = None) -> tuple[dict[str, Claim], list[str]]:
+def _trim_to_budget(
+    winners: dict[str, Claim], package: str | None = None
+) -> tuple[dict[str, Claim], list[str]]:
     """Drop lowest-priority non-required keys until the rendered file fits MAX_LINES.
 
     Returns (kept, dropped-reasons). The caller still lints; if required keys
@@ -429,7 +433,12 @@ def _trim_to_budget(winners: dict[str, Claim], package: str | None = None) -> tu
     # Render with placeholder survey values just to count lines.
     while True:
         body = render_agents_md(
-            kept, "minimal", "development", "not-enforced", "local-only", package=package
+            kept,
+            "minimal",
+            "development",
+            "not-enforced",
+            "local-only",
+            package=package,
         )
         if len(body.splitlines()) <= MAX_LINES - 1:
             return kept, dropped
@@ -450,9 +459,7 @@ _FILLER_RE = re.compile(
     r"(welcome to|this document explains|you should|be sure to|make sure)",
     re.IGNORECASE,
 )
-_PKG_MARKER_RE = re.compile(
-    r"<!--\s*project-init:package-scoped\s+(\S+)\s*-->"
-)
+_PKG_MARKER_RE = re.compile(r"<!--\s*project-init:package-scoped\s+(\S+)\s*-->")
 
 
 def lint_agents_md(content: str) -> list[str]:
@@ -589,7 +596,10 @@ def _cmd_generate(args: argparse.Namespace) -> int:
     if args.package:
         pkg_path = (root / args.package).resolve()
         if not pkg_path.is_relative_to(root) or not pkg_path.is_dir():
-            safe_print(f"FAIL: --package path does not exist or escapes repo root: {args.package}", file=sys.stderr)
+            safe_print(
+                f"FAIL: --package path does not exist or escapes repo root: {args.package}",
+                file=sys.stderr,
+            )
             return 1
 
     try:
@@ -607,8 +617,10 @@ def _cmd_generate(args: argparse.Namespace) -> int:
     if args.package:
         pkg_prefix = args.package.strip().replace("\\", "/").rstrip("/") + "/"
         winners = {
-            k: v for k, v in winners.items()
-            if not v.evidence or v.evidence.path.replace("\\", "/").startswith(pkg_prefix)
+            k: v
+            for k, v in winners.items()
+            if not v.evidence
+            or v.evidence.path.replace("\\", "/").startswith(pkg_prefix)
         }
 
     winners, trimmed = _trim_to_budget(winners, package=args.package)
@@ -696,7 +708,9 @@ def _build_parser() -> argparse.ArgumentParser:
         "--model", default=None, help="Active model name for the attribution trailer."
     )
     gen.add_argument(
-        "--package", default=None, help="Relative path to package directory (e.g. 'packages/api')."
+        "--package",
+        default=None,
+        help="Relative path to package directory (e.g. 'packages/api').",
     )
     gen.add_argument("--out", type=Path, default=None)
 
