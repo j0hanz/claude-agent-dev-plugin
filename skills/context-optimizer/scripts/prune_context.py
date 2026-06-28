@@ -181,6 +181,69 @@ def update_rolling_summary(
     return final_content
 
 
+def append_task_ledger(summary_path: Path, task_line: str) -> str:
+    """Appends a line to the Task Ledger section, creating it if needed."""
+    summary_path.parent.mkdir(parents=True, exist_ok=True)
+
+    # Read existing content
+    content = ""
+    if summary_path.exists():
+        try:
+            content = summary_path.read_text(encoding="utf-8", errors="ignore")
+        except OSError:
+            pass
+
+    # Check if Task Ledger section exists
+    if "## Task Ledger" in content:
+        # Append after the heading
+        lines = content.split("\n")
+        output = []
+        ledger_found = False
+        for i, line in enumerate(lines):
+            output.append(line)
+            if line.strip() == "## Task Ledger" and not ledger_found:
+                ledger_found = True
+                # Find where to insert (after the heading, but before next heading or end)
+                insert_at = i + 1
+                # Skip blank lines after heading
+                while insert_at < len(lines) and lines[insert_at].strip() == "":
+                    output.append(lines[insert_at])
+                    insert_at += 1
+                    i += 1
+
+        # Reconstruct to insert the new line
+        output = []
+        ledger_idx = -1
+        for i, line in enumerate(lines):
+            if line.strip() == "## Task Ledger":
+                ledger_idx = i
+            output.append(line)
+
+        if ledger_idx >= 0:
+            # Find the position after the heading and any blank lines
+            insert_pos = ledger_idx + 1
+            while insert_pos < len(lines) and lines[insert_pos].strip() == "":
+                insert_pos += 1
+
+            # Check if next content is another heading (## or #)
+            if insert_pos < len(lines) and lines[insert_pos].startswith("#"):
+                # Insert before the heading
+                output.insert(insert_pos, task_line)
+            else:
+                # Insert after blank lines
+                output.insert(insert_pos, task_line)
+
+        final_content = "\n".join(output)
+    else:
+        # Create the section at the end
+        if content and not content.endswith("\n"):
+            content += "\n"
+        final_content = content + "\n## Task Ledger\n" + task_line + "\n"
+
+    summary_path.write_text(final_content, encoding="utf-8")
+    return final_content
+
+
 def main() -> None:
     parser = argparse.ArgumentParser(description="Prune and optimize context input.")
     group = parser.add_mutually_exclusive_group(required=True)
@@ -190,6 +253,11 @@ def main() -> None:
     )
     group.add_argument(
         "--summary", action="store_true", help="Update the rolling summary file"
+    )
+    group.add_argument(
+        "--task-complete",
+        default=None,
+        help='Append a line to the Task Ledger (e.g., "Task N: complete (commits <base7>..<head7>, review clean)")',
     )
 
     parser.add_argument(
@@ -243,6 +311,10 @@ def main() -> None:
             args.current_skill,
         )
         print(f"Summary written to {args.path}. Content:")
+        print(result)
+    elif args.task_complete:
+        result = append_task_ledger(args.path, args.task_complete)
+        print(f"Task ledger entry written to {args.path}. Content:")
         print(result)
 
 
