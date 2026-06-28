@@ -213,6 +213,18 @@ export function updateState(state, update) {
 }
 
 // CLI entrypoint handling
+export function renderStatusTable(state) {
+  let table = '| Lane | Title | Status | Spec | Quality |\n';
+  table += '| :--- | :--- | :--- | :--- | :--- |\n';
+
+  for (const lane of state.lanes) {
+    const spec = (lane.reviews && lane.reviews.spec && lane.reviews.spec.verdict) || '-';
+    const quality = (lane.reviews && lane.reviews.quality && lane.reviews.quality.verdict) || '-';
+    table += `| ${lane.id} | ${lane.title} | ${lane.status} | ${spec} | ${quality} |\n`;
+  }
+  return table;
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const [, , command, arg] = process.argv;
   if (command === 'init' && arg) {
@@ -229,12 +241,30 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
 
     if (process.argv.includes('--update')) {
       const payloadIndex = process.argv.indexOf('--update') + 1;
-      const payload = JSON.parse(process.argv[payloadIndex]);
+      if (payloadIndex >= process.argv.length || !process.argv[payloadIndex]) {
+        console.error('Error: Missing payload for --update parameter.');
+        process.exit(1);
+      }
+      let payload;
+      try {
+        payload = JSON.parse(process.argv[payloadIndex]);
+      } catch (err) {
+        console.error('Error: Malformed JSON payload for --update.');
+        process.exit(1);
+      }
       state = updateState(state, payload);
       saveState(state);
     }
 
     const actions = evaluateStep(state);
     console.log(JSON.stringify(actions, null, 2));
+  } else if (command === 'status') {
+    const statePath = path.resolve('.claude/multi_agent_state.json');
+    if (!fs.existsSync(statePath)) {
+      console.error('Error: State file not found.');
+      process.exit(1);
+    }
+    const state = JSON.parse(fs.readFileSync(statePath, 'utf-8'));
+    console.log(renderStatusTable(state));
   }
 }
