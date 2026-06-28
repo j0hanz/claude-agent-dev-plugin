@@ -2,7 +2,7 @@
 
 ## Workflow Security Auditor Output Contract
 
-When dispatching the `general-purpose` subagent for the audit step (SKILL.md PATH A step 5), instruct it to produce JSON output with the following structure:
+When dispatching the `researcher` subagent (`agents/researcher.md`) for the audit step (SKILL.md PATH A step 5), instruct it to produce JSON output with the following structure:
 
 ```json
 {

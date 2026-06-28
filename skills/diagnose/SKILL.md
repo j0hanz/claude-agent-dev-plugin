@@ -60,7 +60,7 @@ Phase 0: Triage (serial vs. tournament)
 **serial path (default):** probe one hypothesis directly against the Oracle
 **tournament path (Phase 0 escalated):** dispatch via `multi-agent-dispatch`, one falsifiable proposition per worktree, lanes blind to siblings
 
-- **role:** observational/static probe -> read-only `detective` (fallback `general-purpose`); instrumented/executed probe -> worktree-isolated `general-purpose` Investigator (Bash+Write), `isolation: worktree`
+- **role:** observational/static probe -> read-only `researcher` agent (`agents/researcher.md`); instrumented/executed probe -> worktree-isolated `implementer` agent (`agents/implementer.md`) with `isolation: worktree`
 - **contract:** 5-field cold-start (SCOPE/OBJECTIVE/CONTEXT/CONSTRAINTS/OUTPUT) per `../multi-agent-development/references/subagent-contract.md`
 - **concurrency:** background-exempt only with a notify primitive; else batch lanes in <=3
 - **output:** `VERDICT: SURVIVED | KILLED` + EVIDENCE (the probe as a runnable block, asserting the predicted mechanism effect Y — not just the Oracle bit)

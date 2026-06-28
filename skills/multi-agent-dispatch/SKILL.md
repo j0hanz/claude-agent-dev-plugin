@@ -51,7 +51,7 @@ This table **is** the dispatch gate:
 
 Assign roles: **Investigator** (read-only, traces root cause), **Writer** (dispatches the named `implementer` agent, `isolation: worktree`), **Researcher** (read-only, reports file paths/usages).
 
-Writer lanes dispatch `subagent_type: implementer` (`agents/implementer.md`), not generic `general-purpose` — it already requires `isolation: worktree` and returns its own fixed output schema (see Step 5: INTEGRATE), so skip the generic five-field/VERDICT-SCHEMA setup for Writer lanes specifically. Investigator and Researcher lanes have no matching named agent — dispatch `general-purpose` for those, using the five-field contract below.
+Writer lanes dispatch `subagent_type: implementer` (`agents/implementer.md`), not generic `general-purpose` — it already requires `isolation: worktree` and returns its own fixed output schema (see Step 5: INTEGRATE), so skip the generic five-field/VERDICT-SCHEMA setup for Writer lanes specifically. Investigator and Researcher lanes MUST dispatch the named `researcher` agent (`agents/researcher.md`) — this enforces hard read-only tool restrictions at the harness level.
 
 Every Investigator/Researcher dispatch prompt MUST contain five fields — subagents start cold with no memory of this conversation:
 
@@ -80,7 +80,7 @@ For the full contract, common mistakes, and specialist-routing table, see `../mu
 Each lane reports against a different schema depending on its role — interpret accordingly before tiering:
 
 - **Writer lanes (`implementer`):** Returns `VERDICT: [DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT]` + SUMMARY + FILES_CHANGED + COMMIT + CONCERNS/BLOCKER/QUESTION. Map to a tier: `DONE` → PASS/merged; `DONE_WITH_CONCERNS` → MINOR or IMPORTANT depending on the concern's severity (merge-and-log, or re-dispatch with the concern verbatim); `BLOCKED` → CRITICAL/discarded, re-dispatch fresh only after resolving the blocker; `NEEDS_CONTEXT` → CRITICAL/discarded, re-dispatch with the question answered, not retried verbatim.
-- **Investigator/Researcher lanes (`general-purpose`):** Returns the generic `VERDICT/FILES_TOUCHED/SUMMARY/EVIDENCE` contract — tier its dispatch-specific VERDICT enum the same CRITICAL/IMPORTANT/MINOR way as before.
+- **Investigator/Researcher lanes (`researcher`):** Returns the generic `VERDICT/FILES_TOUCHED/SUMMARY/EVIDENCE` contract (where `VERDICT` is `SUCCESS | FAILURE | BLOCKED | NEEDS_CONTEXT`) — tier its dispatch-specific VERDICT enum the same CRITICAL/IMPORTANT/MINOR way as before.
 
 Tier every lane, regardless of schema, into the same three buckets used here and by `multi-agent-development`'s quality reviewer:
 
@@ -88,7 +88,19 @@ Tier every lane, regardless of schema, into the same three buckets used here and
 - **IMPORTANT** — works but needs a fix before merge: re-dispatch with the issue verbatim.
 - **MINOR** — cosmetic: merge now, log for later.
 
-Then run the real test suite. Neither implementer's `DONE` nor a generic lane's `VERDICT: SUCCESS` is proof by itself — never merge on either report alone. A lane is mergeable only once its work clears the project-wide [Definition of Done](../verification-before-completion/references/definition-of-done.md), independently verified.
+### Git Merge Conflict Resolution
+If a Git merge conflict occurs during integration, do NOT immediately abort or escalate to the user:
+1. Dispatch the specialized `conflict-resolver` agent (`agents/conflict-resolver.md`) to resolve the conflict markers.
+2. The conflict resolver will read the conflicted files, resolve the edits, run tests, and commit the resolution.
+3. If it returns `VERDICT: DONE`, proceed with the merge. If it returns `VERDICT: BLOCKED`, escalate the conflict to the user.
+
+### Context Compaction & Token Hygiene
+To prevent orchestrator context bloat during multi-lane integration:
+1. Once a lane's work is integrated (merged and tests pass), prune intermediate agent logs, thinking steps, and full file diffs from the active conversation context.
+2. Retain only a high-level summary and the merge commit hash in the main thread.
+3. If token footprint is high or 3+ lanes have been merged, execute the `context-optimizer` skill to generate a rolling summary and reset/compact active context.
+
+Then run the real test suite. Neither implementer's `DONE` nor a researcher's `VERDICT: SUCCESS` is proof by itself — never merge on either report alone. A lane is mergeable only once its work clears the project-wide [Definition of Done](../verification-before-completion/references/definition-of-done.md), independently verified.
 
 ### Report Template
 
@@ -122,6 +134,8 @@ Skipped/blocked lanes: [list, or "none"]
 - **Read:** Agents can read the same files.
 - **Write:** Agents CANNOT edit the same files.
 - **Validate:** Run tests on all agent work. Never just trust the report.
+- **Auto-Resolve:** Use `conflict-resolver` for merge conflicts before user escalation.
+- **Compact:** Trigger `context-optimizer` to prune logs and keep context lightweight.
 
 ## Success Criteria
 

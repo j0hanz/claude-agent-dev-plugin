@@ -169,6 +169,6 @@ Outcome: two independent tasks ran wall-clock in parallel inside an otherwise se
 - **Prompts**: Give agents all facts. They have no memory.
 - **Commits**: Give reviewers the exact old commit and new commit.
 - **Rejects**: Throw away bad work. Start over from a clean base.
-- **Conflicts**: If a merge fails, pause and ask the user.
+- **Conflicts**: If a Git merge fails, do NOT immediately abort or escalate. Dispatch the specialized `conflict-resolver` agent (`agents/conflict-resolver.md`) to read conflict markers, resolve them, test, and commit the resolution. Only pause and ask the user if the conflict resolver returns `VERDICT: BLOCKED`.
 - **Resuming**: Check `git log` before restarting to avoid repeating work.
-- **Context**: The orchestrator thread accumulates summaries across every task loop even though subagents are isolated. Run `context-optimizer` after every cluster boundary (never mid-task) once 3+ tasks have reported back since the last optimization pass, or sooner if responses noticeably slow down.
+- **Context**: The orchestrator thread accumulates summaries across every task loop even though subagents are isolated. Run `context-optimizer` after every cluster boundary (never mid-task) once 3+ tasks have reported back since the last optimization pass, or sooner if responses noticeably slow down. Prune intermediate subagent logs, thinking steps, and full file diffs from the main conversation context once integrated, keeping only a high-level summary and the merge commit hash.

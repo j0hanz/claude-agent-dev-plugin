@@ -46,7 +46,7 @@ Trigger: Workflow/CLI Request
    - Set default permissions to `contents: read`.
    - Use OIDC (`id-token: write`).
 4. **Validate:** Read `references/security-hardening.md`. Run `python3 scripts/lint.py <path>`.
-5. **Audit:** Dispatch a `general-purpose` subagent with the full workflow YAML plus `references/security-hardening.md`, instructing it to return findings in the JSON shape defined in `references/schemas.md`. If `clean` is false, fix each finding and re-run step 4.
+5. **Audit:** Dispatch the named `researcher` subagent (`agents/researcher.md`) with the full workflow YAML plus `references/security-hardening.md`, instructing it to return findings in the JSON shape defined in `references/schemas.md`. If `clean` is false, fix each finding and re-run step 4.
 
 ## PATH B: CLI (gh)
 

@@ -31,8 +31,8 @@ Agents are read-only. They must strictly stick to their job:
 
 **4. DISPATCH SETTINGS**
 
-- **Default Agent:** `general-purpose`
-- **Code Scans:** Use a specialized Researcher agent from `../multi-agent-development/references/subagent-contract.md`. If none match, use `general-purpose`.
+- **Default Agent:** Use the named `researcher` agent (`agents/researcher.md`) for all read-only roles (Ideators, Reviewers, Arbiter).
+- **Code Scans:** Use the named `researcher` agent (`agents/researcher.md`).
 - **Parallel Work:** Use the `multi-agent-dispatch` skill for Phases 3 and 5.
 
 ## Process Flow

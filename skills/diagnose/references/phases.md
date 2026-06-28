@@ -37,7 +37,7 @@
 - **Ranking:** Bayesian prior (Recent changes > Code > Environment > External).
 - **Efficiency:** Rule out hypotheses cheaply by asking user about recent changes or environment differences.
 - **Conjunctions:** A hypothesis may be a conjunction ("if X AND Y, then Z") — this is how interaction bugs (only reproduce when two conditions co-occur) get represented as ONE falsifiable proposition rather than forced into two unfalsifiable single-variable lanes.
-- **Tournament dispatch (Phase 0 escalated only):** one proposition per worktree, lanes blind to each other. Role by probe type — observational/static (read a value, check a log) -> read-only `detective`; instrumented/executed (add logging, run code, modify state) -> worktree-isolated `general-purpose` Investigator with Bash+Write. Never assign a write-requiring probe to a read-only agent.
+- **Tournament dispatch (Phase 0 escalated only):** one proposition per worktree, lanes blind to each other. Role by probe type — observational/static (read a value, check a log) -> read-only `researcher` agent (`agents/researcher.md`); instrumented/executed (add logging, run code, modify state) -> worktree-isolated `implementer` agent (`agents/implementer.md`) with Bash+Write. Never assign a write-requiring probe to a read-only agent.
 - **Mechanism-linked probes:** a probe must assert on the predicted intermediate effect Y, not just whether the Oracle flips. A probe that flips the Oracle bit via an unrelated side effect (touched shared state, shifted timing) is a false `SURVIVED` — Phase 3.5 inspects for the predicted signature, not the bare flip.
 
 ## Phase 3.5: Converge & Arbitrate

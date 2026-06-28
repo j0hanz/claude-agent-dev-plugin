@@ -37,7 +37,7 @@ Start: Feature Description -> 0. Confirm Depth (AskUserQuestion, discloses agent
 
 ## Step 2: Parallel Drafting (Ideators)
 
-Dispatch N `general-purpose` agents in ONE message. Agents MUST remain 100% blind to each other.
+Dispatch N read-only subagents using the named `researcher` agent (`agents/researcher.md`) in ONE message. Agents MUST remain 100% blind to each other.
 
 - `sketch`: 1 agent (Conventional lens).
 - `contract`: 3 agents (Conventional, Minimalist, Risk-First lenses).
@@ -47,7 +47,7 @@ Each agent writes a FULL `specs.md` and `plan.md` pair using the Canonical Task 
 
 ## Step 3: Synthesis
 
-Dispatch 1 `general-purpose` Synthesizer agent to review all N candidates.
+Dispatch 1 Synthesizer agent using the named `researcher` agent (`agents/researcher.md`) to review all N candidates.
 
 **Required Output**:
 
