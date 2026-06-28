@@ -63,7 +63,7 @@ Every Investigator/Researcher dispatch prompt MUST contain five fields — subag
 
 For Writer lanes, structure the dispatch prompt using `implementer`'s own five fields instead (SCOPE/OBJECTIVE/CONTEXT/CONSTRAINTS/OUTPUT, per `agents/implementer.md`) — its OUTPUT is implicit (it always replies with its own fixed schema), so don't also impose the generic VERDICT/FILES_TOUCHED/SUMMARY/EVIDENCE schema on top of it.
 
-For the full contract, common mistakes, specialist-routing table, and large-artifact `.claude/dispatch/` handoff rule, see `../multi-agent-development/references/subagent-contract.md` — read it before dispatching when available; the five fields above are the fallback if that file is missing.
+For the full contract, common mistakes, specialist-routing table, large-artifact `.claude/dispatch/` handoff rule, and Model Tiering table, see `../multi-agent-development/references/subagent-contract.md` — read it before dispatching when available, and apply an explicit `model:` override at the dispatch call site per the tiering guidance. The five fields above are the fallback if that file is missing.
 
 - Writers MUST use `isolation: worktree` to prevent overlapping edits — state it explicitly in the dispatch call since `isolation` is dispatcher-side guidance, not an enforced agent property.
 
