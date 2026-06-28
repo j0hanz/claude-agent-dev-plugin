@@ -190,3 +190,84 @@ def test_prescan_skips_vendor_and_counts_packages(tmp_path: Path):
     result = init.prescan(tmp_path)
     assert "node_modules/dep" not in result["packages"]
     assert result["package_count"] == 2  # root + pkg-a
+
+
+def test_claims_filtering_by_package_prefix(tmp_path: Path):
+    """Claims are filtered to only keep those matching the specified package prefix."""
+    (tmp_path / "packages").mkdir()
+    (tmp_path / "packages" / "api").mkdir()
+    (tmp_path / "packages" / "frontend").mkdir()
+    (tmp_path / "packages" / "api" / "package.json").write_text('{"name": "api"}\n')
+    (tmp_path / "packages" / "frontend" / "package.json").write_text('{"name": "frontend"}\n')
+    (tmp_path / "README.md").write_text("root readme\n")
+
+    claims = [
+        _claim("pm", "pnpm", "packages/api/package.json", match="api", confidence=0.9),
+        _claim("cmd.build", "pnpm build", "packages/api/package.json", match="api", confidence=0.9),
+        _claim("cmd.test", "vitest", "packages/frontend/package.json", match="frontend", confidence=0.8),
+        _claim("conv.git", "ESM only", "README.md", confidence=0.5),
+    ]
+
+    # Run merge_claims as normal
+    winners, _ = init.merge_claims(claims, tmp_path)
+    
+    # Simulate filtering logic
+    package_path = "packages/api"
+    prefix = package_path.strip().replace("\\", "/").rstrip("/") + "/"
+    filtered = {
+        k: v for k, v in winners.items()
+        if v.evidence.path.replace("\\", "/").startswith(prefix)
+    }
+
+    assert "pm" in filtered
+    assert "cmd.build" in filtered
+    assert "cmd.test" not in filtered
+    assert "conv.git" not in filtered
+
+
+def test_cli_package_filtering(tmp_path: Path, monkeypatch):
+    """CLI option --package correctly filters generated AGENTS.md content to the package directory prefix."""
+    (tmp_path / "packages").mkdir()
+    (tmp_path / "packages" / "api").mkdir()
+    (tmp_path / "packages" / "api" / "package.json").write_text('{"name": "api"}\n')
+    (tmp_path / "README.md").write_text("root readme\n")
+
+    claims_file = tmp_path / "claims.json"
+    claims_file.write_text(
+        json.dumps(
+            [
+                _claim("pm", "pnpm", "packages/api/package.json", match="api", confidence=0.9),
+                _claim("cmd.build", "pnpm build", "packages/api/package.json", match="api", confidence=0.9),
+                _claim("cmd.test", "vitest", "README.md", match="readme", confidence=0.8),
+            ]
+        )
+    )
+    monkeypatch.chdir(tmp_path)
+    args = init._build_parser().parse_args(
+        [
+            "generate",
+            "--claims",
+            str(claims_file),
+            "--commit",
+            "minimal",
+            "--maturity",
+            "development",
+            "--testing",
+            "always",
+            "--ci",
+            "local-only",
+            "--purpose",
+            "test repo",
+            "--model",
+            "Claude",
+            "--package",
+            "packages/api",
+            "--out",
+            "AGENTS.md",
+        ]
+    )
+    assert init._cmd_generate(args) == 0
+    raw = (tmp_path / "AGENTS.md").read_text()
+    assert "pm: pnpm" in raw
+    assert "build: pnpm build" in raw
+    assert "test: vitest" not in raw

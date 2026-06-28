@@ -243,11 +243,18 @@ def _sanitize_value(value: str) -> str:
 
 
 @dataclass
+class Evidence:
+    path: str
+    match: str | None = None
+
+
+@dataclass
 class Claim:
     key: str
     value: str
     tier: int
     confidence: float
+    evidence: Evidence | None = None
 
 
 def _read_text_safe(p: Path) -> str | None:
@@ -299,7 +306,7 @@ def verify_claim(raw: dict[str, Any], root: Path) -> tuple[Claim | None, str]:
         confidence = float(raw.get("confidence", 0.5))
     except (TypeError, ValueError):
         confidence = 0.5
-    return Claim(key, value, evidence_tier(ev_path), confidence), ""
+    return Claim(key, value, evidence_tier(ev_path), confidence, Evidence(path=ev_path, match=match)), ""
 
 
 def merge_claims(
@@ -558,6 +565,14 @@ def _cmd_generate(args: argparse.Namespace) -> int:
     winners, dropped = merge_claims(raws, root)
     if args.purpose:
         winners["purpose"] = Claim("purpose", _sanitize_value(args.purpose), 4, 1.0)
+
+    if args.package:
+        pkg_prefix = args.package.strip().replace("\\", "/").rstrip("/") + "/"
+        winners = {
+            k: v for k, v in winners.items()
+            if not v.evidence or v.evidence.path.replace("\\", "/").startswith(pkg_prefix)
+        }
+
     winners, trimmed = _trim_to_budget(winners)
     dropped += trimmed
 
@@ -640,6 +655,9 @@ def _build_parser() -> argparse.ArgumentParser:
     gen.add_argument("--purpose", default=None)
     gen.add_argument(
         "--model", default=None, help="Active model name for the attribution trailer."
+    )
+    gen.add_argument(
+        "--package", default=None, help="Relative path to package directory (e.g. 'packages/api')."
     )
     gen.add_argument("--out", type=Path, default=None)
 
