@@ -1,12 +1,6 @@
 """Tests for context-optimizer diagnose_context_bloat."""
 
-import sys
-from pathlib import Path
-
-scripts_dir = Path(__file__).parent.parent / "scripts"
-sys.path.insert(0, str(scripts_dir))
-
-import diagnose_context_bloat  # noqa: E402
+import diagnose_context_bloat
 
 
 def test_parse_gitignore(tmp_path):

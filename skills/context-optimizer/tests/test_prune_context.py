@@ -1,13 +1,6 @@
 """Tests for context-optimizer prune_context."""
 
-import sys
-from pathlib import Path
-
-# Add scripts directory to path
-scripts_dir = Path(__file__).parent.parent / "scripts"
-sys.path.insert(0, str(scripts_dir))
-
-import prune_context  # noqa: E402
+import prune_context
 
 
 def test_to_markdown_kv_simple():

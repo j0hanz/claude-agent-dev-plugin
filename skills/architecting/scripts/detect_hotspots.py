@@ -69,9 +69,7 @@ def run_hotspot_detection(
     # Run individual analyses
     cycles, fan_out = run_locality_check(abs_dir)
     violations = run_bleed_detection(abs_dir, infra_pkgs) if infra_pkgs else []
-    coupling_results = run_git_coupling(
-        abs_dir, since=since, min_count=1, top_n=1000000
-    )
+    coupling_results = run_git_coupling(abs_dir, since=since, min_count=1, top_n=None)
     if "error" in coupling_results:
         logger.warning(
             "git churn data unavailable (%s); churn score will be 0 for all files.",

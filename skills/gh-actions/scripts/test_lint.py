@@ -80,9 +80,3 @@ def test_workflow_dispatch_input_injection_caught():
         )
     finally:
         path.unlink()
-
-
-if __name__ == "__main__":
-    test_injection_at_minimum_block_indent()
-    test_pull_request_target_two_line_footgun_caught()
-    test_workflow_dispatch_input_injection_caught()

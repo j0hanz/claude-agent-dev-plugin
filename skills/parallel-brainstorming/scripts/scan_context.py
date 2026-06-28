@@ -17,6 +17,7 @@ from __future__ import annotations
 import argparse
 import ast
 import json
+import os
 import re
 import subprocess
 import sys
@@ -207,8 +208,6 @@ _DOC_SUFFIXES = [g.removeprefix("**/") for g in _DOC_GLOBS]
 
 
 def _find_doc_files(cwd: Path) -> list[str]:
-    import os
-
     found: list[str] = []
     for root, dirs, files in os.walk(cwd):
         dirs[:] = [d for d in dirs if d not in _SKIP_DIRS]
@@ -299,9 +298,7 @@ def _extract_interface_shapes(file_path: Path, nouns: set[str]) -> list[str]:
 def _estimate_scope(file_count: int, crosses_boundary: bool) -> tuple[str, str]:
     if file_count <= 2 and not crosses_boundary:
         return "S", f"{file_count} file(s), isolated change"
-    if file_count <= 2:
-        label = "M"
-    elif file_count <= 5:
+    if file_count <= 5:
         label = "M"
     elif file_count <= 10:
         label = "L"

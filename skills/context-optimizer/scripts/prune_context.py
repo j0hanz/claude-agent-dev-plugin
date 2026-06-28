@@ -88,7 +88,7 @@ def filter_logs(logs_text: str) -> str:
         for i in range(start, end):
             keep_indices.add(i)
 
-    sorted_indices = sorted(keep_indices)  # Removed redundant list() call
+    sorted_indices = sorted(keep_indices)
     output_parts = []
     last_idx = -1
 

@@ -1,13 +1,6 @@
 """Tests for parallel-brainstorming compress_report."""
 
-import sys
-from pathlib import Path
-
-# Add scripts directory to path
-scripts_dir = Path(__file__).parent.parent / "scripts"
-sys.path.insert(0, str(scripts_dir))
-
-import compress_report  # noqa: E402
+import compress_report
 
 
 def test_compress_report_empty():

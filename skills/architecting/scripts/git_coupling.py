@@ -6,7 +6,10 @@ from collections import Counter
 
 
 def run_git_coupling(
-    target_dir: str, min_count: int = 3, top_n: int = 20, since: str = "6 months ago"
+    target_dir: str,
+    min_count: int = 3,
+    top_n: int | None = 20,
+    since: str = "6 months ago",
 ) -> Dict[str, Any]:
     abs_dir = os.path.abspath(target_dir)
 

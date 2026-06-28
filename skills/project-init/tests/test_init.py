@@ -2,19 +2,11 @@
 
 from __future__ import annotations
 
-import importlib.util
 import json
-import sys
 from pathlib import Path
 
+import init
 import pytest
-
-_SPEC = importlib.util.spec_from_file_location(
-    "init_engine", Path(__file__).resolve().parent.parent / "scripts" / "init.py"
-)
-init = importlib.util.module_from_spec(_SPEC)
-sys.modules["init_engine"] = init  # dataclass needs the module discoverable
-_SPEC.loader.exec_module(init)
 
 
 def _claim(key, value, path, match=None, confidence=0.5):

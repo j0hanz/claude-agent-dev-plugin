@@ -405,14 +405,10 @@ def render_results(pr_number: str, results: Iterable[dict[str, Any]]) -> None:
         snippet = result.get("logSnippet") or ""
         if snippet:
             print("Failure snippet:")
-            print(indent_block(snippet, prefix="  "))
+            print("\n".join(f"  {line}" for line in snippet.splitlines()))
         else:
             print("No snippet available.")
     print("-" * 60)
-
-
-def indent_block(text: str, prefix: str = "  ") -> str:
-    return "\n".join(f"{prefix}{line}" for line in text.splitlines())
 
 
 def parse_args() -> argparse.Namespace:

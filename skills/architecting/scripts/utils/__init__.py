@@ -1,1 +1,0 @@
-# Architecture Scripts Utilities package
