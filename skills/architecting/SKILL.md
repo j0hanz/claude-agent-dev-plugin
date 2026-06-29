@@ -34,10 +34,10 @@ Trigger: Review/Design Request
 - **Constraint_Context:** NEVER load `references/architecture-patterns.md`.
 - **Phase_1_Explore:** - Detect tech stack.
 - Run `scripts/` (default args shown):
-- `python scripts/check_locality.py [dir=src]`
-- `python scripts/detect_bleed.py [dir=src/domain] [infra=express,typeorm,prisma,fs,path,react,mongoose]`
-- `python scripts/git_coupling.py [dir=.] [--min-count 3] [--since "6 months ago"] [--top-n 20]`
-- `python scripts/detect_hotspots.py [dir=src] [infra=...] [--since "6 months ago"]`
+- `python ${CLAUDE_SKILL_DIR}/scripts/check_locality.py [dir=src]`
+- `python ${CLAUDE_SKILL_DIR}/scripts/detect_bleed.py [dir=src/domain] [infra=express,typeorm,prisma,fs,path,react,mongoose]`
+- `python ${CLAUDE_SKILL_DIR}/scripts/git_coupling.py [dir=.] [--min-count 3] [--since "6 months ago"] [--top-n 20]`
+- `python ${CLAUDE_SKILL_DIR}/scripts/detect_hotspots.py [dir=src] [infra=...] [--since "6 months ago"]`
 
 - **Fallback:** Manually analyze imports, God modules (>500 lines/20+ exports), and history.
 - **Dispatch:** Dispatch the named `researcher` subagent (`agents/researcher.md`) to run in read-only mode. Give it `target_dir` and the four scripts' stdout (or "skipped"). Ask it to read every high-severity flagged file, apply all four Seam Tests — Deletion (would complexity scatter to callers if removed?), Seam (testable without DB/API/infra?), Locality (readable without understanding 5+ other modules?), Bounded Context (do modules share tables directly without APIs/interfaces?) — quote the exact file path + import/pattern per friction signal (no editorializing), never propose event buses/base classes/utils folders, and return JSON only: a `candidates` array ranked by impact, each `{seam_name, evidence, seam_test_results, visual_diagram}` with a Mermaid `graph LR`/`graph TD` contrasting current tangled dependencies vs. the proposed clean boundary.
@@ -57,7 +57,7 @@ Trigger: Review/Design Request
 - **Step_4_ADR:** Generate ADR in `docs/adr/` using `references/ADR_TEMPLATE.md`.
 - **Step_5_Scaffold:** - Generate `architecture-brief.json` (`references/brief-schema.json`).
 - Read `references/MIGRATION_STRATEGIES.md` for integration cutovers.
-- Run `python scripts/scaffold_boundary.py <domain> [pattern] [output_dir=src] [--force]`. _(Valid patterns: hexagonal, vertical-slice, layered, clean-architecture, cqrs. Others require manual creation)._
+- Run `python ${CLAUDE_SKILL_DIR}/scripts/scaffold_boundary.py <domain> [pattern] [output_dir=src] [--force]`. _(Valid patterns: hexagonal, vertical-slice, layered, clean-architecture, cqrs. Others require manual creation)._
 
 - **Heuristics:**
 - **Deletion:** Removal must not scatter complexity across callers.

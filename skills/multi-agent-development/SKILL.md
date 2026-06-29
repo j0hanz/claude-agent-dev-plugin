@@ -3,7 +3,7 @@ name: multi-agent-development
 description: 'Use when implementing a multi-task plan where tasks depend on each other, share files, or must run in order. Prefer over multi-agent-dispatch when tasks have shared state or file dependencies that prevent parallel execution.'
 disable-model-invocation: false
 argument-hint: '[path to plan file]'
-allowed-tools: Agent(implementer), Agent(spec-reviewer), Agent(quality-reviewer), Agent(conflict-resolver), AskUserQuestion
+allowed-tools: Agent(implementer), Agent(spec-reviewer), Agent(quality-reviewer), Agent(conflict-resolver), AskUserQuestion, Bash(git log*), Bash(python *)
 ---
 
 # multi-agent-development
@@ -78,7 +78,7 @@ For a cluster of 2+ tasks with no dependency between them: dispatch one implemen
 - **Goal**: Check code quality and tests.
 - **Rules**: Max 2 tries (this does not count against Phase 2).
 - **Before advancing:** quality-reviewer must return `QUALITY_PASS` or `MINOR`. If `CRITICAL` or `IMPORTANT` twice, escalate to user.
-- **After QUALITY_PASS or MINOR:** Run `prune_context.py --task-complete "Task N: complete (commits <base7>..<head7>, review clean)"` to record the task completion in `.claude/rolling_summary.md`'s `## Task Ledger` section before advancing to the next task or cluster. This enables the Resuming step to verify that work won't be duplicated on recovery.
+- **After QUALITY_PASS or MINOR:** Run `python ${CLAUDE_SKILL_DIR}/../context-optimizer/scripts/prune_context.py --task-complete "Task N: complete (commits <base7>..<head7>, review clean)"` to record the task completion in `.claude/rolling_summary.md`'s `## Task Ledger` section before advancing to the next task or cluster. This enables the Resuming step to verify that work won't be duplicated on recovery.
 
 ## Final Validation
 

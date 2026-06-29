@@ -2,7 +2,7 @@
 name: parallel-brainstorming
 description: 'Use when requirements are vague or the solution space is open — before a plan exists and before touching code. Prefer over request-plan or architecting when the problem is unproven and multiple distinct approaches need to be explored. Not for bug fixes or one-line changes with no design space.'
 disable-model-invocation: false
-allowed-tools: Agent(researcher), AskUserQuestion, Write
+allowed-tools: Agent(researcher), AskUserQuestion, Write, Bash(python *)
 ---
 
 # parallel-brainstorming
@@ -68,7 +68,7 @@ Creative Checkpoint
 ## Phase 1: Framing & Discovery
 
 - **Probe:** Identify target users. Ask clarifying questions if the request is ambiguous.
-- **Scan:** Run `python scripts/scan_context.py -- '<nouns>' --cwd '<root>' | python scripts/compress_report.py` (fallback to `grep` if it fails).
+- **Scan:** Run `python ${CLAUDE_SKILL_DIR}/scripts/scan_context.py -- '<nouns>' --cwd '<root>' | python ${CLAUDE_SKILL_DIR}/scripts/compress_report.py` (fallback to `grep` if it fails).
 - **Report:** Extract Related Files, Recent Changes, Terms, Interfaces, Constraints, Scope (S/M/L/XL), and Unknowns.
 - **Zero-Code Check:** Stop and offer exit if existing code/config already solves this.
 - **Understanding Lock:** Summarize the problem. **Require explicit user confirmation via `AskUserQuestion`** before generating any ideas.
