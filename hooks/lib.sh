@@ -23,13 +23,8 @@ fi
 
 agent_sdlc_json_escape() {
   # Escapes $1 for embedding as a JSON string value (no surrounding quotes).
-  local input="$1"
-  if command -v jq >/dev/null 2>&1; then
-    printf '%s' "$input" | jq -Rs . | sed -e 's/^"//' -e 's/"$//'
-    return
-  fi
   # Node is a guaranteed prerequisite for this plugin environment (same fallback as shell-safety.sh)
-  node -e 'process.stdout.write(JSON.stringify(process.argv[1]).slice(1, -1))' "$input" 2>/dev/null
+  node -e 'process.stdout.write(JSON.stringify(process.argv[1]).slice(1, -1))' "$1" 2>/dev/null
 }
 
 agent_sdlc_skill_exists() {
@@ -52,6 +47,7 @@ agent_sdlc_enum_skills() {
     return 0
   fi
   while IFS= read -r file; do
-    dirname "$file" | xargs basename
+    local d="${file%/SKILL.md}"
+    printf '%s\n' "${d##*/}"
   done <<< "$skill_files"
 }

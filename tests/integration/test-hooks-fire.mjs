@@ -133,7 +133,7 @@ test('skill-nudge.sh emits additionalContext on first fire, then stays quiet (co
     const first = runHandler(
       'skill-nudge.sh',
       {},
-      { CLAUDE_PROJECT_DIR: dir, CLAUDE_PLUGIN_ROOT: pluginRoot },
+      { CLAUDE_PROJECT_DIR: dir, CLAUDE_PLUGIN_ROOT: pluginRoot, AGENT_SDLC_BOOTSTRAP_MODE: 'cooldown' },
     );
     assert.strictEqual(first.exitCode, 0);
     const parsed = JSON.parse(first.stdout);
@@ -142,7 +142,7 @@ test('skill-nudge.sh emits additionalContext on first fire, then stays quiet (co
     const second = runHandler(
       'skill-nudge.sh',
       {},
-      { CLAUDE_PROJECT_DIR: dir, CLAUDE_PLUGIN_ROOT: pluginRoot },
+      { CLAUDE_PROJECT_DIR: dir, CLAUDE_PLUGIN_ROOT: pluginRoot, AGENT_SDLC_BOOTSTRAP_MODE: 'cooldown' },
     );
     assert.strictEqual(second.exitCode, 0);
     assert.strictEqual(second.stdout.trim(), '');

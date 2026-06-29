@@ -43,14 +43,8 @@ input=$(cat)
 
 extract_command() {
   # extract_command <json> — pulls .tool_input.command out of the PreToolUse
-  # payload. Prefers jq; falls back to a Node.js one-liner since Node is a
-  # guaranteed prerequisite for this plugin environment.
-  local json="$1"
-  if command -v jq >/dev/null 2>&1; then
-    printf '%s' "$json" | jq -r '.tool_input.command // empty' 2>/dev/null
-    return
-  fi
-  node -e 'try { console.log(JSON.parse(process.argv[1]).tool_input.command); } catch (e) {}' "$json" 2>/dev/null
+  # payload. Node is a guaranteed prerequisite for this plugin environment.
+  node -e 'try { console.log(JSON.parse(process.argv[1]).tool_input.command); } catch (e) {}' "$1" 2>/dev/null
 }
 
 command=$(extract_command "$input") || command=""
