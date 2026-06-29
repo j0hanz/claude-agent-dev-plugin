@@ -57,7 +57,7 @@ MANIFEST_FILES = {
     "*.csproj",
 }
 
-# ── Hard Rules text (carried verbatim from the old codebase-init engine) ──────
+# ── Hard Rules text (must stay byte-identical with references/hard-rules.md) ─
 HARD_RULES_TEXT: dict[str, dict[str, str]] = {
     "commit": {
         "strict": "Conventional Commits format (`type(scope): subject`) required — see the `pr-workflow` skill",

@@ -1,7 +1,7 @@
 ---
 name: project-init
 description: "Bootstrap a repo's agent instructions via a blind parallel discovery fan-out converging into a deterministic generator. Produces a lean (<100-line) markdown-kv AGENTS.md plus one-line CLAUDE.md/GEMINI.md redirect stubs. Discovery agents are read-only and emit evidence-cited claims; a single script is the sole writer and never executes a discovered command. Trigger on: 'init project', 'project-init', 'onboard repo', 'generate AGENTS.md', 'setup agent instructions', 'initialize project memory', 'audit AGENTS.md'."
-disable-model-invocation: true
+disable-model-invocation: false
 user-invocable: true
 allowed-tools: Bash(python *), Bash(python3 *), AskUserQuestion, Skill, Read, Grep, Glob, Agent
 ---
@@ -35,7 +35,7 @@ Phase 3  CONSENT + WRITE
 
 ## Phase 0: Check and Ask
 
-1. **Scan:** Run `python "$CLAUDE_PLUGIN_ROOT/skills/project-init/scripts/init.py" prescan .` to get project details.
+1. **Scan:** Run `python "$CLAUDE_PLUGIN_ROOT/skills/project-init/scripts/init.py" prescan .` to get project details. (Below, `init.py` is shorthand for this same `python "$CLAUDE_PLUGIN_ROOT/skills/project-init/scripts/init.py"` invocation.)
 2. **Check for Old Rules:** Look for `AGENTS.md`. If it has the `<!-- project-init:hard-rules... -->` tag, use those answers. Do not ask the user again unless they force it.
 3. **Ask the User (if no old rules):** Run `AskUserQuestion` exactly once. Ask the 3 questions from `references/hard-rules.md` (commit policy, project maturity, testing rigor). Use the exact words provided. Do not add an "Other" choice. Stop if the user cancels.
 4. **Find CI Automatically:** Do not ask the user about CI. Look for folders: `.github/workflows/` means `github-actions`, `.gitlab-ci.yml` means `gitlab-ci`. Otherwise, use `local-only`.
@@ -101,4 +101,4 @@ Phase 3  CONSENT + WRITE
 - **NEVER** write or edit `AGENTS.md` by hand. Only the `init.py` script is allowed to write it.
 - **NEVER** copy text into a stub file.
 - **NEVER** replace existing rule files without backing them up and asking the user.
-- **NEVER** keep a fact if you cannot prove it with a real file path and an exact quote.
+- **NEVER** keep a fact lacking a real file path and an exact quote as proof.

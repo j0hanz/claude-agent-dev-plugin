@@ -4,6 +4,8 @@ The exact option sets for the 3 `AskUserQuestion` prompts in Phase 0. Use this w
 
 CI/CD Automation is **not** surveyed — it is file-detected (see below).
 
+The option prose below must stay byte-identical with `HARD_RULES_TEXT` in `scripts/init.py` (the script renders from its own copy; this file is what the survey question shows the user).
+
 ## 1. Commit & attribution policy
 
 Header: `Commit policy`
