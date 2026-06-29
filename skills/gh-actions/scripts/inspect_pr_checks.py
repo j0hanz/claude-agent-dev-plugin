@@ -12,7 +12,6 @@ from typing import Any, Iterable, Sequence
 
 FAILURE_CONCLUSIONS = {"failure", "cancelled", "timed_out", "action_required"}
 FAILURE_STATES = {"failure", "error", "cancelled", "timed_out", "action_required"}
-FAILURE_BUCKETS = {"fail"}
 FAILURE_MARKERS = (
     "error",
     "fail",
@@ -132,10 +131,7 @@ def is_failing(check: dict[str, Any]) -> bool:
     if conclusion in FAILURE_CONCLUSIONS:
         return True
     state = normalize_field(check.get("state") or check.get("status"))
-    if state in FAILURE_STATES:
-        return True
-    bucket = normalize_field(check.get("bucket"))
-    return bucket in FAILURE_BUCKETS
+    return state in FAILURE_STATES
 
 
 def analyze_check(
@@ -180,7 +176,6 @@ def analyze_check(
     if metadata:
         base["run"] = metadata
     base["logSnippet"] = snippet
-    base["logTail"] = tail_lines(log_text, max_lines)
     return base
 
 
@@ -336,13 +331,6 @@ def find_failure_index(lines: Sequence[str]) -> int | None:
         if any(marker in lowered for marker in FAILURE_MARKERS):
             return idx
     return None
-
-
-def tail_lines(text: str, max_lines: int) -> str:
-    if max_lines <= 0:
-        return ""
-    lines = text.splitlines()
-    return "\n".join(lines[-max_lines:])
 
 
 def render_results(pr_number: str, results: Iterable[dict[str, Any]]) -> None:
