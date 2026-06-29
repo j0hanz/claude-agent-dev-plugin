@@ -33,7 +33,6 @@ export default [
       ],
       'no-var': 'error',
       'prefer-const': 'error',
-      eqeqeq: ['error', 'always', { null: 'ignore' }],
       'object-shorthand': 'error',
       'prefer-template': 'error',
     },
