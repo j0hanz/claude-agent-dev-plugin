@@ -2,8 +2,6 @@
 
 This reference document contains concrete examples of ADRs in practice.
 
----
-
 ## ADR-0001: Auth Domain Boundaries
 
 **Status**: Accepted
@@ -23,8 +21,6 @@ This reference document contains concrete examples of ADRs in practice.
 
 **Related Issues**: Ticket AUTH-45, ADR-0007 (API layer seams)
 
----
-
 ## ADR-0002: Repository Interfaces for Data Access
 
 **Status**: Accepted
@@ -42,8 +38,6 @@ This reference document contains concrete examples of ADRs in practice.
 - Production wires up concrete database adapters
 - New queries don't require database migrations to test
 
----
-
 ## ADR-0003: No Circular Dependencies Between Domain Modules
 
 **Status**: Accepted
@@ -60,8 +54,6 @@ This reference document contains concrete examples of ADRs in practice.
 - Orchestrators in infra/ compose domain modules
 - Events emitted in infra/ to decouple producers from listeners
 - Code review should catch any reverse imports
-
----
 
 ## ADR-0004: Utils Folder is Forbidden
 

@@ -19,8 +19,6 @@ When deepening a module, you'll propose a "new interface shape" — the boundary
 
 If any answer is "no," redraw the boundary.
 
----
-
 ## Example 1: Auth Scattered Across Files
 
 **Bad** — logic split across `auth.ts`, `middleware.ts`, `utils.ts`. Callers must know where to import `login`, that middleware needs wiring into Express, and how to compose the pieces. Testing `login()` requires a database. Shape is SHALLOW (caller's knowledge ≈ implementation's complexity) and the seam is wrong (routes call domain logic directly, no boundary to mock).
@@ -56,8 +54,6 @@ export async function loginUser(email: string, password: string) {
 ```
 
 Caller now only needs `import { loginUser } from './infra/users-repository'`. **Shape**: deep — one call instead of three things to know. **Seam**: between `auth/` (domain) and `infra/` (adapters); domain never imports infra, so tests pass a plain `User` object with no database.
-
----
 
 ## Example 2: God Module / Circular Dependency
 
@@ -97,8 +93,6 @@ export async function createOrderWorkflow(repo: IOrderRepository, userId: string
 ```
 
 Tests exercise `calculateOrderPrice`/`validateItems` directly with no mocks at all, or pass an in-memory `IOrderRepository`. **Shape**: caller sees `createOrderWorkflow(repo, userId, items)` instead of five intermixed concerns. **Seam**: between domain modules (pure, no I/O) and the orchestrator that composes them with infrastructure — one direction only, so neither side needs the other to test.
-
----
 
 ## Example 3: Repository — Shallow vs. Deep
 

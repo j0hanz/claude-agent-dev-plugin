@@ -35,8 +35,6 @@ Phase 3  CONSENT + WRITE
   -- approved ---------------> generate --out | wire stubs | lint | receipt --> DONE
 ```
 
----
-
 ## Phase 0: Check and Ask
 
 **MANDATORY**: Before conducting the survey, you MUST read the option mappings in `references/hard-rules.md`. Do NOT load `references/canonical-keys.md` during this phase.
@@ -46,8 +44,6 @@ Phase 3  CONSENT + WRITE
 3. **Ask the User (if no old rules):** Run `AskUserQuestion` exactly once with all 4 questions from `references/hard-rules.md` (commit policy, project maturity, testing rigor, optional sections to omit — the last is multiSelect, 0–3 picks). Use the exact words provided, including the "Don't include" option on the first three. Do not add an extra "Other" choice (the tool already provides one). Stop if the user cancels.
 4. **Find CI Automatically:** Do not ask the user about CI. Look for folders: `.github/workflows/` means `github-actions`, `.gitlab-ci.yml` means `gitlab-ci`. Otherwise, use `local-only`. CI has no "Don't include" — it's never skippable.
 5. **Choose Path:** If the scan says `has_manifest == false`, explore the project yourself (`Glob` for structure, `Grep` for content, `Read` for specific files), skip Phase 1, and go straight to Phase 2. Otherwise, go to Phase 1.
-
----
 
 ## Phase 1: Search (Read-Only)
 
@@ -69,8 +65,6 @@ Phase 3  CONSENT + WRITE
 
 5. **Output:** The agents must only output a JSON list of facts matching `references/canonical-keys.md`. No extra text.
 
----
-
 ## Phase 2: Check and Preview
 
 1. **Combine:** Put all facts from Phase 1 into one file called `claims.json`.
@@ -79,8 +73,6 @@ Phase 3  CONSENT + WRITE
    `init.py generate --claims claims.json --package <pkg> --commit <c> --maturity <m> --testing <t> --ci <ci> --skip-sections <s>`
 4. **Filter:** The script will keep only proven facts and drop bad ones.
 5. **Show the User:** Show the user the draft of `AGENTS.md` (root and packages) and the list of dropped facts. If there is an error, fix the inputs or rerun the bad agent. Do not save yet.
-
----
 
 ## Phase 3: Ask and Save
 
@@ -93,14 +85,10 @@ Phase 3  CONSENT + WRITE
 6. **Test Package Files (Monorepos):** For each package folder `<pkg>`, run `init.py lint <pkg>/AGENTS.md`. They must pass.
 7. **Report to User:** Tell the user what files were saved, how many lines they have, and remind them of the facts that were dropped.
 
----
-
 ## Fixing Errors
 
 - If any script fails, use the `diagnose` skill on the error message. Fix the problem and restart the current phase. Never restart Phase 0.
 - When done, run `verification-before-completion`.
-
----
 
 ## Rules
 

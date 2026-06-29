@@ -30,8 +30,6 @@ permissions:
 
 `id-token: write` should be on the **job** that authenticates, not the whole workflow.
 
----
-
 ## AWS
 
 ### Workflow AWS
@@ -91,8 +89,6 @@ The role's permission policy is whatever the deploy needs (S3 access, ECS update
 
 **Common mistake:** using `StringEquals` on `:sub` with a wildcard — `StringEquals` is literal, wildcards need `StringLike`.
 
----
-
 ## GCP
 
 ### Workflow GCP
@@ -144,8 +140,6 @@ gcloud iam service-accounts add-iam-policy-binding gha-deployer@my-project.iam.g
 
 For per-environment scoping, use `attribute.environment/production` instead of (or in addition to) `attribute.repository`.
 
----
-
 ## Azure
 
 ### Workflow
@@ -181,8 +175,6 @@ Note: `client-id`, `tenant-id`, `subscription-id` go in **vars**, not secrets. T
 - Audience: `api://AzureADTokenExchange`
 
 Different entity types correspond to different `sub` formats — branch, tag, PR, environment. You can add multiple federated credentials per app (one per environment, for example).
-
----
 
 ## Other targets that support OIDC
 

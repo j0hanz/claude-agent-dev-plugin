@@ -16,8 +16,6 @@ Canonical contract for any skill dispatching a `general-purpose` subagent (used 
   EVIDENCE: [test results, grep output, or file:line citations]
   ```
 
----
-
 ## Common Mistakes (Check before dispatching)
 
 - **Unbounded scope**: e.g., "Fix failing tests" -> Better: "Fix `src/auth/jwt.test.ts` only".
@@ -25,8 +23,6 @@ Canonical contract for any skill dispatching a `general-purpose` subagent (used 
 - **No constraints**: E.g., allowing edits in sibling lanes.
 - **No output schema**: E.g., allowing freeform prose.
 - **Inlined large files**: Inlining >150 lines configs instead of using file references.
-
----
 
 ## Model Tiering
 
@@ -37,8 +33,6 @@ Select the appropriate model tier based on task scope:
 - **Capable** (e.g., Opus): Architecture decisions, final-review gates, N-lane arbitration.
 
 _Note: Default to `model: inherit` (orchestrator's current model) if task complexity is ambiguous._
-
----
 
 ## Roles and Dispatch Directory
 
@@ -61,8 +55,6 @@ If a domain has no custom named agent, scan installed agents by category before 
 | Error Handling               | Silent-failure/error auditing        | `general-purpose` |
 | Debugging                    | Diagnostic/investigation             | `general-purpose` |
 | Documentation                | Docs maintenance/sync                | `general-purpose` |
-
----
 
 ## Independent Verification
 

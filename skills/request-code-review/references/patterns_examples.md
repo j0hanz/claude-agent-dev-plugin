@@ -1,9 +1,5 @@
 # Code Review Pattern Examples
 
-This document contains code examples for the patterns listed in the main catalog.
-
----
-
 ## Security Patterns
 
 ### Command Injection
@@ -65,8 +61,6 @@ pickle.loads(user_bytes)
 # CORRECT — use JSON or validate source before unpickling
 json.loads(user_bytes)
 ```
-
----
 
 ## Correctness Patterns
 
@@ -151,8 +145,6 @@ if (user.isAdmin) {
 }
 ```
 
----
-
 ## Performance Patterns
 
 ### N+1 Query
@@ -182,8 +174,6 @@ def first_match(items, pred):
 def first_match(items, pred):
     return next((x for x in items if pred(x)), None)
 ```
-
----
 
 ## Plugin-Specific Patterns
 

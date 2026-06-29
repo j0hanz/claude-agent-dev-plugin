@@ -129,8 +129,6 @@ Creative Checkpoint
 - **Save:** Present in chat, then write to `docs/design/YYYY-MM-DD-<topic>-design.md`.
 - **Commit Guard:** Ask before running git commit. Default to NO. If approved, hand off to `pr-workflow` for the actual commit/message — don't hand-roll a message here.
 
----
-
 ## Worked Example
 
 Request: "add a way for users to save and re-run searches."

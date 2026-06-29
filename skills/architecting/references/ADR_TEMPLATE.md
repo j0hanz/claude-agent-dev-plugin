@@ -8,8 +8,6 @@ Use this template to record architectural decisions that should not be revisited
 - When establishing a boundary that future explorations should respect
 - When a refactoring contradicts a previous decision
 
----
-
 ## Template
 
 ```markdown
@@ -39,8 +37,6 @@ Use this template to record architectural decisions that should not be revisited
 [Link to relevant GitHub issues, tickets, or ADRs]
 ```
 
----
-
 ## Examples
 
 See [ADR_EXAMPLES.md](ADR_EXAMPLES.md) for concrete examples:
@@ -49,8 +45,6 @@ See [ADR_EXAMPLES.md](ADR_EXAMPLES.md) for concrete examples:
 - **ADR-0002**: Repository Interfaces for Data Access
 - **ADR-0003**: No Circular Dependencies Between Domain Modules
 - **ADR-0004**: Utils Folder is Forbidden
-
----
 
 ## Tips for Writing ADRs
 

@@ -2,13 +2,9 @@
 
 Use this reference when the user has approved a seam (Mode A) or a new architecture (Mode B) and needs to know HOW to get from the current state to the target state without breaking production.
 
----
-
 ## The Core Problem
 
 Architecture proposals fail at execution because teams try to do a "Big Bang" rewrite — swapping the entire implementation in one PR. This destroys git blame, breaks bisect, and creates multi-week merge conflicts. Every strategy below avoids the Big Bang.
-
----
 
 ## Strategy 1: Strangler Fig
 
@@ -24,8 +20,6 @@ Architecture proposals fail at execution because teams try to do a "Big Bang" re
 **Key rule:** The old code and the new code coexist. You never have a broken intermediate state. Each step is independently shippable.
 
 **Failure mode:** Keeping the old module "just in case" forever. Set a deletion date when you start.
-
----
 
 ## Strategy 2: Branch by Abstraction
 
@@ -56,8 +50,6 @@ class PrismaUserRepository implements UserRepository { ... }
 // Step 4: swap in a new implementation (e.g., in-memory for tests)
 ```
 
----
-
 ## Strategy 3: Parallel Run
 
 **Use when:** You need to validate that new logic produces the same results as old logic before cutting over.
@@ -72,8 +64,6 @@ class PrismaUserRepository implements UserRepository { ... }
 **Key rule:** No user-visible behavior change at any step. The parallel run is invisible to callers.
 
 **Best for:** Payment processing, pricing engines, permission checks — anywhere a silent difference is a production incident.
-
----
 
 ## Strategy 4: Feature Flag Cutover
 
@@ -90,8 +80,6 @@ class PrismaUserRepository implements UserRepository { ... }
 
 **Failure mode:** Flag accumulation. Flags that never get cleaned up become permanent tech debt. Set a cleanup date when you create the flag.
 
----
-
 ## Strategy 5: Seam Introduction (Feathers)
 
 **Use when:** Working in legacy code with no tests — you need to add tests before you can safely refactor.
@@ -105,8 +93,6 @@ class PrismaUserRepository implements UserRepository { ... }
 
 **Reference:** Michael Feathers, "Working Effectively with Legacy Code"
 
----
-
 ## Strategy 6: Expand-Contract (for Database Schemas)
 
 **Use when:** Moving domain concepts between tables or renaming columns.
@@ -119,8 +105,6 @@ class PrismaUserRepository implements UserRepository { ... }
 
 **Key rule:** Never rename a column directly in a single migration — that's a Big Bang and breaks deploys in flight.
 
----
-
 ## Choosing a Strategy
 
 | Situation                                      | Strategy              |
@@ -131,8 +115,6 @@ class PrismaUserRepository implements UserRepository { ... }
 | Need instant rollback capability               | Feature Flag          |
 | No tests exist, need safety before refactoring | Seam Introduction     |
 | Database schema change                         | Expand-Contract       |
-
----
 
 ## Anti-Patterns to Avoid
 

@@ -4,13 +4,9 @@ To understand domain boundaries before proposing architectural changes, use a st
 
 > **Decision Protocol**: Ask questions with a three-option protocol: (1) Recommended answer based on static scan, (2) second-most-likely option, (3) custom write-in. Fill brackets with actual scanned code details. Ask one question at a time.
 
----
-
 ## Why Interview?
 
 Refactors fail if modules are named for implementation rather than domain concepts, or if calling context/constraints are misunderstood. A short interview prevents this.
-
----
 
 ## Interview Steps
 
@@ -66,8 +62,6 @@ Ask: _"If we deleted this module, what happens to its logic?"_
 - Also likely: It just moves elsewhere intact (shallow module; reconsider extraction).
 - Custom option.
 
----
-
 ## Example Dialog (Extracting Auth)
 
 - **Concept**:
@@ -96,16 +90,12 @@ Ask: _"If we deleted this module, what happens to its logic?"_
   - **Agent**: "If deleted, what happens? (1) Recommended: Duplicates across 3 callers, (2) Moves intact, (3) Custom."
   - **User**: "Option 1. It would duplicate across routes, middleware, and CLI."
 
----
-
 ## Interview Pitfalls
 
 - **Proposing Before Understanding**: Avoid designing interfaces before asking questions.
 - **Assuming You Know the Domain**: Always ask how terms and logic behave in their specific system.
 - **Letting Ambiguity Slide**: Clarify fuzzy boundaries (e.g., separating authentication from access control).
 - **Skipping Constraints**: Identify compliance, latency, or out-of-scope logic first.
-
----
 
 ## When to Stop
 

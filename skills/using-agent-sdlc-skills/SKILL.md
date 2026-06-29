@@ -75,8 +75,6 @@ diagnose -- bug resolved, merge-ready ----> Gate 4
 - **NEVER** auto-invoke `project-init` or `gh-actions`; `pr-workflow` is recommended at Gate 4 but never pushes without an explicit go-ahead.
 - **NEVER** dispatch subagents (Gate 3) for trivial inline edits.
 
----
-
 ## Auxiliary Information
 
 - **Reference:** `references/lifecycle.md` (State transitions).
