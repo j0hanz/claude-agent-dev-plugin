@@ -68,8 +68,8 @@ HARD_RULES_TEXT: dict[str, dict[str, str]] = {
         "minimal": "no enforced message format",
     },
     "maturity": {
-        "production": "stability first — avoid breaking changes, prefer additive changes, flag breaking changes explicitly before making them",
-        "development": "breaking changes are fine — never add fallback/legacy-compat shims, rewrite to the better approach directly",
+        "production": "stability first. Avoid breaking changes, prefer additive changes, flag breaking changes explicitly before making them",
+        "development": "breaking changes are fine. Never add fallback/legacy-compat shims, rewrite to the better approach directly",
     },
     "testing": {
         "always": "every change must have passing tests before being called done",
