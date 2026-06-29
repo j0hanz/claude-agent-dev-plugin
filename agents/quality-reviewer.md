@@ -3,7 +3,7 @@ name: quality-reviewer
 description: Read-only — assesses cleanliness, testability, and maintainability of a diff already verified spec-compliant. Does not re-check spec compliance.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
-model: inherit
+model: haiku
 memory: project
 ---
 

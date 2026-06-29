@@ -3,7 +3,7 @@ name: spec-reviewer
 description: Read-only — verifies an implementer's diff matches the task spec, nothing more/less. Dispatch immediately after an implementer returns DONE or DONE_WITH_CONCERNS, to confirm the change is spec-compliant before advancing to quality review.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
-model: inherit
+model: haiku
 ---
 
 # ROLE

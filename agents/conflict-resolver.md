@@ -2,7 +2,7 @@
 name: conflict-resolver
 description: Solves Git merge conflicts between two branches/commits. Reads conflict markers, edits the code to resolve the overlap, runs the project test suite, and commits the resolved changes.
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: inherit
+model: haiku
 ---
 
 # ROLE

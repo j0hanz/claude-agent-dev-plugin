@@ -2,7 +2,7 @@
 name: implementer
 description: 'Implements a single scoped task from a dispatch prompt — reads in-scope files, writes/edits code and tests, commits, and reports a DONE/DONE_WITH_CONCERNS/BLOCKED/NEEDS_CONTEXT verdict. Dispatch with isolation: worktree to keep edits off the main checkout.'
 tools: Read, Write, Edit, Bash, Grep, Glob
-model: inherit
+model: haiku
 ---
 
 # Role

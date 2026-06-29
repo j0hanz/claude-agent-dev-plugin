@@ -3,7 +3,7 @@ name: researcher
 description: Read-only — explores the codebase, runs searches, fetches URL contents, and reports findings. Denies write and edit actions to enforce strict read-only execution boundaries.
 tools: Read, Grep, Glob, Bash
 disallowedTools: Write, Edit
-model: inherit
+model: haiku
 ---
 
 # ROLE
