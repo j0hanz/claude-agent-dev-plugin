@@ -3,7 +3,7 @@ name: multi-agent-development
 description: 'Use when implementing a multi-task plan where tasks depend on each other, share files, or must run in order. Prefer over multi-agent-dispatch when tasks have shared state or file dependencies that prevent parallel execution.'
 disable-model-invocation: false
 argument-hint: '[path to plan file]'
-allowed-tools: Agent(implementer), Agent(spec-reviewer), Agent(quality-reviewer), Agent(conflict-resolver), AskUserQuestion, Bash(git log*), Bash(python *)
+allowed-tools: Agent(implementer), Agent(spec-reviewer), Agent(quality-reviewer), Agent(conflict-resolver), AskUserQuestion, Bash(git log*)
 ---
 
 # multi-agent-development
@@ -21,14 +21,11 @@ Orchestrate sequential task execution with zero context pollution and high quali
 ```
 Start Cluster (1+ tasks, Depends-on satisfied) -> Phase 1: Implement EACH task in the cluster
   (independent tasks: launched together, run_in_background, isolation: worktree — no waiting between them)
-  -> per task, as it reports back: Phase 2: Spec Compliance (read-only reviewer)
-       -- SPEC_PASS ------------------> Phase 3: Code Quality (read-only auditor)
-       -- SPEC_FAIL (retry) -----------> back to Phase 1 for that task only
-       -- SPEC_FAIL (after 2 attempts) -> BLOCKED (escalate to user)
-
-     Phase 3: Code Quality
-       -- QUALITY_PASS -------------> this task done
-       -- CRITICAL / IMPORTANT (retry) -> back to Phase 1 for that task only
+  -> per task, as it reports back: Phase 2+3: Combined Review (one read-only reviewer, both verdicts)
+       -- SPEC_PASS + (QUALITY_PASS|MINOR) ---> this task done
+       -- SPEC_FAIL or CRITICAL/IMPORTANT (1st) -> fix, re-run Combined Review
+       -- 2nd failure (split mode) -------------> fix, re-run as separate Phase 2 / Phase 3
+       -- still failing after split's 2 tries --> BLOCKED (escalate to user)
 
 Cluster done when every task in it is done/blocked -> Next Cluster?
   -- yes --> loop to Start Cluster
@@ -37,9 +34,13 @@ Cluster done when every task in it is done/blocked -> Next Cluster?
 
 ## Step 0: Setup
 
+Read `references/implementer-prompt.md`, `references/spec-reviewer-prompt.md`, `references/quality-reviewer-prompt.md`, and `references/subagent-contract.md` once, here — not again per task or per phase. The Core Loop below assumes you already have them.
+
 Default to running all tasks straight through — that was already the recommended option, so don't spend a round-trip asking for it. Raise `AskUserQuestion` ("run all" vs. "run one task first to validate the loop") only when the plan is large or unfamiliar enough that a single test task is a genuinely safer first step.
 
 ## Partitioning & Scope
+
+**Single task, no dependencies?** Skip the Matrix — there's nothing to partition. Go straight to the Core Loop.
 
 Before asking the user, write the same Lane Matrix `multi-agent-dispatch` uses — it's what makes "strict order" a fact instead of a guess:
 
@@ -59,25 +60,20 @@ For a cluster of 2+ tasks with no dependency between them: dispatch one implemen
 ## Core Loop (Strict Order, per task or per cluster member)
 
 - **Phase 1**: Implement.
-- **Agent**: `implementer` (isolated worktree).
-- **Input**: Read `references/implementer-prompt.md` and `references/subagent-contract.md` (including the large-artifact rule for `.claude/dispatch/` handoff and the Model Tiering table before dispatch, applying an explicit `model:` override at the dispatch call site).
+- **Agent**: `implementer` (isolated worktree), per `references/implementer-prompt.md` and `references/subagent-contract.md` (large-artifact rule, Model Tiering — apply an explicit `model:` override at the dispatch call site).
 - **Output**: Verdict, files touched, commit, summary.
 - **Before advancing:** implementer must return `DONE` or `DONE_WITH_CONCERNS`. If `BLOCKED` or `NEEDS_CONTEXT`, stop and surface to the user — do not dispatch Phase 2.
 
-- **Phase 2**: Spec Check.
-- **Agent**: Read-only `spec-reviewer`. Do not substitute `diff-reviewer` here — spec-reviewer receives the full task spec context that diff-reviewer does not have.
-- **Input**: Read `references/spec-reviewer-prompt.md`.
-- **Goal**: Check if they built exactly what was asked.
-- **Rules**: Max 2 tries. If blocked, pause all tasks and ask the user.
-- **Before advancing:** spec-reviewer must return `SPEC_PASS`. If `SPEC_FAIL` twice, escalate to user.
+- **Phase 2+3 (default — low/med risk, first pass)**: Combined Review.
+- **Agent**: ONE read-only `spec-reviewer`, given both `references/spec-reviewer-prompt.md` and `references/quality-reviewer-prompt.md` as its dispatch contract, asked to return both `SPEC_VERDICT` and `QUALITY_VERDICT` in one pass. This avoids two cold-start agents independently re-reading the same diff.
+- **Rules**: Max 2 tries total. If `SPEC_FAIL`, fix and re-run the combined pass (don't bother scoring quality on a spec-failing diff). If `SPEC_PASS` but `CRITICAL`/`IMPORTANT`, fix and re-run.
+- **Before advancing:** needs `SPEC_PASS` + (`QUALITY_PASS` or `MINOR`).
 
-- **Phase 3**: Quality Check.
-- **Agent**: Read-only `quality-reviewer`. Do not substitute `diff-reviewer` here.
-- **Input**: Read `references/quality-reviewer-prompt.md`.
-- **Goal**: Check code quality and tests.
-- **Rules**: Max 2 tries (this does not count against Phase 2).
-- **Before advancing:** quality-reviewer must return `QUALITY_PASS` or `MINOR`. If `CRITICAL` or `IMPORTANT` twice, escalate to user.
-- **After QUALITY_PASS or MINOR:** Document the task completion in `.claude/rolling_summary.md`'s `## Task Ledger` section (e.g., "Task N: complete (commits <base7>..<head7>, review clean)") before advancing to the next task or cluster. This enables the Resuming step to verify that work won't be duplicated on recovery.
+- **Phase 2 / Phase 3 (split — high risk, or any retry after a fix)**: run as two separate agents instead, per the original per-phase contracts below. Fresh eyes matter once a fix has already gone in.
+  - **Phase 2**: Read-only `spec-reviewer` per `references/spec-reviewer-prompt.md`. Do not substitute `diff-reviewer` — it lacks the full task spec context. Max 2 tries; `SPEC_FAIL` twice → escalate.
+  - **Phase 3**: Read-only `quality-reviewer` per `references/quality-reviewer-prompt.md`, only after `SPEC_PASS`. Do not substitute `diff-reviewer`. Max 2 tries (separate from Phase 2's count); `CRITICAL`/`IMPORTANT` twice → escalate.
+
+- **After SPEC_PASS + (QUALITY_PASS or MINOR), whichever path got you there:** advance to the next task or cluster.
 
 ## Final Validation
 
@@ -106,7 +102,7 @@ Blocked/escalated tasks: [list, or "none"]
 - A blocked or skipped task wasn't surfaced to the user — it just silently didn't happen. **If any lane reaches `BLOCKED` or `NEEDS_CONTEXT`, surface it to the user before continuing. Never advance the next cluster while a blocked lane is unresolved.**
 - An old agent was reused across tasks, carrying stale memory into a new task's context.
 - Tasks with `Depends on: none` and disjoint files were still run one-at-a-time instead of clustered — wasted wall-clock time with no correctness benefit.
-- The ledger in `.claude/rolling_summary.md` is append-only and never rewritten in place. On resume, always verify that the ledger's last recorded commit hash (parsed from the ledger line format) is reachable in `git log` (e.g., `git log --oneline <hash>^..HEAD` should succeed). If the ledger's hash is not reachable in git history, surface this as an explicit discrepancy to the user — never silently resolve by picking one source. **Extraction rule (canonical)**: Given the ledger line format `"Task N: complete (commits <base7>..<head7>, review clean)"`, the head hash is extracted as the second 7-character token between the literal `(commits ` and literal `..` — split the parenthetical content (between `(` and `)`) on `..`, take the second segment, and strip any trailing `, review clean` suffix.
+- On resume, a task's completion was assumed instead of verified against `git log` — always confirm the task's commit (matched by its `<type>: [task title]` subject) actually exists before treating it as done.
 
 ## Worked Example
 
@@ -118,13 +114,13 @@ Plan: add a "saved searches" feature — schema, API, and UI. Partition Matrix:
 | 2    | `api/saved-search.ts`                                   | Task 1     | med  | `npm test api`    |
 | 3    | `ui/SavedSearches.tsx`                                  | Task 2     | low  | `npm test ui`     |
 
-Strict chain (2 needs 1's model, 3 needs 2's contract) → no clustering; run in order. Each task: Phase 1 implement (worktree) → Phase 2 spec check → Phase 3 quality check, clearing the [Definition of Done](../verification-before-completion/references/definition-of-done.md) before the next starts.
+Strict chain (2 needs 1's model, 3 needs 2's contract) → no clustering; run in order. Each task: Phase 1 implement (worktree) → combined Phase 2+3 review, clearing the [Definition of Done](../verification-before-completion/references/definition-of-done.md) before the next starts.
 
 ```
 | Task | VERDICT | Spec | Quality | Action |
 | :--- | :------ | :--- | :------ | :----- |
 | 1    | DONE    | PASS | PASS    | merged |
-| 2    | DONE    | PASS | IMPORTANT → fixed | re-dispatched, then merged |
+| 2    | DONE    | PASS | IMPORTANT → fixed, re-run split (Phase 2/Phase 3) | re-dispatched, then merged |
 | 3    | DONE    | PASS | PASS    | merged |
 
 Tests: PASS — `npm test` (full suite)
@@ -142,7 +138,7 @@ Contrast with `multi-agent-dispatch`: there the lanes were file-disjoint and lau
 - **Commits**: Give reviewers the exact old commit and new commit.
 - **Rejects**: Throw away bad work. Start over from a clean base.
 - **Conflicts**: If a Git merge fails, do NOT immediately abort or escalate. Dispatch the specialized `conflict-resolver` agent (`agents/conflict-resolver.md`) to read conflict markers, resolve them, test, and commit the resolution. Only pause and ask the user if the conflict resolver returns `VERDICT: BLOCKED`.
-- **Resuming**: Before restarting, check `.claude/rolling_summary.md`'s `## Task Ledger` section first to see which tasks have already completed — trust the ledger over self-recollection. Fall back to `git log` only if the ledger section is absent or unreadable (e.g., first task of a fresh plan). The ledger is append-only, making it the primary source of truth for task recovery.
+- **Resuming**: Before restarting, check `git log` for commits matching the plan's task titles (`<type>: [task title]` subjects) to see which tasks already completed — never trust self-recollection alone.
 - **Context**: The orchestrator thread accumulates summaries across every task loop even though subagents are isolated. Prune intermediate subagent logs, thinking steps, and full file diffs from the main conversation context once integrated, keeping only a high-level summary and the merge commit hash.
 
 ## Next Skills

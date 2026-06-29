@@ -9,6 +9,7 @@ Canonical contract for any skill dispatching a `general-purpose` subagent (used 
 - **CONTEXT:** Errors, versions, baseline commit. Write large artifacts (>150 lines) under `.claude/dispatch/` and reference the file path here.
 - **CONSTRAINTS:** Tool restrictions (e.g., read-only, git formatting conventions).
 - **OUTPUT SCHEMA:** Instruct subagent to return:
+
   ```text
   VERDICT: [SUCCESS | FAILURE | BLOCKED | NEEDS_CONTEXT or role-specific enum]
   FILES_TOUCHED: [list of paths, or "none"]
@@ -32,7 +33,7 @@ Select the appropriate model tier based on task scope:
 - **Standard** (`model: inherit`): Multi-file, cross-module, standard complexity.
 - **Capable** (e.g., Opus): Architecture decisions, final-review gates, N-lane arbitration.
 
-_Note: Default to `model: inherit` (orchestrator's current model) if task complexity is ambiguous._
+_Note: Default to `model: sonnet` if task complexity is ambiguous — never silently inherit the orchestrator's own model, which may be a more expensive tier than the task needs._
 
 ## Roles and Dispatch Directory
 
