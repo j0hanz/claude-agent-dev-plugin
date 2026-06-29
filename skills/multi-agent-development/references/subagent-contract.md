@@ -1,82 +1,69 @@
 # Subagent Prompt Contract (Zero-Shot)
 
-Canonical contract for any skill that dispatches a `general-purpose` subagent — shared by `multi-agent-development` and `multi-agent-dispatch`. Subagents start cold — they have no memory of the parent conversation. Every dispatch prompt MUST contain all five fields below.
+Canonical contract for any skill dispatching a `general-purpose` subagent (used by `multi-agent-development` and `multi-agent-dispatch`). Subagents start cold with no memory of the parent conversation. Every dispatch prompt MUST contain all five fields below.
 
-This plugin's `agents/` directory ships six named agents covering fixed roles: `implementer` (Writer — used by both `multi-agent-development`'s Phase 1 and `multi-agent-dispatch`'s Writer lanes), `researcher` (read-only Researcher/Investigator), `conflict-resolver` (Git merge conflict solver), `spec-reviewer` and `quality-reviewer` (`multi-agent-development`'s Phase 2/Phase 3 gates), and `diff-reviewer` (`request-code-review`'s dispatch target). Each has its own fixed output schema described in its own file and no longer needs the generic fallback below. The generic schema remains the fallback for any role without a matching named agent, and any specialist category in the "Routing a lane to a specialist" table below.
+## Prompt Fields
 
-- **SCOPE:** Validated paths (In/Out of bounds). For writer roles, list the exact files the agent may touch.
-- **OBJECTIVE:** One concrete, verifiable/falsifiable outcome. Not "improve X" — state the exact done-condition.
-- **CONTEXT:** Error text, versions, baseline commit, conventions — everything needed to start cold. Never assume the agent can infer project context. **Large artifacts rule:** artifacts over ~150 lines must be written to a file under `.claude/dispatch/` first, with only the file path cited in CONTEXT — never inline them.
-- **CONSTRAINTS:** Tool restrictions and specific "Do Not" rules. State explicitly if the agent must be read-only (no Write/Edit) — and note that this is an instruction, not an enforced restriction, unless the harness supports passing a tool allowlist.
-- **OUTPUT SCHEMA:** Instruct the subagent to return data in this format:
-
+- **SCOPE:** In/Out of bounds paths. For writers, list files they may touch.
+- **OBJECTIVE:** Concrete, verifiable outcome (e.g. "tests pass", not "improve X").
+- **CONTEXT:** Errors, versions, baseline commit. Write large artifacts (>150 lines) under `.claude/dispatch/` and reference the file path here.
+- **CONSTRAINTS:** Tool restrictions (e.g., read-only, git formatting conventions).
+- **OUTPUT SCHEMA:** Instruct subagent to return:
   ```text
-  VERDICT: [outcome enum specific to this dispatch — e.g. SUCCESS | FAILURE | BLOCKED]
-  FILES_TOUCHED: [list of paths, or "none" for read-only roles]
-  SUMMARY: [concise — what was done or found]
+  VERDICT: [SUCCESS | FAILURE | BLOCKED | NEEDS_CONTEXT or role-specific enum]
+  FILES_TOUCHED: [list of paths, or "none"]
+  SUMMARY: [concise description of work/findings]
   EVIDENCE: [test results, grep output, or file:line citations]
   ```
 
-  The `VERDICT` enum is dispatch-specific (e.g. `multi-agent-development`'s implementer uses `DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT`; its reviewers use `SPEC_PASS | SPEC_FAIL` and `QUALITY_PASS | CRITICAL | IMPORTANT | MINOR`). Define the enum for the specific role, but never omit the schema.
+---
 
-## Common Mistakes (fix these before dispatching)
+## Common Mistakes (Check before dispatching)
 
-A prompt that violates the five-field contract wastes a whole agent run. Most failures are one of these:
+- **Unbounded scope**: e.g., "Fix failing tests" -> Better: "Fix `src/auth/jwt.test.ts` only".
+- **Missing context**: E.g., omitting error logs/baseline commit.
+- **No constraints**: E.g., allowing edits in sibling lanes.
+- **No output schema**: E.g., allowing freeform prose.
+- **Inlined large files**: Inlining >150 lines configs instead of using file references.
 
-| Mistake                                                | Better                                                                                         |
-| :----------------------------------------------------- | :--------------------------------------------------------------------------------------------- |
-| "Fix all the failing tests" (unbounded scope)          | "Fix `src/auth/jwt.test.ts` only; do not edit other files" (one file, explicit out-of-bounds)  |
-| "Fix the race condition" (no context)                  | Paste the error text + failing test name + baseline commit                                     |
-| No CONSTRAINTS — agent edits files a sibling lane owns | "Read-only. Touch nothing under `src/api/`."                                                   |
-| No OUTPUT SCHEMA — reply is freeform prose             | Require `VERDICT/FILES_TOUCHED/SUMMARY/EVIDENCE` verbatim                                      |
-| "Improve the code" (unfalsifiable objective)           | "All 6 tests in the file pass, 0 skipped" (a checkable done-condition)                         |
-| 200-line config file inlined in CONTEXT                | Write to `.claude/dispatch/config.json` first, cite only the path in CONTEXT (large artifacts) |
-
-## Role Vocabulary
-
-Use these role labels when configuring subagents so isolation and tool-restriction decisions are explicit, not implied by prose. This plugin's own `agents/` directory covers six fixed roles by name — `implementer` (Writer), `researcher` (read-only Researcher/Investigator), `conflict-resolver` (Git merge conflict solver), `spec-reviewer` and `quality-reviewer` (the two Reviewer gates below), and `diff-reviewer` (used by `request-code-review`) — so those roles are named directly rather than left generic. The categories in the table below (architecture review, language-specific quality, error-handling auditing, root-cause debugging, docs sync) have no matching named agent in this plugin, so for those, fall back to scanning the user's installed roster, then `general-purpose` if nothing matches.
+---
 
 ## Model Tiering
 
-Choose a model tier based on scope complexity and file count:
+Select the appropriate model tier based on task scope:
 
-| Scope                                             | Files & Signals                    | Model                                       |
-| :------------------------------------------------ | :--------------------------------- | :------------------------------------------ |
-| Single domain, fully concrete spec                | 1–2 files, clear boundaries        | **Fast/cheap tier** (e.g., Claude 3 Haiku)  |
-| Multi-file or cross-module work, standard clarity | 3+ files OR ambiguous scope        | **Standard tier** (`model: inherit`)        |
-| Architecture-defining or final-review gate        | Critical decision or N-lane review | **Most-capable tier** (e.g., Claude 3 Opus) |
+- **Fast/Cheap** (e.g., Haiku): Single domain, 1–2 files, fully concrete spec.
+- **Standard** (`model: inherit`): Multi-file, cross-module, standard complexity.
+- **Capable** (e.g., Opus): Architecture decisions, final-review gates, N-lane arbitration.
 
-**Rationale:** Turn count beats token price — a cheap model retried 3× on ambiguous work costs more than one standard-model pass that gets it right.
+_Note: Default to `model: inherit` (orchestrator's current model) if task complexity is ambiguous._
 
-**Safety-biased default:** Ambiguous or unmeasured-complexity cases MUST default to the orchestrator's own current model (via `model: inherit`), never silently to the cheapest tier. Cheapness is an option when scope is genuinely bounded; when in doubt, defer to the orchestrator's judgment.
+---
 
-**Advisory caveat:** Model tier is a dispatch-prompt hint and applies to the agent prompt context only — it is not enforced by the harness unless a model-pinning parameter is exposed. `model:` overrides in the dispatch call site take precedence over `model: inherit` defaults in agent frontmatter.
+## Roles and Dispatch Directory
 
-- **Investigator (Read-only):** Trace root cause, propose a fix as a code block. No edits. Dispatch the named `researcher` agent (`agents/researcher.md`) for this role.
-- **Writer (Isolation: worktree):** Implement a spec, write tests, report changes. Dispatch the named `implementer` agent (`agents/implementer.md`) for this role — it already requires `isolation: worktree` and returns its own schema (`VERDICT: [DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT]` + SUMMARY/FILES_CHANGED/COMMIT/CONCERNS/BLOCKER/QUESTION), not the generic schema below. Both `multi-agent-development` (Phase 1) and `multi-agent-dispatch` (Step 3 Writer lanes) dispatch it this way.
-- **Researcher (Read-only):** Explore code/docs, report file paths and usages. Dispatch the named `researcher` agent (`agents/researcher.md`) for this role.
-- **Conflict Resolver (Isolation: worktree):** Resolves merge/rebase conflicts. Dispatch the named `conflict-resolver` agent (`agents/conflict-resolver.md`) for this role.
-- **Reviewer (Read-only):** Verify a Writer's diff against a spec or quality bar — never the Writer's own summary. `multi-agent-development` dispatches the named `spec-reviewer` (Phase 2) and `quality-reviewer` (Phase 3) agents for this role; `request-code-review` dispatches the named `diff-reviewer` agent. Each has its own fixed output schema rather than the generic schema below.
+The project includes six named agents in the `agents/` directory with their own configurations and output schemas:
 
-### Routing a lane to a specialist
+1. **`implementer`** (Writer): Runs with `isolation: worktree`. Returns `DONE | DONE_WITH_CONCERNS | BLOCKED | NEEDS_CONTEXT`.
+2. **`researcher`** (Read-only Investigator/Researcher): Traces root causes and usages.
+3. **`conflict-resolver`** (Writer): Resolves Git merge/rebase conflicts.
+4. **`spec-reviewer`** & **`quality-reviewer`** (Read-only): Assess specs (Phase 2) and quality (Phase 3).
+5. **`diff-reviewer`** (Read-only): Ad-hoc reviews on commits/diffs.
 
-A generalist runs every lane competently; a domain specialist runs its own lane
-_better_. Before defaulting to `general-purpose`, match the lane's domain to an
-installed agent. Match by **category** below, not by name — rosters differ per
-environment, so look up what's actually installed and fall back to
-`general-purpose` when nothing matches.
+### Routing to Specialists
 
-| Lane domain                         | Look for an installed agent that does…         | Fallback          |
-| :---------------------------------- | :--------------------------------------------- | :---------------- |
-| Architecture / cross-module design  | architecture or system-design review           | `general-purpose` |
-| Language-specific code quality      | a reviewer for that language (e.g. Python, TS) | `general-purpose` |
-| Error handling / swallowed failures | silent-failure / error-path auditing           | `general-purpose` |
-| Root-cause debugging                | a debugging / detective specialist             | `general-purpose` |
-| Docs sync after a change            | a documentation specialist                     | `general-purpose` |
+If a domain has no custom named agent, scan installed agents by category before falling back to `general-purpose`:
 
-The contract is unchanged whichever agent runs the lane: all five fields still
-required, and the report is still independently verified (see below).
+| Lane Domain                  | Specialist Focus                     | Fallback          |
+| :--------------------------- | :----------------------------------- | :---------------- |
+| Architecture / System Design | Architecture/System Review           | `general-purpose` |
+| Language Code Quality        | Language-specific review (Python/TS) | `general-purpose` |
+| Error Handling               | Silent-failure/error auditing        | `general-purpose` |
+| Debugging                    | Diagnostic/investigation             | `general-purpose` |
+| Documentation                | Docs maintenance/sync                | `general-purpose` |
 
-## Never Trust, Always Verify
+---
 
-A subagent's report describes what it intended to do, not necessarily what it did. The dispatching skill MUST independently verify load-bearing claims (run the test suite, check `git status`/`git diff`) rather than accepting `VERDICT: SUCCESS` at face value.
+## Independent Verification
+
+Orchestrators must independently verify subagent claims (e.g., run test suites, check `git status`/`git diff`) instead of trusting a `VERDICT: SUCCESS` at face value.
