@@ -4,8 +4,6 @@
 **when:** Only after `SPEC_PASS` from Phase 2.
 **constraint:** Do NOT re-check spec compliance — that was Phase 2.
 
----
-
 ## Dispatch Template
 
 ```text
@@ -28,7 +26,7 @@ CONTEXT:
 CONSTRAINTS:
   - Evaluate ONLY code introduced by this task (delta from baseline to implementation commit).
   - Do NOT suggest features or scope expansions.
-  - Flag any file that grew by more than 150 lines due to this task alone (advisory heuristic — generated files like migrations/fixtures can legitimately exceed it; note as MINOR, not CRITICAL/IMPORTANT, unless the growth itself indicates a responsibility violation).
+  - Flag any file that grew by more than 150 lines due to this task alone (heuristic; migrations/fixtures may legitimately exceed it — note as MINOR unless it signals a responsibility violation).
 
 CHECKS:
   1. Responsibility: Does each file/class/function have one clear job?
@@ -61,8 +59,6 @@ OUTPUT:
   SUMMARY:
   [2-3 sentences: quality verdict with specific evidence]
 ```
-
----
 
 ## Verdict Rules
 

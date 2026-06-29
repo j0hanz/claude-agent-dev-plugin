@@ -3,8 +3,6 @@
 **purpose:** Verify implementation matches task spec — nothing more, nothing less.
 **when:** Immediately after implementer returns `DONE` or `DONE_WITH_CONCERNS`.
 
----
-
 ## Dispatch Template
 
 ```text
@@ -48,8 +46,6 @@ OUTPUT:
   SUMMARY:
   [2-3 sentences: compliance verdict with evidence from code, not from report]
 ```
-
----
 
 ## Dispatcher Rules
 

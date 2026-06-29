@@ -3,8 +3,6 @@
 **purpose:** Execute a single scoped task — implement exactly what the spec states.
 **when:** Phase 1. One task per subagent call.
 
----
-
 ## Dispatch Template
 
 ```text
@@ -47,8 +45,6 @@ OUTPUT:
   BLOCKER:  [if BLOCKED: exact blocker — missing requirement, conflicting constraint.]
   QUESTION: [if NEEDS_CONTEXT: one specific clarifying question.]
 ```
-
----
 
 ## Dispatcher Rules
 
