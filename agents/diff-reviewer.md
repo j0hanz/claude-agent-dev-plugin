@@ -63,7 +63,8 @@ You MUST reply using EXACTLY this format. Do not add anything else:
 
 ### Code Review Result
 
-**Status**: [Choose ONE: PASS ✓ | FAIL ✗ (Number of Must Fix issues)]
+**Status**: [Choose ONE: PASS | FAIL]
+**Blocking Issue Count**: [number of Tier 1/2 issues, 0 if PASS]
 
 #### Blocking Issues
 

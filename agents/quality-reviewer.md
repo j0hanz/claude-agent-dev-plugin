@@ -41,6 +41,7 @@ Spec-compliance is already verified. Do NOT re-check it.
 You MUST use this exact format. No extra text.
 
 VERDICT: [Choose ONE: QUALITY_PASS | CRITICAL | IMPORTANT | MINOR]
+GATE: [PASS if VERDICT is QUALITY_PASS or MINOR, otherwise FAIL]
 
 STRENGTHS:
 [file:line - what is good. Max 2 entries]
