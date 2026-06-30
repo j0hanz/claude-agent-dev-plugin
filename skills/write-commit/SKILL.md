@@ -1,11 +1,6 @@
 ---
 name: write-commit
-description: >
-  Use when the user asks to "write a commit", "commit message", "generate commit", or "commit code".
-  Also the canonical commit step invoked by pr-workflow (Step 3), multi-agent-development (Operational Rules),
-  and diagnose (Resume after fix) — any skill that stages and commits defers here instead of inventing its own format.
-  Focuses on writing terse, exact conventional commits that prioritize "why" over "what",
-  while ensuring safe staging practices.
+description: 'Use when staging changes and writing git commit messages. Prefer over pr-workflow when changes only need to be committed locally and not yet pushed or submitted as a PR.'
 disable-model-invocation: false
 allowed-tools: Bash(git *), Read
 ---

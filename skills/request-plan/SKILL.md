@@ -1,6 +1,6 @@
 ---
 name: request-plan
-description: 'Use when requested to draft a plan for a new feature or change. Produces a DRAFT plan and specs.'
+description: 'Use when requested to draft a plan or specification for a new feature, change, or repository modification.'
 disable-model-invocation: false
 user-invocable: true
 argument-hint: '[--depth sketch|contract|blueprint] <feature description>'

@@ -1,6 +1,6 @@
 ---
 name: using-agent-sdlc-skills
-description: 'Use at the start of any new task to route it through the correct lifecycle gate — onboarding, planning, scoping, execution, or delivery. Prefer over jumping directly to an individual skill when the right starting point is unclear.'
+description: 'Use when starting a new task and the correct starting point, lifecycle gate, or routing among skills is unclear.'
 disable-model-invocation: false
 allowed-tools: Skill
 ---

@@ -1,6 +1,6 @@
 ---
 name: verification-before-completion
-description: 'Use before claiming any work is complete — runs tests, checks for regressions, and gathers execution evidence. Always before request-code-review; never substitute code-reading for actual execution.'
+description: 'Use when code changes are complete and require verification, regression testing, or compliance checks before review or release. Prefer over request-code-review when the implementation has not yet been verified by execution.'
 disable-model-invocation: false
 allowed-tools: AskUserQuestion, Bash, Read, Grep
 ---
