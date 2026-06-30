@@ -6,7 +6,7 @@ A Claude Code plugin for authoring and maintaining skills and hooks — structur
 
 ## Overview
 
-Agent SDLC Plugin extends Claude Code with 15 skills and 2 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on session events to guard against destructive commands and surface relevant skills. Multi-step or parallel work is delegated to specialized, safe-by-default subagents (`implementer`, `researcher`, `conflict-resolver`, etc.) orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
+Agent SDLC Plugin extends Claude Code with 16 skills and 2 lifecycle hooks covering the complete agent development cycle. Skills activate automatically based on task context and can also be invoked manually; hooks fire on session events to guard against destructive commands and surface relevant skills. Multi-step or parallel work is delegated to specialized, safe-by-default subagents (`implementer`, `researcher`, `conflict-resolver`, etc.) orchestrated by the `multi-agent-dispatch` (parallel fan-out) and `multi-agent-development` (sequential, gate-checked) skills.
 
 | Aspect              | Detail                       |
 | :------------------ | :--------------------------- |
@@ -20,7 +20,7 @@ Agent SDLC Plugin extends Claude Code with 15 skills and 2 lifecycle hooks cover
 
 | Feature                  | Description                                                                                                                                                  |
 | :----------------------- | :----------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 15 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                                 |
+| 16 auto-triggered skills | Activate on task context; invoke manually with `/skill-name`                                                                                                 |
 | Subagent orchestration   | `multi-agent-dispatch` and `multi-agent-development` drive subagent dispatches using specialized, safe-by-default agents (`implementer`, `researcher`, etc.) |
 | 2 lifecycle hooks        | Bash-only handlers: a shell-safety guard and a skill nudge                                                                                                   |
 | Marketplace install      | One-command install from GitHub — no manual clone required                                                                                                   |
@@ -71,25 +71,26 @@ claude --plugin-dir ./agent-sdlc
 
 ## What's Included
 
-### Skills (15)
+### Skills (16)
 
-Skills are invoked automatically by Claude based on task context, or manually with `/skill-name`. 13 are listed below; `multi-agent-dispatch` and `multi-agent-development` are detailed in [Subagent Dispatch](#subagent-dispatch).
+Skills are invoked automatically by Claude based on task context, or manually with `/skill-name`. 14 are listed below; `multi-agent-dispatch` and `multi-agent-development` are detailed in [Subagent Dispatch](#subagent-dispatch).
 
-| Skill                            | Trigger                                                                  | Purpose                                                        |
-| :------------------------------- | :----------------------------------------------------------------------- | :------------------------------------------------------------- |
-| `parallel-brainstorming`         | "brainstorm", "add a feature", "explore approaches"                      | Parallel multi-agent ideation + critique before implementation |
-| `request-plan`                   | "plan", "design", "draft a plan", "write a spec"                         | Multi-agent ideate-and-synthesize: drafts plan/specs.md        |
-| `receive-plan`                   | "check my plan", "is this plan ready", "verify this spec"                | Multi-agent critique panel + Traceability Auditor gate         |
-| `interview`                      | "stress-test this plan", "challenge this decision"                       | Resolves hard-to-reverse decisions before commit               |
-| `diagnose`                       | "debug", "fix crash", "not working", "why is this failing"               | Root-cause debugging before any fix                            |
-| `request-code-review`            | "review", "check this", "is this correct"                                | Dispatches a fresh-context subagent to review the diff         |
-| `receive-code-review`            | "reviewer said", "PR comments"                                           | Verify, push back on, and implement review feedback            |
-| `test-driven-development`        | "TDD", "write tests", "implement this"                                   | Red-green-refactor workflow                                    |
-| `project-audit`                  | "audit the codebase", "structure", "circular dependency", "coupling"     | Parallel per-directory structural audit                        |
-| `pr-workflow`                    | "commit this", "open a PR", "ship it", "push my work"                    | Branch, commit, push & open a PR — multi-agent aware delivery  |
-| `verification-before-completion` | (automatic before task completion)                                       | Verify changes work before marking done                        |
-| `using-agent-sdlc-skills`        | (meta-routing)                                                           | Routes to the right skill based on context                     |
-| `project-init`                   | "init project", "generate AGENTS.md/CLAUDE.md/GEMINI.md", "onboard repo" | Parallel discovery fan-out → lean AGENTS.md + stubs            |
+| Skill                            | Trigger                                                                  | Purpose                                                                                                                    |
+| :------------------------------- | :----------------------------------------------------------------------- | :------------------------------------------------------------------------------------------------------------------------- |
+| `parallel-brainstorming`         | "brainstorm", "add a feature", "explore approaches"                      | Parallel multi-agent ideation + critique before implementation                                                             |
+| `request-plan`                   | "plan", "design", "draft a plan", "write a spec"                         | Multi-agent ideate-and-synthesize: drafts plan/specs.md                                                                    |
+| `receive-plan`                   | "check my plan", "is this plan ready", "verify this spec"                | Multi-agent critique panel + Traceability Auditor gate                                                                     |
+| `interview`                      | "stress-test this plan", "challenge this decision"                       | Resolves hard-to-reverse decisions before commit                                                                           |
+| `diagnose`                       | "debug", "fix crash", "not working", "why is this failing"               | Root-cause debugging before any fix                                                                                        |
+| `request-code-review`            | "review", "check this", "is this correct"                                | Dispatches a fresh-context subagent to review the diff                                                                     |
+| `receive-code-review`            | "reviewer said", "PR comments"                                           | Verify, push back on, and implement review feedback                                                                        |
+| `test-driven-development`        | "TDD", "write tests", "implement this"                                   | Red-green-refactor workflow                                                                                                |
+| `project-audit`                  | "audit the codebase", "structure", "circular dependency", "coupling"     | Parallel per-directory structural audit                                                                                    |
+| `pr-workflow`                    | "open a PR", "ship it", "push my work", "push my branch"                 | Branch, push & open a PR — delegates commit mechanics to `write-commit`                                                    |
+| `write-commit`                   | "write a commit", "commit message", "generate commit", "commit code"     | Canonical commit step — stages, secret-scans, and commits with conventional format; hands off to `pr-workflow` for push+PR |
+| `verification-before-completion` | (automatic before task completion)                                       | Verify changes work before marking done                                                                                    |
+| `using-agent-sdlc-skills`        | (meta-routing)                                                           | Routes to the right skill based on context                                                                                 |
+| `project-init`                   | "init project", "generate AGENTS.md/CLAUDE.md/GEMINI.md", "onboard repo" | Parallel discovery fan-out → lean AGENTS.md + stubs                                                                        |
 
 ### Subagent Dispatch
 
@@ -113,7 +114,7 @@ Bash-only handlers (`hooks/*.sh`), wired in `hooks/hooks.json`. `shell-safety` i
 | `PreToolUse` (`Bash`) | `shell-safety` | Rejects a small, explicit denylist of catastrophic commands (`rm -rf /`, force-push to main/master, `git clean -fdx`). Override with `AGENT_SDLC_SKIP_SHELL_SAFETY=1`. | Yes       |
 | `SessionStart` (`*`)  | `skill-nudge`  | Points toward this plugin's bundled skills, at most once per 24h. Opt out with `AGENT_SDLC_SKILL_NUDGE=0`.                                                             | No        |
 
-`shell-safety.sh` is self-contained (no shared-library dependency) so a bug in `hooks/lib.sh` can never silently disable the one blocking guard. The denylist is intentionally narrow and documented as best-effort, not comprehensive protection.
+`shell-safety.sh` is self-contained with no shared-library dependency, so a bug in any other hook file can never silently disable the one blocking guard. The denylist is intentionally narrow and documented as best-effort, not comprehensive protection.
 
 ### Configuration
 
@@ -142,12 +143,11 @@ This file configures local settings for the `claude-agent-sdlc` plugin.
 .
 ├── bin/                    # Validation and release scripts
 ├── hooks/                  # Hook manifest and bash handlers
-│   ├── lib.sh
 │   ├── shell-safety.sh
 │   ├── skill-nudge.sh
 │   └── hooks.json
 ├── output-styles/          # Output style definitions
-├── skills/                 # Skill SKILL.md files (15 skills)
+├── skills/                 # Skill SKILL.md files (16 skills)
 └── tests/                  # Integration tests
 ```
 
