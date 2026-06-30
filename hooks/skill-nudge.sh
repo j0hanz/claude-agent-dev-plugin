@@ -12,7 +12,7 @@ if [[ -z "${AGENT_SDLC_SKILL_NUDGE:-}" ]]; then
   if [[ -f "$AGENT_SDLC_SETTINGS_FILE" ]]; then
     FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$AGENT_SDLC_SETTINGS_FILE" 2>/dev/null || true)
     if [[ -n "$FRONTMATTER" ]]; then
-      NUDGE_VAL=$(printf '%s\n' "$FRONTMATTER" | grep '^skill_nudge:' | sed 's/skill_nudge: *//' 2>/dev/null || true)
+      NUDGE_VAL=$(printf '%s\n' "$FRONTMATTER" | grep '^skill_nudge:' | sed 's/skill_nudge: *//' | sed 's/[[:space:]]*$//' | sed 's/^"\(.*\)"$/\1/' | sed "s/^'\(.*\)'$/\1/" 2>/dev/null || true)
       if [[ "$NUDGE_VAL" == "false" ]]; then
         export AGENT_SDLC_SKILL_NUDGE=0
       elif [[ "$NUDGE_VAL" == "true" ]]; then

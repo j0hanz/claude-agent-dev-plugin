@@ -17,7 +17,7 @@ AGENT_SDLC_SETTINGS_FILE="${CLAUDE_PROJECT_DIR:-.}/.claude/claude-agent-sdlc.loc
 if [ -f "$AGENT_SDLC_SETTINGS_FILE" ]; then
   FRONTMATTER=$(sed -n '/^---$/,/^---$/{ /^---$/d; p; }' "$AGENT_SDLC_SETTINGS_FILE" 2>/dev/null || true)
   if [ -n "$FRONTMATTER" ]; then
-    SKIP_SAFETY=$(printf '%s\n' "$FRONTMATTER" | grep '^skip_shell_safety:' | sed 's/skip_shell_safety: *//' 2>/dev/null || true)
+    SKIP_SAFETY=$(printf '%s\n' "$FRONTMATTER" | grep '^skip_shell_safety:' | sed 's/skip_shell_safety: *//' | sed 's/[[:space:]]*$//' | sed 's/^"\(.*\)"$/\1/' | sed "s/^'\(.*\)'$/\1/" 2>/dev/null || true)
     if [ "$SKIP_SAFETY" = "true" ]; then
       printf '%s\n' '{"hookSpecificOutput":{"hookEventName":"PreToolUse","additionalContext":"[agent-sdlc:shell-safety] WARNING: shell guard bypassed via skip_shell_safety in local config"}}'
       exit 0

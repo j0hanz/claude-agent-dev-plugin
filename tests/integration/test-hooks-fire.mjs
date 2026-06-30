@@ -7,9 +7,8 @@
  */
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, writeFileSync, mkdirSync, mkdtempSync } from 'node:fs';
 import { join } from 'node:path';
-import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { execFileSync } from 'node:child_process';
 import process from 'node:process';
@@ -125,6 +124,75 @@ test('shell-safety.sh respects the AGENT_SDLC_SKIP_SHELL_SAFETY override', () =>
     { AGENT_SDLC_SKIP_SHELL_SAFETY: '1' },
   );
   assert.strictEqual(exitCode, 0);
+});
+
+test('shell-safety.sh respects skip_shell_safety in settings file (various formats)', () => {
+  const formats = [
+    'skip_shell_safety: true',
+    'skip_shell_safety: "true"',
+    "skip_shell_safety: 'true'",
+    'skip_shell_safety: true   ',
+  ];
+
+  for (const format of formats) {
+    const dir = mkdtempSync(join(tmpdir(), 'agent-sdlc-safety-settings-'));
+    try {
+      mkdirSync(join(dir, '.claude'), { recursive: true });
+      writeFileSync(
+        join(dir, '.claude', 'claude-agent-sdlc.local.md'),
+        `---
+${format}
+---
+`,
+      );
+
+      const { exitCode } = runHandler(
+        'shell-safety.sh',
+        { tool_input: { command: 'rm -rf /' } },
+        { CLAUDE_PROJECT_DIR: dir, CLAUDE_PLUGIN_ROOT: pluginRoot },
+      );
+      assert.strictEqual(exitCode, 0, `Failed for format: ${format}`);
+    } finally {
+      cleanupProject(dir);
+    }
+  }
+});
+
+test('skill-nudge.sh respects skill_nudge in settings file (various formats)', () => {
+  const formats = [
+    'skill_nudge: false',
+    'skill_nudge: "false"',
+    "skill_nudge: 'false'",
+    'skill_nudge: false   ',
+  ];
+
+  for (const format of formats) {
+    const dir = mkdtempSync(join(tmpdir(), 'agent-sdlc-nudge-settings-'));
+    try {
+      mkdirSync(join(dir, '.claude'), { recursive: true });
+      writeFileSync(
+        join(dir, '.claude', 'claude-agent-sdlc.local.md'),
+        `---
+${format}
+---
+`,
+      );
+
+      const { stdout, exitCode } = runHandler(
+        'skill-nudge.sh',
+        {},
+        {
+          CLAUDE_PROJECT_DIR: dir,
+          CLAUDE_PLUGIN_ROOT: pluginRoot,
+          AGENT_SDLC_BOOTSTRAP_MODE: 'full',
+        },
+      );
+      assert.strictEqual(exitCode, 0);
+      assert.strictEqual(stdout.trim(), '', `Failed for format: ${format}`);
+    } finally {
+      cleanupProject(dir);
+    }
+  }
 });
 
 test('skill-nudge.sh emits additionalContext on first fire, then stays quiet (cooldown)', () => {
